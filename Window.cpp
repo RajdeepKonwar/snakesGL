@@ -3,26 +3,27 @@
 #define WINDOW_TITLE "snakesGL"
 
 //! Shader paths
-#define GRID_VERT_SHADER  "GridShader.vert"
-#define GRID_FRAG_SHADER  "GridShader.frag"
-#define SNAKE_VERT_SHADER "SnakeShader.vert"
-#define SNAKE_FRAG_SHADER "SnakeShader.frag"
+#define GRID_VERT_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.vert"
+#define GRID_FRAG_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.frag"
+#define SNAKE_VERT_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.vert"
+#define SNAKE_FRAG_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.frag"
 
 //! Static data members
 int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 4;
-int Window::m_nTile = 2;
+int Window::m_nTile = 20;
 
 GLuint g_gridShader, g_snakeShader;
 
 Node *g_grid;
 Node *g_snake;
-Node *g_tilePos[2];
+std::vector< Node * > g_tilePos;
 Node *g_headMtx, *g_tailMtx;
 std::vector< Node * > g_bodyMtx;
 std::vector< Node * >::iterator g_bodyIt;
+std::vector< Node * >::iterator g_tileIt;
 
 Node *g_tile, *g_head, *g_body, *g_tail;
 
@@ -37,6 +38,11 @@ glm::mat4 Window::m_V;
 
 void Window::initialize_objects() {
   int l_i, l_j;
+    
+  g_tile      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Tile.obj" );
+  g_head      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Head.obj" );
+  g_body      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Body.obj" );
+  g_tail      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Tail.obj" );
 
   g_grid    = new Transform( glm::mat4( 1.0f ) );
 
@@ -44,13 +50,16 @@ void Window::initialize_objects() {
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
-  // for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
-  //   for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
-  //     g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)] = new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 1.0f, l_i * 1.0f, 0.0f ) ) );
-  //     static_cast< Transform * >(g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)])->addChild( g_tile );
-  //     static_cast< Transform * >(g_grid)->addChild( g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)] );
-  //   }
-  // }
+   for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
+     for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
+         g_tilePos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 2.0f, l_i * 2.0f, 0.0f ) ) ));
+     }
+   }
+    
+  for( g_tileIt = g_tilePos.begin(); g_tileIt != g_tilePos.end(); ++g_tileIt ) {
+      static_cast< Transform * >(g_grid)->addChild( *g_tileIt );
+      static_cast< Transform * >(*g_tileIt)->addChild( g_tile );
+  }
 
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
     g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
@@ -58,11 +67,6 @@ void Window::initialize_objects() {
 
   g_tailMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
                 glm::vec3( 0.0f, -0.5f * (float) Window::m_nBody, 0.0f ) ) );
-
-  g_tile      = new Geometry( "Tile.obj" );
-  g_head      = new Geometry( "Head.obj" );
-  g_body      = new Geometry( "Body.obj" );
-  g_tail      = new Geometry( "Tail.obj" );
 
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
@@ -85,8 +89,9 @@ void Window::clean_up() {
   delete g_grid;
   delete g_snake;
 
-  for( int l_i = 0; l_i < Window::m_nTile; l_i++ )
-    delete g_tilePos[l_i];
+  for( g_tileIt = g_tilePos.begin(); g_tileIt != g_tilePos.end(); ++g_tileIt )
+    delete *g_tileIt;
+    
   delete g_headMtx;
   for( g_bodyIt = g_bodyMtx.begin(); g_bodyIt != g_bodyMtx.end(); ++g_bodyIt )
     delete *g_bodyIt;
@@ -181,7 +186,7 @@ void Window::display_callback( GLFWwindow* i_window ) {
 
   //! Use GridShader
   glUseProgram( g_gridShader );
-  // g_grid->draw( g_gridShader, Window::m_V );
+  g_grid->draw( g_gridShader, Window::m_V );
 
   // glDepthMask( GL_TRUE );
 
