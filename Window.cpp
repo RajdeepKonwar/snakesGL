@@ -5,6 +5,8 @@
 //! Shader paths
 #define GRID_VERT_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.vert"
 #define GRID_FRAG_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.frag"
+#define BGRID_VERT_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BGridShader.vert"
+#define BGRID_FRAG_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BGridShader.frag"
 #define SNAKE_VERT_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.vert"
 #define SNAKE_FRAG_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.frag"
 
@@ -15,20 +17,22 @@ int Window::m_move  = 0;
 int Window::m_nBody = 4;
 int Window::m_nTile = 20;
 
-GLuint g_gridShader, g_snakeShader;
+GLuint g_gridShader, g_bGridShader, g_snakeShader;
 
 Node *g_grid;
+Node *g_bGrid;
 Node *g_snake;
 std::vector< Node * > g_tilePos;
+std::vector< Node * > g_bigTilePos;
 Node *g_headMtx, *g_tailMtx;
 std::vector< Node * > g_bodyMtx;
 std::vector< Node * >::iterator g_bodyIt;
 std::vector< Node * >::iterator g_tileIt;
 
-Node *g_tile, *g_head, *g_body, *g_tail;
+Node *g_tile, *g_bigTile, *g_head, *g_body, *g_tail;
 
 //! Default camera parameters
-glm::vec3 g_camPos(    0.0f, -2.5f, 3.0f );   //! e | Position of camera
+glm::vec3 g_camPos(    0.0f, -3.5f, 2.5f );   //! e | Position of camera
 glm::vec3 g_camLookAt( 0.0f,  1.5f, 0.0f );   //! d | Where camera looks at
 glm::vec3 g_camUp(     0.0f,  1.0f, 0.0f );   //! u | What orientation "up" is
 
@@ -39,12 +43,14 @@ glm::mat4 Window::m_V;
 void Window::initialize_objects() {
   int l_i, l_j;
     
-  g_tile      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Tile.obj" );
+  g_tile      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SmallTile.obj" );
+  g_bigTile   = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BigTile.obj" );
   g_head      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Head.obj" );
   g_body      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Body.obj" );
   g_tail      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Tail.obj" );
 
   g_grid    = new Transform( glm::mat4( 1.0f ) );
+  g_bGrid   = new Transform( glm::mat4( 1.0f ) );
 
   g_snake   = new Transform( glm::mat4( 1.0f ) ); 
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
@@ -53,12 +59,18 @@ void Window::initialize_objects() {
    for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
      for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
          g_tilePos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 2.0f, l_i * 2.0f, 0.0f ) ) ));
+         g_bigTilePos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 2.0f, l_i * 2.0f, -0.01f ) ) ));
      }
    }
     
   for( g_tileIt = g_tilePos.begin(); g_tileIt != g_tilePos.end(); ++g_tileIt ) {
       static_cast< Transform * >(g_grid)->addChild( *g_tileIt );
       static_cast< Transform * >(*g_tileIt)->addChild( g_tile );
+  }
+  
+  for( g_tileIt = g_bigTilePos.begin(); g_tileIt != g_bigTilePos.end(); ++g_tileIt ) {
+    static_cast< Transform * >(g_bGrid)->addChild( *g_tileIt );
+    static_cast< Transform * >(*g_tileIt)->addChild( g_bigTile );
   }
 
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
@@ -81,7 +93,9 @@ void Window::initialize_objects() {
 
   //! Load the shader programs
   g_gridShader  = LoadShaders( GRID_VERT_SHADER,  GRID_FRAG_SHADER  );
+  g_bGridShader = LoadShaders( BGRID_VERT_SHADER, BGRID_FRAG_SHADER );
   g_snakeShader = LoadShaders( SNAKE_VERT_SHADER, SNAKE_FRAG_SHADER );
+
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -183,6 +197,8 @@ void Window::display_callback( GLFWwindow* i_window ) {
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   // glDepthMask( GL_FALSE );
+  glUseProgram( g_bGridShader );
+  g_bGrid->draw( g_bGridShader, Window::m_V);
 
   //! Use GridShader
   glUseProgram( g_gridShader );

@@ -11,17 +11,7 @@ void main() {
   vec3 distanceVector = vec3(viewSpace) - vec3(0.0f, -3.5f, 2.5f);
   float dist = length(distanceVector);
   
-  vec4 tileColor = vec4(8.0f / dist, 0.8f, 0.0f, 1.0f);
-  
-  /*if (dist < 5.0f) {
-    tileColor = vec4(1.0f, 0.8f, 0.0f, 1.0f);
-  }
-  else if (dist < 10.0f) {
-    tileColor = vec4(0.7f, 0.8f, 0.0f, 1.0f);
-  }
-  else {
-    tileColor = vec4(0.3f, 0.8f, 0.0f, 1.0f);
-  }*/
+  vec4 tileColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
   
   vec4 fogColor = vec4(0.3f, 0.3f, 0.3f, 1.0f);
   
