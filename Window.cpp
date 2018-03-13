@@ -8,13 +8,21 @@
 #define SNAKE_VERT_SHADER "SnakeShader.vert"
 #define SNAKE_FRAG_SHADER "SnakeShader.frag"
 
+//! Static data members
+int Window::m_width;
+int Window::m_height;
+int Window::m_move  = 0;
+int Window::m_nBody = 4;
+int Window::m_nTile = 2;
+
 GLuint g_gridShader, g_snakeShader;
 
-Node *g_grid, *g_snake;
-
-Node *g_headMtx,*g_tailMtx;
-std::vector< Node * > g_tileMtx, g_bodyMtx;
-std::vector< Node * >::iterator g_tileIt, g_bodyIt;
+Node *g_grid;
+Node *g_snake;
+Node *g_tilePos[2];
+Node *g_headMtx, *g_tailMtx;
+std::vector< Node * > g_bodyMtx;
+std::vector< Node * >::iterator g_bodyIt;
 
 Node *g_tile, *g_head, *g_body, *g_tail;
 
@@ -23,19 +31,12 @@ glm::vec3 g_camPos(    0.0f, -2.5f, 3.0f );   //! e | Position of camera
 glm::vec3 g_camLookAt( 0.0f,  1.5f, 0.0f );   //! d | Where camera looks at
 glm::vec3 g_camUp(     0.0f,  1.0f, 0.0f );   //! u | What orientation "up" is
 
-//! Static data members
-int Window::m_width;
-int Window::m_height;
-int Window::m_move  = 0;
-int Window::m_nBody = 4;
-int Window::m_nTile = 2;
-
 glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
 
 void Window::initialize_objects() {
-  int l_i;
+  int l_i, l_j;
 
   g_grid    = new Transform( glm::mat4( 1.0f ) );
 
@@ -43,14 +44,13 @@ void Window::initialize_objects() {
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
-  //! Push central tile
-  g_tileMtx.push_back( new Transform( glm::mat4( 1.0f ) ) );
-
-  //! Push top tiles
-  for( l_i = 1; l_i <= 2 * Window::m_nTile - 1; l_i++ ) {
-    g_tileMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                         glm::vec3( 1.0f * (float) l_i, (float) l_i, 0.0f ) ) ) );
-  }
+  // for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
+  //   for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
+  //     g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)] = new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 1.0f, l_i * 1.0f, 0.0f ) ) );
+  //     static_cast< Transform * >(g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)])->addChild( g_tile );
+  //     static_cast< Transform * >(g_grid)->addChild( g_tilePos[2*Window::m_nTile*(l_i+Window::m_nTile)+(l_j+Window::m_nTile)] );
+  //   }
+  // }
 
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
     g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
@@ -63,11 +63,6 @@ void Window::initialize_objects() {
   g_head      = new Geometry( "Head.obj" );
   g_body      = new Geometry( "Body.obj" );
   g_tail      = new Geometry( "Tail.obj" );
-
-  for( g_tileIt = g_tileMtx.begin(); g_tileIt != g_tileMtx.end(); ++g_tileIt ) {
-    static_cast< Transform * >(g_grid)->addChild( *g_tileIt );
-    static_cast< Transform * >(*g_tileIt)->addChild( g_tile );
-  }
 
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
@@ -90,8 +85,8 @@ void Window::clean_up() {
   delete g_grid;
   delete g_snake;
 
-  for( g_tileIt = g_tileMtx.begin(); g_tileIt != g_tileMtx.end(); ++g_tileIt )
-    delete *g_tileIt;
+  for( int l_i = 0; l_i < Window::m_nTile; l_i++ )
+    delete g_tilePos[l_i];
   delete g_headMtx;
   for( g_bodyIt = g_bodyMtx.begin(); g_bodyIt != g_bodyMtx.end(); ++g_bodyIt )
     delete *g_bodyIt;
@@ -186,7 +181,7 @@ void Window::display_callback( GLFWwindow* i_window ) {
 
   //! Use GridShader
   glUseProgram( g_gridShader );
-  g_grid->draw( g_gridShader, Window::m_V );
+  // g_grid->draw( g_gridShader, Window::m_V );
 
   // glDepthMask( GL_TRUE );
 
