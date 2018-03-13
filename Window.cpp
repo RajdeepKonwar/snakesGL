@@ -55,7 +55,7 @@ std::vector< Node * >::iterator g_nodeIt;
 Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall;
 
 //! Default camera parameters
-glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.5f );//! e | Position of camera
+glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.0f );//! e | Position of camera
 glm::vec3 g_camLookAt( 0.0f, 1.5f, 0.0f );      //! d | Where camera looks at
 glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 
