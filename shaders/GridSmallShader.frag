@@ -25,13 +25,34 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Window, scene and objects manager.
+ * Grid Small Fragment Shader.
  **/
 
-#ifndef _SHADER_H_
-#define _SHADER_H_
+#version 330 core
 
-GLuint LoadShaders( const char *i_vertexFilePath,
-                    const char *i_fragmentFilePath );
+in vec3 FragCoord;
+in vec4 ViewSpace;
 
-#endif
+uniform vec4 u_camPos;
+
+out vec4 FragColor;
+
+void main() {
+  //! Linear fog
+  vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
+  float l_dist      = length( l_distVector );
+
+  float l_minFogDist = 5.0f;
+  float l_maxFogDist = 25.0f;
+
+  float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
+  vec4 l_tileColor  = vec4( 8.0f / l_dist, 0.8f, 0.0f, 1.0f );  //! lime
+  // vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
+  vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
+  // vec4 l_fogColor   = vec4( 0.4f, 0.8f, 0.8f, 1.0f );  //! light-blue
+  // vec4 l_fogColor   = vec4( 0.5f, 0.0f, 0.5f, 1.0f );  //! purple
+  // vec4 l_fogColor   = vec4( 1.0f, 0.6f, 1.0f, 1.0f );   //! orange
+
+  l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
+  FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+}

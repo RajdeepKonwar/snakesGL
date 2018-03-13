@@ -25,13 +25,28 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Window, scene and objects manager.
+ * Grid Big Fragment Shader.
  **/
 
-#ifndef _SHADER_H_
-#define _SHADER_H_
+#version 330 core
 
-GLuint LoadShaders( const char *i_vertexFilePath,
-                    const char *i_fragmentFilePath );
+in vec3 FragCoord;
+in vec4 ViewSpace;
 
-#endif
+out vec4 FragColor;
+
+void main() {
+  //! Linear fog
+  vec3 l_distVector = vec3( ViewSpace ) - vec3( 0.0f, -3.5f, 2.5f );
+  float l_dist      = length( l_distVector );
+
+  float l_minFogDist = 5.0f;
+  float l_maxFogDist = 25.0f;
+
+  float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
+  vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
+  vec4 l_tileColor  = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
+
+  l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
+  FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+}

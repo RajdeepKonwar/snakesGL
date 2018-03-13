@@ -25,26 +25,17 @@
 # SOFTWARE.
 #
 # @section DESCRIPTION
-# makefile.
+# Big black tile.
+#
+# Vertices: 4
+# Faces:    2
+#
 ##
 
-CXX ?= g++
-CXXFLAGS=-std=c++11 -O3 -Wall
-LDFLAGS=-lGL -lGLU -lGLEW -lglfw3 -L/usr/local/lib -lXi -lGLEW -lGLU -lm -lGL -lm -lpthread -pthread -ldl -ldrm -lXdamage -lX11-xcb -lxcb-glx -lxcb-dri2 -lglfw -lrt -lm -ldl -lXrandr -lXinerama -lXxf86vm -lXext -lXcursor -lXrender -lXfixes -lX11 -lpthread -lxcb -lXau -lXdmcp
+v -1.0 -1.0 0
+v 1.0 -1.0 0
+v 1.0 1.0 0
+v -1.0 1.0 0
 
-OBJECTS=snakesGL.o SceneGraph.o Shader.o Window.o
-
-snakesGL: $(OBJECTS)
-					$(CXX) $(CXXFLAGS) $(OBJECTS) -o snakesGL $(LDFLAGS)
-
-snakesGL.o: snakesGL.cpp
-
-SceneGraph.o: SceneGraph.cpp
-
-Shader.o: Shader.cpp
-
-Window.o: Window.cpp
-
-.PHONY: clean
-clean:
-			rm -f *.o snakesGL
+f 1//1 2//2 3//3
+f 1//1 3//3 4//4

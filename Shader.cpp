@@ -1,3 +1,33 @@
+/**
+ * @file This file is part of snakesGL.
+ *
+ * @section LICENSE
+ * MIT License
+ *
+ * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @section DESCRIPTION
+ * Shader manager.
+ **/
+
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -15,14 +45,15 @@
 
 #include "Shader.h"
 
-GLuint LoadShaders( const char * vertex_file_path, const char * fragment_file_path ) {
+GLuint LoadShaders( const char *i_vertexFilePath,
+                    const char *i_fragmentFilePath ) {
   //! Create the shaders
   GLuint VertexShaderID   = glCreateShader( GL_VERTEX_SHADER );
   GLuint FragmentShaderID = glCreateShader( GL_FRAGMENT_SHADER );
 
   //! Read the Vertex Shader code from the file
   std::string VertexShaderCode;
-  std::ifstream VertexShaderStream( vertex_file_path, std::ios::in );
+  std::ifstream VertexShaderStream( i_vertexFilePath, std::ios::in );
 
   if( VertexShaderStream.is_open() ) {
     std::string Line = "";
@@ -33,7 +64,7 @@ GLuint LoadShaders( const char * vertex_file_path, const char * fragment_file_pa
     VertexShaderStream.close();
   } else {
     printf( "Impossible to open %s. Check to make sure the file exists and you passed in the right filepath!\n",
-            vertex_file_path );
+            i_vertexFilePath );
     printf( "The current working directory is:" );
     //! Please for the love of whatever deity/ies you believe in never do something like the next line of code,
     //! Especially on non-Windows systems where you can have the system happily execute "rm -rf ~"
@@ -52,7 +83,7 @@ GLuint LoadShaders( const char * vertex_file_path, const char * fragment_file_pa
 
   //! Read the Fragment Shader code from the file
   std::string FragmentShaderCode;
-  std::ifstream FragmentShaderStream( fragment_file_path, std::ios::in );
+  std::ifstream FragmentShaderStream( i_fragmentFilePath, std::ios::in );
 
   if( FragmentShaderStream.is_open() ) {
     std::string Line = "";
@@ -67,7 +98,7 @@ GLuint LoadShaders( const char * vertex_file_path, const char * fragment_file_pa
   int InfoLogLength;
 
   //! Compile Vertex Shader
-  printf( "\nCompiling shader : %s\n", vertex_file_path );
+  printf( "\nCompiling shader : %s\n", i_vertexFilePath );
   char const * VertexSourcePointer = VertexShaderCode.c_str();
   glShaderSource( VertexShaderID, 1, &VertexSourcePointer , NULL );
   glCompileShader( VertexShaderID );
@@ -86,7 +117,7 @@ GLuint LoadShaders( const char * vertex_file_path, const char * fragment_file_pa
   }
 
   //! Compile Fragment Shader
-  printf( "Compiling shader : %s\n", fragment_file_path );
+  printf( "Compiling shader : %s\n", i_fragmentFilePath );
   char const * FragmentSourcePointer = FragmentShaderCode.c_str();
   glShaderSource( FragmentShaderID, 1, &FragmentSourcePointer , NULL );
   glCompileShader( FragmentShaderID );

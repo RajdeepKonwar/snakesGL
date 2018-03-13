@@ -1,9 +1,40 @@
+/**
+ * @file This file is part of snakesGL.
+ *
+ * @section LICENSE
+ * MIT License
+ *
+ * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @section DESCRIPTION
+ * Scene Graph Manager.
+ **/
+
 #include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <sstream>
 #include <cstdio>
+
 #include "SceneGraph.h"
 #include "Window.h"
 
@@ -69,9 +100,9 @@ void Geometry::load( const char *i_fileName ) {
       l_n3  = (l_n3 / l_mag) * 0.5f + 0.5f;
 
       //! Populate normals
-      this->m_normals.push_back( l_n1 );
-      this->m_normals.push_back( l_n2 );
-      this->m_normals.push_back( l_n3 );
+      m_normals.push_back( l_n1 );
+      m_normals.push_back( l_n2 );
+      m_normals.push_back( l_n3 );
     }
 
     //! vertices
@@ -88,15 +119,15 @@ void Geometry::load( const char *i_fileName ) {
 
       //! Populate vertices
       l_val = atof( l_tokens[1].c_str() );
-      this->m_vertices.push_back( l_val );
+      m_vertices.push_back( l_val );
       l_x.push_back( l_val );
 
       l_val = atof( l_tokens[2].c_str() );
-      this->m_vertices.push_back( l_val );
+      m_vertices.push_back( l_val );
       l_y.push_back( l_val );
 
       l_val = atof( l_tokens[3].c_str() );
-      this->m_vertices.push_back( l_val );
+      m_vertices.push_back( l_val );
       l_z.push_back( l_val );
     }
 
@@ -117,7 +148,7 @@ void Geometry::load( const char *i_fileName ) {
         l_index = atoi( (l_tokens[l_i].substr( 0, l_pos )).c_str() ) - 1;
 
         //! Populate face-indices
-        this->m_indices.push_back( l_index );
+        m_indices.push_back( l_index );
       }
     }
   }
@@ -170,11 +201,13 @@ Geometry::~Geometry() {
 void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   glm::mat4 l_modelView = i_mtx;
 
-  m_uProjection = glGetUniformLocation( i_shaderProgram, "projection" );
-  m_uModelView  = glGetUniformLocation( i_shaderProgram, "modelView"  );
+  GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
+  GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
+  GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
 
-  glUniformMatrix4fv( m_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
-  glUniformMatrix4fv( m_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
+  glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
+  glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
+  glUniform3f( l_uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
 
   glBindVertexArray( m_VAO );
   glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),
@@ -195,7 +228,8 @@ void Group::removeChild() {
 }
 
 void Group::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
-  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end(); ++l_it )
+  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
+       ++l_it )
     (*l_it)->draw( i_shaderProgram, i_mtx );
 }
 

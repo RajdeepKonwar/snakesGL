@@ -25,13 +25,21 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Window, scene and objects manager.
+ * Snake Vertex Shader.
  **/
 
-#ifndef _SHADER_H_
-#define _SHADER_H_
+#version 330 core
 
-GLuint LoadShaders( const char *i_vertexFilePath,
-                    const char *i_fragmentFilePath );
+layout (location = 0) in vec3 a_pos;
 
-#endif
+uniform mat4 u_projection;
+uniform mat4 u_modelView;
+
+out vec3 FragCoord;
+out vec4 ViewSpace;
+
+void main() {
+  gl_Position = u_projection * u_modelView * vec4( a_pos, 1.0f );
+  ViewSpace   = u_modelView * vec4( a_pos, 1.0f );
+  FragCoord   = a_pos;
+}

@@ -25,13 +25,22 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Window, scene and objects manager.
+ * snakesGL header.
  **/
 
-#ifndef _SHADER_H_
-#define _SHADER_H_
+#ifndef _SNAKESGL_H_
+#define _SNAKESGL_H_
 
-GLuint LoadShaders( const char *i_vertexFilePath,
-                    const char *i_fragmentFilePath );
+#define GLFW_INCLUDE_GLEXT
+#ifdef __APPLE__
+#define GLFW_INCLUDE_GLCOREARB
+#else
+#include <GL/glew.h>
+#endif
+
+#include <GLFW/glfw3.h>
+#include <cstdlib>
+#include <cstdio>
+#include "Window.h"
 
 #endif

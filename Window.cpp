@@ -1,14 +1,38 @@
+/**
+ * @file This file is part of snakesGL.
+ *
+ * @section LICENSE
+ * MIT License
+ *
+ * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @section DESCRIPTION
+ * Window, scene and objects manager.
+ **/
+
+#include <fstream>
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"
-
-//! Shader paths
-#define GRID_VERT_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.vert"
-#define GRID_FRAG_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/GridShader.frag"
-#define BGRID_VERT_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BGridShader.vert"
-#define BGRID_FRAG_SHADER  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BGridShader.frag"
-#define SNAKE_VERT_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.vert"
-#define SNAKE_FRAG_SHADER "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SnakeShader.frag"
+#define CONFIG_FILE  "snakesGL.conf"
 
 //! Static data members
 int Window::m_width;
@@ -17,107 +41,180 @@ int Window::m_move  = 0;
 int Window::m_nBody = 4;
 int Window::m_nTile = 20;
 
-GLuint g_gridShader, g_bGridShader, g_snakeShader;
+//! Global variables
+GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader;
 
-Node *g_grid;
-Node *g_bGrid;
-Node *g_snake;
-std::vector< Node * > g_tilePos;
-std::vector< Node * > g_bigTilePos;
+Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
+Node *g_snake;                  //! Snake transform mtx
+
+//! Individual elements' transform mtx
 Node *g_headMtx, *g_tailMtx;
-std::vector< Node * > g_bodyMtx;
-std::vector< Node * >::iterator g_bodyIt;
-std::vector< Node * >::iterator g_tileIt;
+std::vector< Node * > g_tileBigPos, g_tileSmallPos, g_bodyMtx;
+std::vector< Node * >::iterator g_nodeIt;
 
-Node *g_tile, *g_bigTile, *g_head, *g_body, *g_tail;
+Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall;
 
 //! Default camera parameters
-glm::vec3 g_camPos(    0.0f, -3.5f, 2.5f );   //! e | Position of camera
-glm::vec3 g_camLookAt( 0.0f,  1.5f, 0.0f );   //! d | Where camera looks at
-glm::vec3 g_camUp(     0.0f,  1.0f, 0.0f );   //! u | What orientation "up" is
+glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.5f );//! e | Position of camera
+glm::vec3 g_camLookAt( 0.0f, 1.5f, 0.0f );      //! d | Where camera looks at
+glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 
-glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );
+glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
 
+//! functions as constructor
 void Window::initialize_objects() {
   int l_i, l_j;
-    
-  g_tile      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/SmallTile.obj" );
-  g_bigTile   = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/BigTile.obj" );
-  g_head      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Head.obj" );
-  g_body      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Body.obj" );
-  g_tail      = new Geometry( "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/Tail.obj" );
 
-  g_grid    = new Transform( glm::mat4( 1.0f ) );
-  g_bGrid   = new Transform( glm::mat4( 1.0f ) );
+  //! Parse config file for shader and obj paths
+  std::ifstream l_confFn( CONFIG_FILE, std::ios::in );
+  if( !l_confFn.is_open() ) {
+    std::cerr << "Error: cannot open " << CONFIG_FILE << std::endl;
+    exit( EXIT_FAILURE );
+  }
+
+  std::string l_lineBuf;
+  std::string l_gridBigVertShader,   l_gridBigFragShader;
+  std::string l_gridSmallVertShader, l_gridSmallFragShader;
+  std::string l_snakeVertShader,     l_snakeFragShader;
+  std::string l_head, l_body, l_tail, l_tileBig, l_tileSmall;
+
+  while( getline( l_confFn, l_lineBuf ) ) {
+    size_t l_k = -1, l_l;
+
+    while( (++l_k < l_lineBuf.length()) && (l_lineBuf[l_k] == ' ') );
+
+    if( (l_k >= l_lineBuf.length()) || (l_lineBuf[l_k] == '#') )
+      continue;
+
+    l_l = l_k - 1;
+
+    while( (++l_l < l_lineBuf.length()) && (l_lineBuf[l_l] != '=') );
+
+    if( l_l >= l_lineBuf.length() )
+      continue;
+
+    std::string l_varName   = l_lineBuf.substr( l_k, l_l - l_k );
+    std::string l_varValue  = l_lineBuf.substr( l_l + 1 );
+
+    if( l_varName.compare( "grid_big_vert_shader" ) == 0 )
+      l_gridBigVertShader   = l_varValue;
+    else if( l_varName.compare( "grid_big_frag_shader" ) == 0 )
+      l_gridBigFragShader   = l_varValue;
+    else if( l_varName.compare( "grid_small_vert_shader" ) == 0 )
+      l_gridSmallVertShader = l_varValue;
+    else if( l_varName.compare( "grid_small_frag_shader" ) == 0 )
+      l_gridSmallFragShader = l_varValue;
+    else if( l_varName.compare( "snake_vert_shader" ) == 0 )
+      l_snakeVertShader     = l_varValue;
+    else if( l_varName.compare( "snake_frag_shader" ) == 0 )
+      l_snakeFragShader     = l_varValue;
+    else if( l_varName.compare( "head" ) == 0 )
+      l_head                = l_varValue;
+    else if( l_varName.compare( "body" ) == 0 )
+      l_body                = l_varValue;
+    else if( l_varName.compare( "tail" ) == 0 )
+      l_tail                = l_varValue;
+    else if( l_varName.compare( "tile_big" ) == 0 )
+      l_tileBig             = l_varValue;
+    else if( l_varName.compare( "tile_small" ) == 0 )
+      l_tileSmall           = l_varValue;
+    else
+      std::cout << "\nUnknown setting (" << l_varName << "). Ignored."
+                << std::endl;
+  }
+
+  l_confFn.close();
+
+  //! Geometry nodes
+  g_head      = new Geometry( l_head.c_str() );
+  g_body      = new Geometry( l_body.c_str() );
+  g_tail      = new Geometry( l_tail.c_str() );
+  g_tileSmall = new Geometry( l_tileSmall.c_str() );
+  g_tileBig   = new Geometry( l_tileBig.c_str() );
+
+  //! Transform nodes
+  g_gridBig   = new Transform( glm::mat4( 1.0f ) );
+  g_gridSmall = new Transform( glm::mat4( 1.0f ) );
 
   g_snake   = new Transform( glm::mat4( 1.0f ) ); 
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
-   for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
-     for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
-         g_tilePos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 2.0f, l_i * 2.0f, 0.0f ) ) ));
-         g_bigTilePos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ), glm::vec3( l_j * 2.0f, l_i * 2.0f, -0.01f ) ) ));
+  for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
+    for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
+      g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
+                                             glm::vec3( l_j * 2.0f,
+                                                        l_i * 2.0f,
+                                                        -0.1f ) ) ) );
+      g_tileSmallPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
+                                               glm::vec3( l_j * 2.0f,
+                                                          l_i * 2.0f,
+                                                          0.0f ) ) ) );
      }
    }
     
-  for( g_tileIt = g_tilePos.begin(); g_tileIt != g_tilePos.end(); ++g_tileIt ) {
-      static_cast< Transform * >(g_grid)->addChild( *g_tileIt );
-      static_cast< Transform * >(*g_tileIt)->addChild( g_tile );
+  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt ) {
+    static_cast< Transform * >(g_gridBig)->addChild( *g_nodeIt );
+    static_cast< Transform * >(*g_nodeIt)->addChild( g_tileBig );
   }
   
-  for( g_tileIt = g_bigTilePos.begin(); g_tileIt != g_bigTilePos.end(); ++g_tileIt ) {
-    static_cast< Transform * >(g_bGrid)->addChild( *g_tileIt );
-    static_cast< Transform * >(*g_tileIt)->addChild( g_bigTile );
+  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt ) {
+    static_cast< Transform * >(g_gridSmall)->addChild( *g_nodeIt );
+    static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
   }
 
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
     g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                          glm::vec3( 0.0f, -0.5f * (float) l_i, 0.0f ) ) ) );
 
-  g_tailMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
-                glm::vec3( 0.0f, -0.5f * (float) Window::m_nBody, 0.0f ) ) );
+  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
+                  glm::vec3( 0.0f, -0.5f * (float) Window::m_nBody, 0.0f ) ) );
 
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
 
-  for( g_bodyIt = g_bodyMtx.begin(); g_bodyIt != g_bodyMtx.end(); ++g_bodyIt ) {
-    static_cast< Transform * >(g_snake)->addChild( *g_bodyIt );
-    static_cast< Transform * >(*g_bodyIt)->addChild( g_body );
+  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt ) {
+    static_cast< Transform * >(g_snake)->addChild( *g_nodeIt );
+    static_cast< Transform * >(*g_nodeIt)->addChild( g_body );
   }
 
   static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
   static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
 
   //! Load the shader programs
-  g_gridShader  = LoadShaders( GRID_VERT_SHADER,  GRID_FRAG_SHADER  );
-  g_bGridShader = LoadShaders( BGRID_VERT_SHADER, BGRID_FRAG_SHADER );
-  g_snakeShader = LoadShaders( SNAKE_VERT_SHADER, SNAKE_FRAG_SHADER );
-
+  g_gridBigShader   = LoadShaders( l_gridBigVertShader.c_str(),
+                                   l_gridBigFragShader.c_str()   );
+  g_gridSmallShader = LoadShaders( l_gridSmallVertShader.c_str(),
+                                   l_gridSmallFragShader.c_str() );
+  g_snakeShader     = LoadShaders( l_snakeVertShader.c_str(),
+                                   l_snakeFragShader.c_str()     );
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
 void Window::clean_up() {
-  delete g_grid;
   delete g_snake;
-
-  for( g_tileIt = g_tilePos.begin(); g_tileIt != g_tilePos.end(); ++g_tileIt )
-    delete *g_tileIt;
-    
+  delete g_gridBig;
+  delete g_gridSmall;
   delete g_headMtx;
-  for( g_bodyIt = g_bodyMtx.begin(); g_bodyIt != g_bodyMtx.end(); ++g_bodyIt )
-    delete *g_bodyIt;
   delete g_tailMtx;
 
-  delete g_tile;
+  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
+    delete *g_nodeIt;
+  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt )
+    delete *g_nodeIt;
+
+  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt )
+    delete *g_nodeIt;
+
   delete g_head;
   delete g_body;
   delete g_tail;
 
-  glDeleteProgram( g_gridShader  );
-  glDeleteProgram( g_snakeShader );
+  glDeleteProgram( g_gridBigShader   );
+  glDeleteProgram( g_gridSmallShader );
+  glDeleteProgram( g_snakeShader     );
 }
 
 GLFWwindow* Window::create_window( int i_width,
@@ -168,6 +265,34 @@ GLFWwindow* Window::create_window( int i_width,
   return l_window;
 }
 
+void Window::display_callback( GLFWwindow* i_window ) {
+  //! Clear the color and depth buffers
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+  //! Use GridBigShader
+  glUseProgram( g_gridBigShader );
+  g_gridBig->draw( g_gridBigShader, Window::m_V);
+
+  //! Use GridSmallShader
+  glUseProgram( g_gridSmallShader );
+  g_gridSmall->draw( g_gridSmallShader, Window::m_V );
+
+  //! Use SnakeShader
+  glUseProgram( g_snakeShader );
+  g_snake->draw( g_snakeShader, Window::m_V );
+
+  //! Gets events, including input such as keyboard and mouse or window resizing
+  glfwPollEvents();
+
+  //! Swap buffers
+  glfwSwapBuffers( i_window );
+
+  //! Refresh view matrix with new camera position every display callback
+  Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
+}
+
+void Window::idle_callback() {}
+
 void Window::resize_callback( GLFWwindow* i_window,
                               int         i_width,
                               int         i_height ) {
@@ -184,40 +309,8 @@ void Window::resize_callback( GLFWwindow* i_window,
   if( i_height > 0 ) {
     Window::m_P = glm::perspective( 45.0f, (float) i_width / (float) i_height,
                                     0.1f, 2000.0f );
-    Window::m_V = glm::lookAt( g_camPos, g_camLookAt, g_camUp );
+    Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
   }
-}
-
-void Window::idle_callback() {
-
-}
-
-void Window::display_callback( GLFWwindow* i_window ) {
-  //! Clear the color and depth buffers
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-  // glDepthMask( GL_FALSE );
-  glUseProgram( g_bGridShader );
-  g_bGrid->draw( g_bGridShader, Window::m_V);
-
-  //! Use GridShader
-  glUseProgram( g_gridShader );
-  g_grid->draw( g_gridShader, Window::m_V );
-
-  // glDepthMask( GL_TRUE );
-
-  //! Use SnakeShader
-  glUseProgram( g_snakeShader );
-  g_snake->draw( g_snakeShader, Window::m_V );
-
-  //! Gets events, including input such as keyboard and mouse or window resizing
-  glfwPollEvents();
-
-  //! Swap buffers
-  glfwSwapBuffers( i_window );
-
-  //! Refresh view matrix with new camera position every display callback
-  Window::m_V = glm::lookAt( g_camPos, g_camLookAt, g_camUp );
 }
 
 void Window::key_callback( GLFWwindow *i_window,
@@ -250,8 +343,9 @@ glm::vec3 trackBallMapping( glm::vec3 i_point ) {
   return l_v;
 }
 
-void Window::cursor_pos_callback( GLFWwindow *i_window, double i_xPos,
-                                  double i_yPos ) {
+void Window::cursor_pos_callback( GLFWwindow *i_window,
+                                  double      i_xPos,
+                                  double      i_yPos ) {
   glm::vec3 l_direction, l_currPoint, l_rotAxis;
   float     l_vel, l_rotAngle;
 
@@ -268,8 +362,8 @@ void Window::cursor_pos_callback( GLFWwindow *i_window, double i_xPos,
 
         //! Update camera position
         glm::vec4 l_tmp = glm::rotate( glm::mat4( 1.0f ), -l_rotAngle, l_rotAxis )
-                          * glm::vec4( g_camPos, 1.0f );
-        g_camPos  = glm::vec3( l_tmp.x, l_tmp.y, l_tmp.z );
+                          * glm::vec4( Window::m_camPos, 1.0f );
+        m_camPos  = glm::vec3( l_tmp.x, l_tmp.y, l_tmp.z );
       }
 
       break;
@@ -279,8 +373,10 @@ void Window::cursor_pos_callback( GLFWwindow *i_window, double i_xPos,
   }
 }
 
-void Window::mouse_button_callback( GLFWwindow *i_window, int i_button,
-                                    int i_action, int i_mods ) {
+void Window::mouse_button_callback( GLFWwindow *i_window,
+                                    int         i_button,
+                                    int         i_action,
+                                    int         i_mods ) {
   double l_xPos, l_yPos;
 
   if( i_action == GLFW_PRESS ) {
@@ -305,15 +401,17 @@ void Window::mouse_button_callback( GLFWwindow *i_window, int i_button,
   }
 }
 
-void Window::scroll_callback( GLFWwindow *i_window, double i_xOffset,
-                              double i_yOffset ) {
+void Window::scroll_callback( GLFWwindow *i_window,
+                              double      i_xOffset,
+                              double      i_yOffset ) {
   //! Avoid scrolling out of cubemap
-  if( ((int) i_yOffset == -1) && (g_camPos.x > 900.0f || g_camPos.y > 900.0f
-                                                      || g_camPos.z > 900.0f) )
+  if( ((int) i_yOffset == -1) &&
+      (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f
+                                              || Window::m_camPos.z > 900.0f) )
     return;
 
   //! Reposition camera to new location
-  glm::vec3 l_dir = g_camPos - g_camLookAt;
+  glm::vec3 l_dir = Window::m_camPos - g_camLookAt;
   glm::normalize( l_dir );
-  g_camPos  -= l_dir * (float) i_yOffset * 0.1f;
+  Window::m_camPos  -= l_dir * (float) i_yOffset * 0.1f;
 }
