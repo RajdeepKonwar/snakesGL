@@ -30,6 +30,7 @@
 
 #version 330 core
 
+in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
 
@@ -38,8 +39,6 @@ uniform vec4 u_camPos;
 out vec4 FragColor;
 
 void main() {
-  // FragColor = vec4( 1.0f, 0.0f, 0.0f , 1.0f );
-
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
@@ -48,13 +47,10 @@ void main() {
   float l_maxFogDist = 25.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  vec4 l_tileColor  = vec4( 1.0f, 0.0f, 0.0f, 1.0f );  //! red
-  // vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
+  vec4 l_snakeColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );  //! red
+  // vec4 l_snakeColor = vec4( Normal, 1.0f );
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
-  // vec4 l_fogColor   = vec4( 0.4f, 0.8f, 0.8f, 1.0f );  //! light-blue
-  // vec4 l_fogColor   = vec4( 0.5f, 0.0f, 0.5f, 1.0f );  //! purple
-  // vec4 l_fogColor   = vec4( 1.0f, 0.6f, 1.0f, 1.0f );   //! orange
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+  FragColor   = mix( l_fogColor, l_snakeColor, l_fogFactor );
 }

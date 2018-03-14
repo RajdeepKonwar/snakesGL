@@ -43,6 +43,8 @@ int Window::m_nTile = 20;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader;
+float g_yPos     = 0.0f;
+float g_velocity = 0.007f;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -154,12 +156,12 @@ void Window::initialize_objects() {
                                                           0.0f ) ) ) );
      }
    }
-    
+
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt ) {
     static_cast< Transform * >(g_gridBig)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileBig );
   }
-  
+
   for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt ) {
     static_cast< Transform * >(g_gridSmall)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
@@ -291,7 +293,15 @@ void Window::display_callback( GLFWwindow* i_window ) {
   Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
 }
 
-void Window::idle_callback() {}
+void Window::idle_callback() {
+  glm::mat4 l_moveMtx = glm::translate( glm::mat4( 1.0f ),
+                                        glm::vec3( 0.0f, g_yPos, 0.0f ) );
+  static_cast< Transform * >(g_snake)->update( l_moveMtx );
+
+  g_yPos += g_velocity;
+  Window::m_camPos.y += g_velocity;
+  g_camLookAt.y += g_velocity;
+}
 
 void Window::resize_callback( GLFWwindow* i_window,
                               int         i_width,

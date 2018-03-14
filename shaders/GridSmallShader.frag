@@ -30,6 +30,7 @@
 
 #version 330 core
 
+in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
 
@@ -46,12 +47,8 @@ void main() {
   float l_maxFogDist = 25.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  vec4 l_tileColor  = vec4( 8.0f / l_dist, 0.8f, 0.0f, 1.0f );  //! lime
-  // vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
+  vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
-  // vec4 l_fogColor   = vec4( 0.4f, 0.8f, 0.8f, 1.0f );  //! light-blue
-  // vec4 l_fogColor   = vec4( 0.5f, 0.0f, 0.5f, 1.0f );  //! purple
-  // vec4 l_fogColor   = vec4( 1.0f, 0.6f, 1.0f, 1.0f );   //! orange
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
