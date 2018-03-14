@@ -38,13 +38,14 @@
 int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
-int Window::m_nBody = 4;
+int Window::m_nBody = 3;
 int Window::m_nTile = 20;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader;
 float g_yPos     = 0.0f;
 float g_velocity = 0.007f;
+bool g_move      = true;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -144,7 +145,7 @@ void Window::initialize_objects() {
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
-  for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
+  for( l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
     for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3( l_j * 2.0f,
@@ -169,10 +170,10 @@ void Window::initialize_objects() {
 
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
     g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                         glm::vec3( 0.0f, -0.5f * (float) l_i, 0.0f ) ) ) );
+                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
 
   g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
-                  glm::vec3( 0.0f, -0.5f * (float) Window::m_nBody, 0.0f ) ) );
+                  glm::vec3( 0.0f, -1.0f * (float) Window::m_nBody + 0.5f, 0.0f ) ) );
 
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
@@ -294,6 +295,9 @@ void Window::display_callback( GLFWwindow* i_window ) {
 }
 
 void Window::idle_callback() {
+  if( !g_move )
+    return;
+
   glm::mat4 l_moveMtx = glm::translate( glm::mat4( 1.0f ),
                                         glm::vec3( 0.0f, g_yPos, 0.0f ) );
   static_cast< Transform * >(g_snake)->update( l_moveMtx );

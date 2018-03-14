@@ -47,8 +47,8 @@ void main() {
   float l_maxFogDist = 25.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  vec4 l_snakeColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );  //! red
-  // vec4 l_snakeColor = vec4( Normal, 1.0f );
+  // vec4 l_snakeColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );  //! red
+  vec4 l_snakeColor = vec4( Normal, 1.0f );
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
