@@ -205,14 +205,19 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
   
-  glUniform3f(glGetUniformLocation(i_shaderProgram, "dirLight.direction"), 0.0f, 0.1f, 1.2f);
-  glUniform3f(glGetUniformLocation(i_shaderProgram, "dirLight.ambient"), 0.3f, 0.24f, 0.14f);
-  glUniform3f(glGetUniformLocation(i_shaderProgram, "dirLight.diffuse"), 0.7f, 0.42f, 0.26f);
-  glUniform3f(glGetUniformLocation(i_shaderProgram, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
+                                                              0.0f, 0.1f, 1.2f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.ambient"   ),
+                                                            0.3f, 0.24f, 0.14f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.diffuse"   ),
+                                                            0.7f, 0.42f, 0.26f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.specular"  ),
+                                                              0.3f, 0.3f, 0.3f );
 
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
-  glUniform3f( l_uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+  glUniform3f( l_uCamPos,
+               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
 
   glBindVertexArray( m_VAO );
   glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),

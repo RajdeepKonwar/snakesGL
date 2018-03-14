@@ -39,12 +39,12 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 20;
+int Window::m_nTile = 25;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader;
 float g_yPos     = 0.0f;
-float g_velocity = 0.007f;
+float g_velocity = 0.008f;
 bool g_move      = true;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
@@ -145,6 +145,7 @@ void Window::initialize_objects() {
   g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
+  //! Arrange tiles to form grid
   for( l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
     for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
@@ -207,7 +208,6 @@ void Window::clean_up() {
     delete *g_nodeIt;
   for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
-
   for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt )
     delete *g_nodeIt;
 
@@ -298,13 +298,15 @@ void Window::idle_callback() {
   if( !g_move )
     return;
 
+  //! Move snake in y-direction
   glm::mat4 l_moveMtx = glm::translate( glm::mat4( 1.0f ),
                                         glm::vec3( 0.0f, g_yPos, 0.0f ) );
   static_cast< Transform * >(g_snake)->update( l_moveMtx );
 
-  g_yPos += g_velocity;
+  //! Update camera pos, lookat and snake pos
+  g_yPos             += g_velocity;
   Window::m_camPos.y += g_velocity;
-  g_camLookAt.y += g_velocity;
+  g_camLookAt.y      += g_velocity;
 }
 
 void Window::resize_callback( GLFWwindow* i_window,

@@ -30,6 +30,8 @@
 
 #include "snakesGL.h"
 
+#define NUM_SAMPLES 100
+
 GLFWwindow* g_window;
 
 void error_callback(       int   error,
@@ -112,6 +114,39 @@ void print_versions() {
 #endif
 }
 
+void show_fps() {
+  static float s_frameTimes[NUM_SAMPLES];
+  static int   s_currFrame = 0;
+  static float s_prevTicks = clock();
+
+  int l_count, l_i;
+  float l_currTicks = clock();
+  float l_frameTime = l_currTicks - s_prevTicks;
+
+  s_frameTimes[s_currFrame % NUM_SAMPLES] = l_frameTime;
+  s_prevTicks = l_currTicks;
+
+  if( s_currFrame < NUM_SAMPLES )
+    l_count = s_currFrame;
+  else
+    l_count = NUM_SAMPLES;
+
+  float l_frameTimeAvg = 0.0f;
+  for( l_i = 0; l_i < l_count; l_i++ )
+    l_frameTimeAvg += s_frameTimes[l_i];
+  l_frameTimeAvg /= l_count;
+
+  float l_fps;
+  if( l_frameTimeAvg > 0.0f )
+    l_fps = (100000.0f) / l_frameTimeAvg;
+  else
+    l_fps = 60.0f;
+
+  s_currFrame++;
+
+  std::cout << "\r" << l_fps << std::flush;
+}
+
 int main( int    i_argc,
           char **i_argv ) {
   //! Create the GLFW window
@@ -136,7 +171,10 @@ int main( int    i_argc,
 
     //! Idle callback. Updating objects, etc. can be done here.
     Window::idle_callback();
+    show_fps();
   }
+
+  std::cout << std::endl;
 
   Window::clean_up();
 
