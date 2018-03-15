@@ -43,6 +43,8 @@ struct DirLight {
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 uniform DirLight dirLight;
 
+uniform int bodypart;
+
 in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;

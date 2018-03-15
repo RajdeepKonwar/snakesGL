@@ -41,7 +41,7 @@
 Node::~Node() {}
 
 
-Transform::Transform( const glm::mat4 &i_mtx ) {
+Transform::Transform( const glm::mat4 &i_mtx ): m_destroyed(false) {
   m_tMtx  = i_mtx;
 }
 
@@ -55,6 +55,8 @@ void Transform::removeChild() {
 }
 
 void Transform::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
+  if ( m_destroyed )
+    return;
   for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end(); ++l_it )
     (*l_it)->draw( i_shaderProgram, i_mtx * m_tMtx );
 }
@@ -63,6 +65,62 @@ void Transform::update( const glm::mat4 &i_mtx ) {
   m_tMtx  = i_mtx;
 }
 
+void Transform::createBoundingBox() {
+  float l_xMin, l_xMax, l_yMin, l_yMax, l_zMin, l_zMax;
+  
+  l_xMin = m_position.x;
+  l_xMax = m_position.x + m_size.x;
+  l_yMin = m_position.y - m_size.y;
+  l_yMax = m_position.y;
+  l_zMin = m_position.z;
+  l_zMax = m_size.z;
+  
+  m_vertices.push_back( glm::vec3(l_xMin, l_yMin, l_zMin) );
+  m_vertices.push_back( glm::vec3(l_xMax, l_yMin, l_zMin) );
+  m_vertices.push_back( glm::vec3(l_xMax, l_yMax, l_zMin) );
+  m_vertices.push_back( glm::vec3(l_xMin, l_yMax, l_zMin) );
+  m_vertices.push_back( glm::vec3(l_xMin, l_yMin, l_zMax) );
+  m_vertices.push_back( glm::vec3(l_xMax, l_yMin, l_zMax) );
+  m_vertices.push_back( glm::vec3(l_xMax, l_yMax, l_zMax) );
+  m_vertices.push_back( glm::vec3(l_xMin, l_yMax, l_zMax) );
+  
+  
+  
+  glGenVertexArrays(1, &m_VAO);
+  glGenBuffers(1, &m_VBO);
+  
+  glBindVertexArray(m_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+  
+  glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*sizeof(glm::vec3), &m_vertices[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0,
+                        3,
+                        GL_FLOAT,
+                        GL_FALSE,
+                        sizeof(glm::vec3),
+                        (GLvoid*)0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+}
+
+void Transform::drawBoundingBox( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
+  glm::mat4 l_modelView = i_mtx;
+  
+  GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
+  GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
+  GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
+  
+  glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
+  glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
+  glUniform3f( l_uCamPos,
+              Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+  
+  glBindVertexArray( m_VAO );
+  glLineWidth(2.0f);
+  glDrawArrays( GL_LINES, 0, 10);
+  glBindVertexArray( 0 );
+}
 
 void Geometry::load( const char *i_fileName ) {
   float                 l_val, l_n1, l_n2, l_n3, l_mag;
@@ -206,13 +264,22 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
   
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
-                                                              0.0f, 0.1f, 1.2f );
+                                                              0.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.ambient"   ),
-                                                            0.3f, 0.24f, 0.14f );
+                                                            0.2f, 0.2f, 0.2f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.diffuse"   ),
-                                                            0.7f, 0.42f, 0.26f );
+                                                            1.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.specular"  ),
                                                               0.3f, 0.3f, 0.3f );
+  
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.direction" ),
+              0.0f, 0.1f, 1.2f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.ambient"   ),
+              0.8f, 0.8f, 0.8f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.diffuse"   ),
+              0.6f, 0.6f, 0.6f );
+  glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.specular"  ),
+              0.7f, 0.7f, 0.7f );
 
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
@@ -227,20 +294,3 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
 
 void Geometry::update( const glm::mat4 &i_mtx ) {}
 
-
-void Group::addChild( Node *i_child ) {
-  m_ptrs.push_back( i_child );
-}
-
-//! untested: don't use
-void Group::removeChild() {
-  m_ptrs.pop_back();
-}
-
-void Group::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
-  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
-       ++l_it )
-    (*l_it)->draw( i_shaderProgram, i_mtx );
-}
-
-void Group::update( const glm::mat4 &i_mtx ) {}

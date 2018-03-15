@@ -66,17 +66,24 @@ public:
 //! derived Transform class
 class Transform : public Node {
 private:
+  GLuint                  m_VAO, m_VBO;
   glm::mat4           m_tMtx;
   std::list< Node * > m_ptrs;
+  std::vector< glm::vec3 > m_vertices;
 
 public:
   Transform( const glm::mat4 &i_mtx );
+  
+  glm::vec3 m_position, m_size;
+  bool m_destroyed;
 
   void addChild( Node *i_child );
   void removeChild();
 
   void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
   void update( const glm::mat4 &i_mtx );
+  void createBoundingBox ();
+  void drawBoundingBox ( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
 };
 
 //! derived Geometry class
@@ -96,17 +103,5 @@ public:
   void update( const glm::mat4 &i_mtx );
 };
 
-//! derived Group class
-class Group : public Node {
-private:
-  std::list< Node * > m_ptrs;
-
-public:
-  void addChild( Node *i_child );
-  void removeChild();
-
-  void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
-  void update( const glm::mat4 &i_mtx );
-};
 
 #endif

@@ -62,6 +62,9 @@ public:
   static void clean_up();
   static GLFWwindow * create_window( int width,
                                      int height );
+  
+  static bool check_collision( Node * one, Node * two );
+  static void perform_collisions();
 
   static void display_callback( GLFWwindow *i_window );
   static void idle_callback();

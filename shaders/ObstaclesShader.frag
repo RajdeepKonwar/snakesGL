@@ -25,7 +25,7 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Grid Small Fragment Shader.
+ * Obstacle Fragment Shader.
  **/
 
 #version 330 core
@@ -41,7 +41,9 @@ struct DirLight {
 };
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
-uniform DirLight dirLight2;
+uniform DirLight dirLight;
+
+uniform int bodypart;
 
 in vec3 Normal;
 in vec3 FragCoord;
@@ -53,13 +55,12 @@ out vec4 FragColor;
 
 void main() {
   
-  //Directional lighting
+  // Directional Lighting
   
   vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) - vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
   
-  //vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
-  vec4 l_tileColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
-  l_tileColor += vec4 ( CalcDirLight(dirLight2, normalize(Normal), viewDirection), 0.0f );
+  vec4 l_obstacleColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
+  l_obstacleColor += vec4( CalcDirLight(dirLight, normalize(Normal), viewDirection), 0.0f );
   
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
@@ -73,7 +74,7 @@ void main() {
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+  FragColor   = mix( l_fogColor, l_obstacleColor, l_fogFactor );
 }
 
 // Calculates the color when using a directional light.
@@ -86,10 +87,10 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
   float diff = max(dot(normal, lightDir), 0.0);
   // Specular shading
   vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.25f);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.1f);
   // Combine results
-  vec3 ambient = light.ambient * vec3(0.0f, 0.0f, 0.0f);//vec3(texture(material.diffuse, TexCoords));
-  vec3 diffuse = light.diffuse * diff * vec3(0.55f, 0.55f, 0.55f);//vec3(texture(material.diffuse, TexCoords));
-  vec3 specular = light.specular * spec * vec3(0.7f, 0.7f, 0.7f) * dot(vec3(0.7f, 0.7f, 0.7f), light.specular);//vec3(texture(material.specular, TexCoords));
+  vec3 ambient = light.ambient * vec3(0.135, 0.2225, 0.1575);//vec3(texture(material.diffuse, TexCoords));
+  vec3 diffuse = light.diffuse * diff * vec3(0.54, 0.89, 0.63);//vec3(texture(material.diffuse, TexCoords));
+  vec3 specular = light.specular * spec * vec3(0.5, 0.5, 0.5) * dot(vec3(0.5, 0.5, 0.5), light.specular);//vec3(texture(material.specular, TexCoords));
   return (ambient + diffuse + specular);
 }
