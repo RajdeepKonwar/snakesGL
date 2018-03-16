@@ -34,33 +34,33 @@
 
 GLFWwindow* g_window;
 
-void error_callback(       int   error,
+void errorCallback(        int   error,
                      const char *description ) {
   //! Print error
   fputs( description, stderr );
 }
 
-void setup_callbacks() {
+void setupCallbacks() {
   //! Set the error callback
-  glfwSetErrorCallback( error_callback );
+  glfwSetErrorCallback( errorCallback );
 
   //! Set the key callback
-  glfwSetKeyCallback( g_window, Window::key_callback );
+  glfwSetKeyCallback( g_window, Window::keyCallback );
 
   //! Set cursor position callback
-  glfwSetCursorPosCallback( g_window, Window::cursor_pos_callback );
+  glfwSetCursorPosCallback( g_window, Window::cursorPosCallback );
 
   //! Set mouse button callback
-  glfwSetMouseButtonCallback( g_window, Window::mouse_button_callback );
+  glfwSetMouseButtonCallback( g_window, Window::mouseButtonCallback );
 
   //! Set scroll callback
-  glfwSetScrollCallback( g_window, Window::scroll_callback );
+  glfwSetScrollCallback( g_window, Window::scrollCallback );
 
   //! Set the window resize callback
-  glfwSetFramebufferSizeCallback( g_window, Window::resize_callback );
+  glfwSetFramebufferSizeCallback( g_window, Window::resizeCallback );
 }
 
-void setup_glew() {
+void setupGlew() {
   //! Initialize GLEW. Not needed on OSX systems.
   #ifndef __APPLE__
   GLenum err = glewInit();
@@ -74,10 +74,10 @@ void setup_glew() {
   #endif
 }
 
-void setup_opengl_settings() {
+void setupOpenGLSettings() {
 #ifndef __APPLE__
   //! Setup GLEW. Don't do this on OSX systems.
-  setup_glew();
+  setupGlew();
 #endif
   //! Enable depth buffering
   glEnable( GL_DEPTH_TEST );
@@ -102,7 +102,7 @@ void setup_opengl_settings() {
   glClearDepth( 1 );
 }
 
-void print_versions() {
+void printVersions() {
   //! Get info of GPU and supported OpenGL version
   printf( "Renderer: %s\n", glGetString( GL_RENDERER ) );
   printf( "OpenGL version supported %s\n", glGetString( GL_VERSION ) );
@@ -114,7 +114,7 @@ void print_versions() {
 #endif
 }
 
-void show_fps() {
+void showFPS() {
   static float s_frameTimes[NUM_SAMPLES];
   static int   s_currFrame = 0;
   static float s_prevTicks = clock();
@@ -150,33 +150,33 @@ void show_fps() {
 int main( int    i_argc,
           char **i_argv ) {
   //! Create the GLFW window
-  g_window = Window::create_window( 1600, 900 );
+  g_window = Window::createWindow( 1600, 900 );
 
   //! Print OpenGL and GLSL versions
-  print_versions();
+  printVersions();
 
   //! Setup callbacks
-  setup_callbacks();
+  setupCallbacks();
 
   //! Setup OpenGL settings, including lighting, materials, etc.
-  setup_opengl_settings();
+  setupOpenGLSettings();
 
   //! Initialize objects/pointers for rendering
-  Window::initialize_objects();
+  Window::initializeObjects();
 
   //! Loop while GLFW window should stay open
   while( !glfwWindowShouldClose( g_window ) ) {
     //! Main render display callback. Rendering of objects is done here.
-    Window::display_callback( g_window );
+    Window::displayCallback( g_window );
 
     //! Idle callback. Updating objects, etc. can be done here.
-    Window::idle_callback();
-    show_fps();
+    Window::idleCallback();
+    showFPS();
   }
 
   std::cout << std::endl;
 
-  Window::clean_up();
+  Window::cleanUp();
 
   //! Destroy the window
   glfwDestroyWindow( g_window );

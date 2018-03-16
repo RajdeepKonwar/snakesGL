@@ -67,7 +67,7 @@ void main() {
   float l_dist      = length( l_distVector );
 
   float l_minFogDist = 5.0f;
-  float l_maxFogDist = 25.0f;
+  float l_maxFogDist = 20.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
   

@@ -58,36 +58,37 @@ public:
   static glm::mat4  m_P;        //! P for projection
   static glm::mat4  m_V;        //! V for view
 
-  static void initialize_objects();
-  static void clean_up();
-  static GLFWwindow * create_window( int width,
-                                     int height );
+  static void initializeObjects();
+  static void cleanUp();
+  static GLFWwindow * createWindow( int i_width,
+                                    int i_height );
   
-  static bool check_collision( Node * one, Node * two );
-  static void perform_collisions();
+  static bool checkCollision( Node *i_one,
+                              Node *i_two );
+  static void performCollisions();
 
-  static void display_callback( GLFWwindow *i_window );
-  static void idle_callback();
-  static void resize_callback( GLFWwindow *window,
-                               int         i_width,
-                               int         i_height );
+  static void displayCallback( GLFWwindow *i_window );
+  static void idleCallback();
+  static void resizeCallback( GLFWwindow *window,
+                              int         i_width,
+                              int         i_height );
 
-  static void key_callback( GLFWwindow *i_window,
-                            int         i_key,
-                            int         i_scancode,
-                            int         i_action,
-                            int i_mods );
+  static void keyCallback( GLFWwindow *i_window,
+                           int         i_key,
+                           int         i_scancode,
+                           int         i_action,
+                           int         i_mods );
 
-  static void cursor_pos_callback( GLFWwindow *i_window,
-                                   double      i_xPos,
-                                   double      i_yPos );
-  static void mouse_button_callback( GLFWwindow *i_window,
-                                     int         i_button,
-                                     int         i_action,
-                                     int         i_mods );
-  static void scroll_callback( GLFWwindow *i_window,
-                               double      i_xOffset,
-                               double      i_yOffset );
+  static void cursorPosCallback( GLFWwindow *i_window,
+                                 double      i_xPos,
+                                 double      i_yPos );
+  static void mouseButtonCallback( GLFWwindow *i_window,
+                                   int         i_button,
+                                   int         i_action,
+                                   int         i_mods );
+  static void scrollCallback( GLFWwindow *i_window,
+                              double      i_xOffset,
+                              double      i_yOffset );
 };
 
 #endif

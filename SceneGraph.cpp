@@ -40,7 +40,6 @@
 
 Node::~Node() {}
 
-
 Transform::Transform( const glm::mat4 &i_mtx ): m_destroyed(false) {
   m_tMtx  = i_mtx;
 }
@@ -65,43 +64,51 @@ void Transform::update( const glm::mat4 &i_mtx ) {
   m_tMtx  = i_mtx;
 }
 
-void Transform::createBoundingBox() {
-  float l_xMin, l_xMax, l_yMin, l_yMax, l_zMin, l_zMax;
+void Transform::generateBoundingBox() {
+  float l_xMin  = m_position.x;
+  float l_xMax  = m_position.x + m_size.x;
+  float l_yMin  = m_position.y - m_size.y;
+  float l_yMax  = m_position.y;
+  float l_zMin  = m_position.z;
+  float l_zMax  = m_size.z;
+
+  //! The 8 vertices of the bounding box
+  glm::vec3 l_v1( l_xMin, l_yMin, l_zMin );
+  glm::vec3 l_v2( l_xMax, l_yMin, l_zMin );
+  glm::vec3 l_v3( l_xMax, l_yMax, l_zMin );
+  glm::vec3 l_v4( l_xMin, l_yMax, l_zMin );
+  glm::vec3 l_v5( l_xMin, l_yMin, l_zMax );
+  glm::vec3 l_v6( l_xMax, l_yMin, l_zMax );
+  glm::vec3 l_v7( l_xMax, l_yMax, l_zMax );
+  glm::vec3 l_v8( l_xMin, l_yMax, l_zMax );
+
+  //! Construct the cuboidal bounding box
+  m_vertices.clear();
+  m_vertices.push_back( l_v1 );   m_vertices.push_back( l_v2 );
+  m_vertices.push_back( l_v2 );   m_vertices.push_back( l_v3 );
+  m_vertices.push_back( l_v3 );   m_vertices.push_back( l_v4 );
+  m_vertices.push_back( l_v4 );   m_vertices.push_back( l_v1 );
+  m_vertices.push_back( l_v1 );   m_vertices.push_back( l_v5 );
+  m_vertices.push_back( l_v2 );   m_vertices.push_back( l_v6 );
+  m_vertices.push_back( l_v3 );   m_vertices.push_back( l_v7 );
+  m_vertices.push_back( l_v4 );   m_vertices.push_back( l_v8 );
+  m_vertices.push_back( l_v5 );   m_vertices.push_back( l_v6 );
+  m_vertices.push_back( l_v6 );   m_vertices.push_back( l_v7 );
+  m_vertices.push_back( l_v7 );   m_vertices.push_back( l_v8 );
+  m_vertices.push_back( l_v8 );   m_vertices.push_back( l_v5 );
+
+  glGenVertexArrays( 1, &m_VAO );
+  glGenBuffers( 1, &m_VBO );
   
-  l_xMin = m_position.x;
-  l_xMax = m_position.x + m_size.x;
-  l_yMin = m_position.y - m_size.y;
-  l_yMax = m_position.y;
-  l_zMin = m_position.z;
-  l_zMax = m_size.z;
+  glBindVertexArray( m_VAO );
+  glBindBuffer( GL_ARRAY_BUFFER, m_VBO );
   
-  m_vertices.push_back( glm::vec3(l_xMin, l_yMin, l_zMin) );
-  m_vertices.push_back( glm::vec3(l_xMax, l_yMin, l_zMin) );
-  m_vertices.push_back( glm::vec3(l_xMax, l_yMax, l_zMin) );
-  m_vertices.push_back( glm::vec3(l_xMin, l_yMax, l_zMin) );
-  m_vertices.push_back( glm::vec3(l_xMin, l_yMin, l_zMax) );
-  m_vertices.push_back( glm::vec3(l_xMax, l_yMin, l_zMax) );
-  m_vertices.push_back( glm::vec3(l_xMax, l_yMax, l_zMax) );
-  m_vertices.push_back( glm::vec3(l_xMin, l_yMax, l_zMax) );
-  
-  
-  
-  glGenVertexArrays(1, &m_VAO);
-  glGenBuffers(1, &m_VBO);
-  
-  glBindVertexArray(m_VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  
-  glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*sizeof(glm::vec3), &m_vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0,
-                        3,
-                        GL_FLOAT,
-                        GL_FALSE,
-                        sizeof(glm::vec3),
-                        (GLvoid*)0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
+  glBufferData( GL_ARRAY_BUFFER, m_vertices.size() * sizeof( glm::vec3 ),
+                &m_vertices[0], GL_STATIC_DRAW );
+  glEnableVertexAttribArray( 0 );
+  glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( glm::vec3 ), (GLvoid*) 0 );
+  glBindBuffer( GL_ARRAY_BUFFER, 0 );
+  glBindVertexArray( 0 );
 }
 
 void Transform::drawBoundingBox( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
@@ -110,16 +117,23 @@ void Transform::drawBoundingBox( const GLuint &i_shaderProgram, const glm::mat4 
   GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
-  
+  GLuint l_uDestroyed   = glGetUniformLocation( i_shaderProgram, "u_destroyed"  );
+
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
-  
+  glUniform1i( l_uDestroyed, this->m_destroyed );
+
   glBindVertexArray( m_VAO );
-  glLineWidth(2.0f);
-  glDrawArrays( GL_LINES, 0, 10);
+  glLineWidth( 1.0f );
+  glDrawArrays( GL_LINES, 0, m_vertices.size() );
   glBindVertexArray( 0 );
+}
+
+Transform::~Transform() {
+  glDeleteVertexArrays( 1, &m_VAO );
+  glDeleteBuffers( 1, &m_VBO );
 }
 
 void Geometry::load( const char *i_fileName ) {

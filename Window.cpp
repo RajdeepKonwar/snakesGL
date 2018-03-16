@@ -39,13 +39,21 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 100;
+int Window::m_nTile = 40;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader, g_boundingBoxShader;
-float g_yPos     = 0.0f;
-float g_velocity = 0.1f;
-bool g_move      = true;
+
+//! Overclocking on apple to get better fps lul
+#ifdef __APPLE__
+float g_velocity  = 0.1f;
+#else
+float g_velocity  = 0.01f;
+#endif
+
+float g_yPos      = 0.0f;
+int g_move        = 1;
+bool g_drawBbox   = true;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -70,7 +78,7 @@ glm::mat4 Window::m_V;
 glm::mat4 move = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
 //! functions as constructor
-void Window::initialize_objects() {
+void Window::initializeObjects() {
   int l_i, l_j;
 
   //! Parse config file for shader and obj paths
@@ -168,10 +176,10 @@ void Window::initialize_objects() {
   static_cast< Transform* >(g_pyramidMtx)->addChild( g_pyramid );
   
   // bounding boxes
-  static_cast< Transform* >( g_headMtx )->m_position = glm::vec3( -1.0f, 1.0f, 0.0f );
-  static_cast< Transform* >( g_headMtx )->m_size = glm::vec3( 2.0f, 2.0f, 0.75f );
+  static_cast< Transform* >( g_headMtx )->m_position = glm::vec3( -1.0f, 1.8f, 0.0f );
+  static_cast< Transform* >( g_headMtx )->m_size = glm::vec3( 2.0f, 1.5f, 0.75f );
   
-  static_cast< Transform* >( g_pyramidMtx )->m_position = glm::vec3( -0.7f, 6.7f, 0.1f );
+  static_cast< Transform* >( g_pyramidMtx )->m_position = glm::vec3( -0.7f, 6.7f, 0.01f );
   static_cast< Transform* >( g_pyramidMtx )->m_size = glm::vec3( 1.4f, 1.4f, 0.75f );
 
   //! Arrange tiles to form grid
@@ -216,12 +224,12 @@ void Window::initialize_objects() {
 
   static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
   static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
+
+  g_obstaclesList.push_back( g_headMtx );
+  g_obstaclesList.push_back( g_pyramidMtx );
   
-  g_obstaclesList.push_back(g_pyramidMtx);
-  
-  for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt) {
-    static_cast<Transform*>(*g_nodeIt)->createBoundingBox();
-  }
+  for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt)
+    static_cast<Transform*>(*g_nodeIt)->generateBoundingBox();
 
   //! Load the shader programs
   g_gridBigShader   = LoadShaders( l_gridBigVertShader.c_str(),
@@ -237,12 +245,14 @@ void Window::initialize_objects() {
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
-void Window::clean_up() {
+void Window::cleanUp() {
   delete g_snake;
   delete g_gridBig;
   delete g_gridSmall;
   delete g_headMtx;
   delete g_tailMtx;
+  delete g_obstacles;
+  delete g_pyramidMtx;
 
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
@@ -254,34 +264,39 @@ void Window::clean_up() {
   delete g_head;
   delete g_body;
   delete g_tail;
+  delete g_tileBig;
+  delete g_tileSmall;
 
   glDeleteProgram( g_gridBigShader   );
   glDeleteProgram( g_gridSmallShader );
   glDeleteProgram( g_snakeShader     );
+  glDeleteProgram( g_obstaclesShader   );
+  glDeleteProgram( g_boundingBoxShader );
 }
 
-bool Window::check_collision( Node * one, Node * two ) {
+bool Window::checkCollision( Node *i_one,
+                             Node *i_two ) {
   
-  bool collisionX = static_cast< Transform* >(one)->m_position.x + static_cast< Transform* >(one)->m_size.x >= static_cast< Transform* >(two)->m_position.x && static_cast< Transform* >(two)->m_position.x + static_cast< Transform* >(two)->m_size.x >= static_cast< Transform* >(one)->m_position.x;
+  bool collisionX = static_cast< Transform* >(i_one)->m_position.x + static_cast< Transform* >(i_one)->m_size.x >= static_cast< Transform* >(i_two)->m_position.x && static_cast< Transform* >(i_two)->m_position.x + static_cast< Transform* >(i_two)->m_size.x >= static_cast< Transform* >(i_one)->m_position.x;
   
-  bool collisionY = static_cast< Transform* >(one)->m_position.y + static_cast< Transform* >(one)->m_size.y >= static_cast< Transform* >(two)->m_position.y && static_cast< Transform* >(two)->m_position.y + static_cast< Transform* >(two)->m_size.y >= static_cast< Transform* >(one)->m_position.y;
+  bool collisionY = static_cast< Transform* >(i_one)->m_position.y + static_cast< Transform* >(i_one)->m_size.y >= static_cast< Transform* >(i_two)->m_position.y && static_cast< Transform* >(i_two)->m_position.y + static_cast< Transform* >(i_two)->m_size.y >= static_cast< Transform* >(i_one)->m_position.y;
   
   return collisionX && collisionY;
   
 }
 
-void Window::perform_collisions() {
+void Window::performCollisions() {
   std::vector< Node* >::iterator l_it;
-  for (l_it = g_obstaclesList.begin(); l_it != g_obstaclesList.end(); ++l_it) {
+  for (l_it = g_obstaclesList.begin() + 1; l_it != g_obstaclesList.end(); ++l_it) {
     if ( !static_cast< Transform* >(*l_it)->m_destroyed ) {
-      if (check_collision(g_headMtx, *l_it)) {
+      if (checkCollision(g_headMtx, *l_it)) {
         static_cast< Transform* >(*l_it)->m_destroyed = true;
       }
     }
   }
 }
 
-GLFWwindow* Window::create_window( int i_width,
+GLFWwindow* Window::createWindow( int i_width,
                                    int i_height ) {
   //! Initialize GLFW
   if( !glfwInit() ) {
@@ -324,12 +339,12 @@ GLFWwindow* Window::create_window( int i_width,
   glfwGetFramebufferSize( l_window, &i_width, &i_height );
 
   //! Call the resize callback to make sure things get drawn immediately
-  Window::resize_callback( l_window, i_width, i_height );
+  Window::resizeCallback( l_window, i_width, i_height );
 
   return l_window;
 }
 
-void Window::display_callback( GLFWwindow* i_window ) {
+void Window::displayCallback( GLFWwindow* i_window ) {
   //! Clear the color and depth buffers
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -349,8 +364,9 @@ void Window::display_callback( GLFWwindow* i_window ) {
   g_obstacles->draw( g_obstaclesShader, Window::m_V );
   
   glUseProgram( g_boundingBoxShader );
-  for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt) {
-    static_cast<Transform*>(*g_nodeIt)->drawBoundingBox(g_boundingBoxShader, Window::m_V );
+  if( g_drawBbox )
+    for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt) {
+      static_cast<Transform*>(*g_nodeIt)->drawBoundingBox(g_boundingBoxShader, Window::m_V );
   }
 
   //! Gets events, including input such as keyboard and mouse or window resizing
@@ -363,7 +379,7 @@ void Window::display_callback( GLFWwindow* i_window ) {
   Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
 }
 
-void Window::idle_callback() {
+void Window::idleCallback() {
   if( !g_move )
     return;
 
@@ -376,14 +392,18 @@ void Window::idle_callback() {
   g_yPos             += g_velocity;
   Window::m_camPos.y += g_velocity;
   g_camLookAt.y      += g_velocity;
-  
+
+  //! Update head's bounding box position
   static_cast< Transform* >( g_headMtx )->m_position.y += g_velocity;
-  perform_collisions();
+  static_cast< Transform * >(g_headMtx)->generateBoundingBox();
+
+  //! Perform collision check
+  performCollisions();
 }
 
-void Window::resize_callback( GLFWwindow* i_window,
-                              int         i_width,
-                              int         i_height ) {
+void Window::resizeCallback( GLFWwindow* i_window,
+                             int         i_width,
+                             int         i_height ) {
 #ifdef __APPLE__
   glfwGetFramebufferSize( i_window, &i_width, &i_height );  //! In case your Mac has a retina display
 #endif
@@ -401,26 +421,42 @@ void Window::resize_callback( GLFWwindow* i_window,
   }
 }
 
-void Window::key_callback( GLFWwindow *i_window,
-                           int         i_key,
-                           int         i_scancode,
-                           int         i_action,
-                           int         i_mods ) {
+void Window::keyCallback( GLFWwindow *i_window,
+                          int         i_key,
+                          int         i_scancode,
+                          int         i_action,
+                          int         i_mods ) {
   if( i_action == GLFW_PRESS || i_action == GLFW_REPEAT ) {
     switch( i_key ) {
       case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose( i_window, GL_TRUE );
         break;
-        
+
       case GLFW_KEY_UP:
       case GLFW_KEY_W:
-        g_velocity = 0.25f;
+#ifdef __APPLE__
+        g_velocity  = 0.2f;
+#else
+        g_velocity  = 0.03f;
+#endif
         break;
 
+      case GLFW_KEY_DOWN:
+      case GLFW_KEY_S:
+#ifdef __APPLE__
+        g_velocity  = 0.1f;
+#else
+        g_velocity  = 0.01f;
+#endif
+        break;
     }
   }
   else if( i_action == GLFW_RELEASE ) {
-    g_velocity = 0.1f;
+#ifdef __APPLE__
+        g_velocity  = 0.1f;
+#else
+        g_velocity  = 0.01f;
+#endif
   }
 }
 
@@ -440,9 +476,9 @@ glm::vec3 trackBallMapping( glm::vec3 i_point ) {
   return l_v;
 }
 
-void Window::cursor_pos_callback( GLFWwindow *i_window,
-                                  double      i_xPos,
-                                  double      i_yPos ) {
+void Window::cursorPosCallback( GLFWwindow *i_window,
+                                double      i_xPos,
+                                double      i_yPos ) {
   glm::vec3 l_direction, l_currPoint, l_rotAxis;
   float     l_vel, l_rotAngle;
 
@@ -470,10 +506,10 @@ void Window::cursor_pos_callback( GLFWwindow *i_window,
   }
 }
 
-void Window::mouse_button_callback( GLFWwindow *i_window,
-                                    int         i_button,
-                                    int         i_action,
-                                    int         i_mods ) {
+void Window::mouseButtonCallback( GLFWwindow *i_window,
+                                  int         i_button,
+                                  int         i_action,
+                                  int         i_mods ) {
   double l_xPos, l_yPos;
 
   if( i_action == GLFW_PRESS ) {
@@ -498,9 +534,9 @@ void Window::mouse_button_callback( GLFWwindow *i_window,
   }
 }
 
-void Window::scroll_callback( GLFWwindow *i_window,
-                              double      i_xOffset,
-                              double      i_yOffset ) {
+void Window::scrollCallback( GLFWwindow *i_window,
+                             double      i_xOffset,
+                             double      i_yOffset ) {
   //! Avoid scrolling out of cubemap
   if( ((int) i_yOffset == -1) &&
       (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f
