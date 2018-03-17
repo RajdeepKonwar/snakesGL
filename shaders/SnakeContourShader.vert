@@ -25,7 +25,7 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Bounding Box Vertex Shader.
+ * Snake Contour Vertex Shader.
  **/
 
 #version 330 core

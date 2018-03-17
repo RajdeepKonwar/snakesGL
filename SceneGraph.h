@@ -66,10 +66,10 @@ public:
 //! derived Transform class
 class Transform : public Node {
 private:
-  GLuint                   m_VAO, m_VBO;
+  GLuint                   m_bboxVAO, m_bboxVBO, m_snakeVAO, m_snakeVBO;
   glm::mat4                m_tMtx;
   std::list< Node * >      m_ptrs;
-  std::vector< glm::vec3 > m_vertices;
+  std::vector< glm::vec3 > m_bboxVertices, m_snakeVertices;
 
 public:
   Transform( const glm::mat4 &i_mtx );
@@ -84,6 +84,10 @@ public:
   void generateBoundingBox();
   void drawBoundingBox( const GLuint    &i_shaderProgram,
                         const glm::mat4 &i_mtx );
+
+  void generateSnakeContour( const int &i_nBody );
+  void drawSnakeContour( const GLuint    &i_shaderProgram,
+                         const glm::mat4 &i_mtx );
 
   void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
   void update( const glm::mat4 &i_mtx );

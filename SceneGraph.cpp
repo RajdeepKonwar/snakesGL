@@ -56,7 +56,8 @@ void Transform::removeChild() {
 void Transform::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   if ( m_destroyed )
     return;
-  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end(); ++l_it )
+  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
+        ++l_it )
     (*l_it)->draw( i_shaderProgram, i_mtx * m_tMtx );
 }
 
@@ -83,41 +84,43 @@ void Transform::generateBoundingBox() {
   glm::vec3 l_v8( l_xMin, l_yMax, l_zMax );
 
   //! Construct the cuboidal bounding box
-  m_vertices.clear();
-  m_vertices.push_back( l_v1 );   m_vertices.push_back( l_v2 );
-  m_vertices.push_back( l_v2 );   m_vertices.push_back( l_v3 );
-  m_vertices.push_back( l_v3 );   m_vertices.push_back( l_v4 );
-  m_vertices.push_back( l_v4 );   m_vertices.push_back( l_v1 );
-  m_vertices.push_back( l_v1 );   m_vertices.push_back( l_v5 );
-  m_vertices.push_back( l_v2 );   m_vertices.push_back( l_v6 );
-  m_vertices.push_back( l_v3 );   m_vertices.push_back( l_v7 );
-  m_vertices.push_back( l_v4 );   m_vertices.push_back( l_v8 );
-  m_vertices.push_back( l_v5 );   m_vertices.push_back( l_v6 );
-  m_vertices.push_back( l_v6 );   m_vertices.push_back( l_v7 );
-  m_vertices.push_back( l_v7 );   m_vertices.push_back( l_v8 );
-  m_vertices.push_back( l_v8 );   m_vertices.push_back( l_v5 );
+  m_bboxVertices.clear();
+  m_bboxVertices.push_back( l_v1 );   m_bboxVertices.push_back( l_v2 );
+  m_bboxVertices.push_back( l_v2 );   m_bboxVertices.push_back( l_v3 );
+  m_bboxVertices.push_back( l_v3 );   m_bboxVertices.push_back( l_v4 );
+  m_bboxVertices.push_back( l_v4 );   m_bboxVertices.push_back( l_v1 );
+  m_bboxVertices.push_back( l_v1 );   m_bboxVertices.push_back( l_v5 );
+  m_bboxVertices.push_back( l_v2 );   m_bboxVertices.push_back( l_v6 );
+  m_bboxVertices.push_back( l_v3 );   m_bboxVertices.push_back( l_v7 );
+  m_bboxVertices.push_back( l_v4 );   m_bboxVertices.push_back( l_v8 );
+  m_bboxVertices.push_back( l_v5 );   m_bboxVertices.push_back( l_v6 );
+  m_bboxVertices.push_back( l_v6 );   m_bboxVertices.push_back( l_v7 );
+  m_bboxVertices.push_back( l_v7 );   m_bboxVertices.push_back( l_v8 );
+  m_bboxVertices.push_back( l_v8 );   m_bboxVertices.push_back( l_v5 );
 
-  glGenVertexArrays( 1, &m_VAO );
-  glGenBuffers( 1, &m_VBO );
-  
-  glBindVertexArray( m_VAO );
-  glBindBuffer( GL_ARRAY_BUFFER, m_VBO );
-  
-  glBufferData( GL_ARRAY_BUFFER, m_vertices.size() * sizeof( glm::vec3 ),
-                &m_vertices[0], GL_STATIC_DRAW );
+  glGenVertexArrays( 1, &m_bboxVAO );
+  glGenBuffers( 1, &m_bboxVBO );
+
+  glBindVertexArray( m_bboxVAO );
+  glBindBuffer( GL_ARRAY_BUFFER, m_bboxVBO );
+
+  glBufferData( GL_ARRAY_BUFFER, m_bboxVertices.size() * sizeof( glm::vec3 ),
+                &m_bboxVertices[0], GL_STATIC_DRAW );
   glEnableVertexAttribArray( 0 );
-  glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( glm::vec3 ), (GLvoid*) 0 );
+  glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( glm::vec3 ),
+                         (GLvoid*) 0 );
   glBindBuffer( GL_ARRAY_BUFFER, 0 );
   glBindVertexArray( 0 );
 }
 
-void Transform::drawBoundingBox( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
+void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
+                                 const glm::mat4 &i_mtx ) {
   glm::mat4 l_modelView = i_mtx;
   
   GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
-  GLuint l_uDestroyed   = glGetUniformLocation( i_shaderProgram, "u_destroyed"  );
+  GLuint l_uDestroyed  = glGetUniformLocation( i_shaderProgram, "u_destroyed"  );
 
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
@@ -125,15 +128,112 @@ void Transform::drawBoundingBox( const GLuint &i_shaderProgram, const glm::mat4 
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
   glUniform1i( l_uDestroyed, this->m_destroyed );
 
-  glBindVertexArray( m_VAO );
+  glBindVertexArray( m_bboxVAO );
   glLineWidth( 1.0f );
-  glDrawArrays( GL_LINES, 0, m_vertices.size() );
+  glDrawArrays( GL_LINES, 0, m_bboxVertices.size() );
+  glBindVertexArray( 0 );
+}
+
+void Transform::generateSnakeContour( const int &i_nBody ) {
+  int l_i;
+  static float s_headPos[4]   = { 0.78f, 0.78f, 1.8f, 0.78f };
+
+  for( l_i = 0; l_i < 4; l_i++ )
+    s_headPos[l_i] += Window::m_velocity;
+
+  //! Construct the head contours
+  glm::vec3 l_vh1( -1.0f, s_headPos[0], 0.01f );
+  glm::vec3 l_vh2(  1.0f, s_headPos[1], 0.01f );
+  glm::vec3 l_vh3(  0.0f, s_headPos[2], 0.01f );
+  glm::vec3 l_vh4(  0.0f, s_headPos[3], 0.76f );
+
+  m_snakeVertices.clear();
+  m_snakeVertices.push_back( l_vh1 );  m_snakeVertices.push_back( l_vh3 );
+  m_snakeVertices.push_back( l_vh3 );  m_snakeVertices.push_back( l_vh2 );
+  m_snakeVertices.push_back( l_vh1 );  m_snakeVertices.push_back( l_vh4 );
+  m_snakeVertices.push_back( l_vh4 );  m_snakeVertices.push_back( l_vh2 );
+
+  static float s_bodyPos[11]  = { -0.53f, -0.53f, -0.53f,  0.27f,  0.27f, 0.44f,
+                                  -1.53f, -1.53f, -1.53f, -2.53f, -2.53f };
+
+  for( l_i = 0; l_i < 11; l_i++ )
+    s_bodyPos[l_i] += Window::m_velocity;
+
+  //! Construct the first body part attached to head
+  glm::vec3 l_v1( -0.5f, s_bodyPos[0], 0.01f );
+  glm::vec3 l_v2(  0.5f, s_bodyPos[1], 0.01f );
+  glm::vec3 l_v3(  0.0f, s_bodyPos[2], 0.51f );
+  glm::vec3 l_v4( -0.5f, s_bodyPos[3], 0.01f );
+  glm::vec3 l_v5(  0.5f, s_bodyPos[4], 0.01f );
+  glm::vec3 l_v6(  0.0f, s_bodyPos[5], 0.51f );
+
+  m_snakeVertices.push_back( l_v4 );   m_snakeVertices.push_back( l_vh1 );
+  m_snakeVertices.push_back( l_v5 );   m_snakeVertices.push_back( l_vh2 );
+
+  m_snakeVertices.push_back( l_v1 );   m_snakeVertices.push_back( l_v3 );
+  m_snakeVertices.push_back( l_v3 );   m_snakeVertices.push_back( l_v2 );
+  m_snakeVertices.push_back( l_v1 );   m_snakeVertices.push_back( l_v4 );
+  m_snakeVertices.push_back( l_v2 );   m_snakeVertices.push_back( l_v5 );
+  m_snakeVertices.push_back( l_v4 );   m_snakeVertices.push_back( l_v6 );
+  m_snakeVertices.push_back( l_v6 );   m_snakeVertices.push_back( l_v5 );
+
+  //! Second body part
+  glm::vec3 l_v7(  -0.5f, s_bodyPos[6],  0.01f );
+  glm::vec3 l_v8(   0.5f, s_bodyPos[7],  0.01f );
+  glm::vec3 l_v9(   0.0f, s_bodyPos[8],  0.51f );
+
+  m_snakeVertices.push_back( l_v7 );   m_snakeVertices.push_back( l_v9 );
+  m_snakeVertices.push_back( l_v9 );   m_snakeVertices.push_back( l_v8 );
+  m_snakeVertices.push_back( l_v7 );   m_snakeVertices.push_back( l_v1 );
+  m_snakeVertices.push_back( l_v8 );   m_snakeVertices.push_back( l_v2 );
+
+  //! Third body part
+  glm::vec3 l_v10( -0.5f, s_bodyPos[9],  0.01f );
+  glm::vec3 l_v11(  0.5f, s_bodyPos[10], 0.01f );
+
+  m_snakeVertices.push_back( l_v10 );  m_snakeVertices.push_back( l_v7 );
+  m_snakeVertices.push_back( l_v11 );  m_snakeVertices.push_back( l_v8 );
+
+  glGenVertexArrays( 1, &m_snakeVAO );
+  glGenBuffers( 1, &m_snakeVBO );
+
+  glBindVertexArray( m_snakeVAO );
+  glBindBuffer( GL_ARRAY_BUFFER, m_snakeVBO );
+
+  glBufferData( GL_ARRAY_BUFFER, m_snakeVertices.size() * sizeof( glm::vec3 ),
+                &m_snakeVertices[0], GL_STATIC_DRAW );
+  glEnableVertexAttribArray( 0 );
+  glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( glm::vec3 ),
+                         (GLvoid*) 0 );
+  glBindBuffer( GL_ARRAY_BUFFER, 0 );
+  glBindVertexArray( 0 );
+}
+
+void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
+                                  const glm::mat4 &i_mtx ) {
+  glm::mat4 l_modelView = i_mtx;
+  
+  GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
+  GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
+  GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
+
+  glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
+  glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
+  glUniform3f( l_uCamPos,
+              Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+
+  glBindVertexArray( m_snakeVAO );
+  glLineWidth( 2.0f );
+  glDrawArrays( GL_LINES, 0, m_snakeVertices.size() );
   glBindVertexArray( 0 );
 }
 
 Transform::~Transform() {
-  glDeleteVertexArrays( 1, &m_VAO );
-  glDeleteBuffers( 1, &m_VBO );
+  glDeleteVertexArrays( 1, &m_bboxVAO  );
+  glDeleteVertexArrays( 1, &m_snakeVAO );
+
+  glDeleteBuffers( 1, &m_bboxVBO  );
+  glDeleteBuffers( 1, &m_snakeVBO );
 }
 
 void Geometry::load( const char *i_fileName ) {
@@ -307,4 +407,3 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
 }
 
 void Geometry::update( const glm::mat4 &i_mtx ) {}
-

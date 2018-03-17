@@ -42,8 +42,8 @@ void main() {
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
 
-  float l_minFogDist = 5.0f;
-  float l_maxFogDist = 20.0f;
+  float l_minFogDist = 2.0f;
+  float l_maxFogDist = 17.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );

@@ -52,6 +52,8 @@ public:
   static int        m_nBody;
   static int        m_nTile;
 
+  static float      m_velocity;
+
   static glm::vec3  m_camPos;
   static glm::vec3  m_lastPoint;
 

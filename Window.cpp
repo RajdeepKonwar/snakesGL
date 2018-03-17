@@ -42,13 +42,14 @@ int Window::m_nBody = 3;
 int Window::m_nTile = 40;
 
 //! Global variables
-GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader, g_boundingBoxShader;
+GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader;
+GLuint g_boundingBoxShader, g_snakeContourShader;
 
 //! Overclocking on apple to get better fps lul
 #ifdef __APPLE__
-float g_velocity  = 0.1f;
+float Window::m_velocity  = 0.05f;
 #else
-float g_velocity  = 0.01f;
+float Window::m_velocity  = 0.005f;
 #endif
 
 float g_yPos      = 0.0f;
@@ -64,11 +65,11 @@ Node *g_headMtx, *g_tailMtx, *g_pyramidMtx;
 std::vector< Node * > g_tileBigPos, g_tileSmallPos, g_bodyMtx, g_obstaclesList;
 std::vector< Node * >::iterator g_nodeIt;
 
-Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall, *g_pyramid;
+Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall;
 
 //! Default camera parameters
 glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.0f );//! e | Position of camera
-glm::vec3 g_camLookAt( 0.0f, 1.5f, 0.0f );      //! d | Where camera looks at
+glm::vec3 g_camLookAt( 0.0f, 1.8f, 0.0f );      //! d | Where camera looks at
 glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 
 glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
@@ -89,12 +90,13 @@ void Window::initializeObjects() {
   }
 
   std::string l_lineBuf;
-  std::string l_gridBigVertShader,   l_gridBigFragShader;
-  std::string l_gridSmallVertShader, l_gridSmallFragShader;
-  std::string l_snakeVertShader,     l_snakeFragShader;
-  std::string l_obstaclesVertShader,     l_obstaclesFragShader;
-  std::string l_boundingBoxVertShader,     l_boundingBoxFragShader;
-  std::string l_head, l_body, l_tail, l_tileBig, l_tileSmall;
+  std::string l_gridBigVertShader,      l_gridBigFragShader;
+  std::string l_gridSmallVertShader,    l_gridSmallFragShader;
+  std::string l_snakeVertShader,        l_snakeFragShader;
+  std::string l_obstaclesVertShader,    l_obstaclesFragShader;
+  std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
+  std::string l_snakeContourVertShader, l_snakeContourFragShader;
+  std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
     size_t l_k = -1, l_l;
@@ -111,39 +113,44 @@ void Window::initializeObjects() {
     if( l_l >= l_lineBuf.length() )
       continue;
 
-    std::string l_varName   = l_lineBuf.substr( l_k, l_l - l_k );
-    std::string l_varValue  = l_lineBuf.substr( l_l + 1 );
+    std::string l_varName       = l_lineBuf.substr( l_k, l_l - l_k );
+    std::string l_varValue      = l_lineBuf.substr( l_l + 1 );
 
     if( l_varName.compare( "grid_big_vert_shader" ) == 0 )
-      l_gridBigVertShader   = l_varValue;
+      l_gridBigVertShader       = l_varValue;
     else if( l_varName.compare( "grid_big_frag_shader" ) == 0 )
-      l_gridBigFragShader   = l_varValue;
+      l_gridBigFragShader       = l_varValue;
     else if( l_varName.compare( "grid_small_vert_shader" ) == 0 )
-      l_gridSmallVertShader = l_varValue;
+      l_gridSmallVertShader     = l_varValue;
     else if( l_varName.compare( "grid_small_frag_shader" ) == 0 )
-      l_gridSmallFragShader = l_varValue;
+      l_gridSmallFragShader     = l_varValue;
     else if( l_varName.compare( "snake_vert_shader" ) == 0 )
-      l_snakeVertShader     = l_varValue;
+      l_snakeVertShader         = l_varValue;
     else if( l_varName.compare( "snake_frag_shader" ) == 0 )
-      l_snakeFragShader     = l_varValue;
+      l_snakeFragShader         = l_varValue;
     else if( l_varName.compare( "obstacles_vert_shader" ) == 0 )
       l_obstaclesVertShader     = l_varValue;
     else if( l_varName.compare( "obstacles_frag_shader" ) == 0 )
       l_obstaclesFragShader     = l_varValue;
     else if( l_varName.compare( "bounding_box_vert_shader" ) == 0 )
-      l_boundingBoxVertShader     = l_varValue;
+      l_boundingBoxVertShader   = l_varValue;
     else if( l_varName.compare( "bounding_box_frag_shader" ) == 0 )
-      l_boundingBoxFragShader     = l_varValue;
+      l_boundingBoxFragShader   = l_varValue;
+    else if( l_varName.compare( "snake_contour_vert_shader" ) == 0 )
+      l_snakeContourVertShader  = l_varValue;
+    else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
+      l_snakeContourFragShader  = l_varValue;
+
     else if( l_varName.compare( "head" ) == 0 )
-      l_head                = l_varValue;
+      l_head                    = l_varValue;
     else if( l_varName.compare( "body" ) == 0 )
-      l_body                = l_varValue;
+      l_body                    = l_varValue;
     else if( l_varName.compare( "tail" ) == 0 )
-      l_tail                = l_varValue;
+      l_tail                    = l_varValue;
     else if( l_varName.compare( "tile_big" ) == 0 )
-      l_tileBig             = l_varValue;
+      l_tileBig                 = l_varValue;
     else if( l_varName.compare( "tile_small" ) == 0 )
-      l_tileSmall           = l_varValue;
+      l_tileSmall               = l_varValue;
     else
       std::cout << "\nUnknown setting (" << l_varName << "). Ignored."
                 << std::endl;
@@ -152,40 +159,53 @@ void Window::initializeObjects() {
   l_confFn.close();
 
   //! Geometry nodes
-  g_head      = new Geometry( l_head.c_str() );
-  g_body      = new Geometry( l_body.c_str() );
-  g_tail      = new Geometry( l_tail.c_str() );
+  g_head      = new Geometry( l_head.c_str()      );
+  g_body      = new Geometry( l_body.c_str()      );
+  g_tail      = new Geometry( l_tail.c_str()      );
   g_tileSmall = new Geometry( l_tileSmall.c_str() );
-  g_tileBig   = new Geometry( l_tileBig.c_str() );
-  g_pyramid   = new Geometry( l_head.c_str() );
+  g_tileBig   = new Geometry( l_tileBig.c_str()   );
 
   //! Transform nodes
   g_gridBig   = new Transform( glm::mat4( 1.0f ) );
   g_gridSmall = new Transform( glm::mat4( 1.0f ) );
-
-  g_snake   = new Transform( glm::mat4( 1.0f ) ); 
-  g_headMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
+  g_snake     = new Transform( glm::mat4( 1.0f ) );
+  g_headMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
   g_obstacles = new Transform( glm::mat4(1.0f) );
-  
-  glm::mat4 l_moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3( 0.0f, 6.0f, 0.0f )) *
-            glm::rotate(glm::mat4( 1.0f ), glm::radians(-45.0f), glm::vec3( 0.0f, 0.0f, 1.0f ));
+
+  //! Initialize snake contour
+  static_cast< Transform * >(g_snake)->generateSnakeContour( Window::m_nBody );
+
+  //! Using head as pyramid obstacle
+  glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4(1.0f),
+                                            glm::vec3( 0.0f, 6.0f, 0.0f ) ) *
+                            glm::rotate( glm::mat4( 1.0f ),
+                                         glm::radians( -45.0f ),
+                                         glm::vec3( 0.0f, 0.0f, 1.0f ) );
   g_pyramidMtx  = new Transform ( l_moveRotMtx );
-  
+
   static_cast< Transform* >(g_obstacles)->addChild( g_pyramidMtx );
-  static_cast< Transform* >(g_pyramidMtx)->addChild( g_pyramid );
+  static_cast< Transform* >(g_pyramidMtx)->addChild( g_head );
+
+  //! Bounding boxes' initial positions and sizes
+  static_cast< Transform* >( g_headMtx )->m_position = glm::vec3( -1.0f,
+                                                                   1.8f,
+                                                                   0.0f );
+  static_cast< Transform* >( g_headMtx )->m_size     = glm::vec3(  2.0f,
+                                                                   1.5f,
+                                                                   0.75f );
   
-  // bounding boxes
-  static_cast< Transform* >( g_headMtx )->m_position = glm::vec3( -1.0f, 1.8f, 0.0f );
-  static_cast< Transform* >( g_headMtx )->m_size = glm::vec3( 2.0f, 1.5f, 0.75f );
-  
-  static_cast< Transform* >( g_pyramidMtx )->m_position = glm::vec3( -0.7f, 6.7f, 0.01f );
-  static_cast< Transform* >( g_pyramidMtx )->m_size = glm::vec3( 1.4f, 1.4f, 0.75f );
+  static_cast< Transform* >( g_pyramidMtx )->m_position = glm::vec3( -0.7f,
+                                                                      6.7f,
+                                                                      0.01f );
+  static_cast< Transform* >( g_pyramidMtx )->m_size     = glm::vec3(  1.4f,
+                                                                      1.4f,
+                                                                      0.75f );
 
   //! Arrange tiles to form grid
   for( l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
     //for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
-    for (l_j = -8; l_j <= 8; l_j++) {
+    for( l_j = -8; l_j <= 8; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3( l_j * 2.0f,
                                                         l_i * 2.0f,
@@ -197,22 +217,27 @@ void Window::initializeObjects() {
      }
    }
 
-  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt ) {
+  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end();
+        ++g_nodeIt ) {
     static_cast< Transform * >(g_gridBig)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileBig );
   }
 
-  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt ) {
+  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end();
+        ++g_nodeIt ) {
     static_cast< Transform * >(g_gridSmall)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
   }
 
+  //! Snake body parts
   for( l_i = 0; l_i < Window::m_nBody; l_i++ )
     g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                          glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
 
   g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
-                  glm::vec3( 0.0f, -1.0f * (float) Window::m_nBody + 0.5f, 0.0f ) ) );
+                  glm::vec3( 0.0f,
+                             -1.0f * (float) Window::m_nBody + 0.5f,
+                             0.0f ) ) );
 
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
@@ -225,23 +250,28 @@ void Window::initializeObjects() {
   static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
   static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
 
+  //! Populate obstacles list
   g_obstaclesList.push_back( g_headMtx );
   g_obstaclesList.push_back( g_pyramidMtx );
-  
-  for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt)
-    static_cast<Transform*>(*g_nodeIt)->generateBoundingBox();
+
+  //! Initialize bounding boxes
+  for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
+       ++g_nodeIt )
+    static_cast< Transform * >(*g_nodeIt)->generateBoundingBox();
 
   //! Load the shader programs
-  g_gridBigShader   = LoadShaders( l_gridBigVertShader.c_str(),
-                                   l_gridBigFragShader.c_str()   );
-  g_gridSmallShader = LoadShaders( l_gridSmallVertShader.c_str(),
-                                   l_gridSmallFragShader.c_str() );
-  g_snakeShader     = LoadShaders( l_snakeVertShader.c_str(),
-                                   l_snakeFragShader.c_str()     );
-  g_obstaclesShader = LoadShaders(l_obstaclesVertShader.c_str(),
-                                  l_obstaclesFragShader.c_str()  );
-  g_boundingBoxShader = LoadShaders(l_boundingBoxVertShader.c_str(),
-                                   l_boundingBoxFragShader.c_str()  );
+  g_gridBigShader       = LoadShaders( l_gridBigVertShader.c_str(),
+                                       l_gridBigFragShader.c_str()      );
+  g_gridSmallShader     = LoadShaders( l_gridSmallVertShader.c_str(),
+                                       l_gridSmallFragShader.c_str()    );
+  g_snakeShader         = LoadShaders( l_snakeVertShader.c_str(),
+                                       l_snakeFragShader.c_str()        );
+  g_obstaclesShader     = LoadShaders( l_obstaclesVertShader.c_str(),
+                                       l_obstaclesFragShader.c_str()    );
+  g_boundingBoxShader   = LoadShaders( l_boundingBoxVertShader.c_str(),
+                                       l_boundingBoxFragShader.c_str()  );
+  g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
+                                       l_snakeContourFragShader.c_str() );
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -256,7 +286,8 @@ void Window::cleanUp() {
 
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
-  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end(); ++g_nodeIt )
+  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end();
+       ++g_nodeIt )
     delete *g_nodeIt;
   for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt )
     delete *g_nodeIt;
@@ -272,24 +303,35 @@ void Window::cleanUp() {
   glDeleteProgram( g_snakeShader     );
   glDeleteProgram( g_obstaclesShader   );
   glDeleteProgram( g_boundingBoxShader );
+  glDeleteProgram( g_snakeContourShader );
 }
 
 bool Window::checkCollision( Node *i_one,
                              Node *i_two ) {
-  
-  bool collisionX = static_cast< Transform* >(i_one)->m_position.x + static_cast< Transform* >(i_one)->m_size.x >= static_cast< Transform* >(i_two)->m_position.x && static_cast< Transform* >(i_two)->m_position.x + static_cast< Transform* >(i_two)->m_size.x >= static_cast< Transform* >(i_one)->m_position.x;
-  
-  bool collisionY = static_cast< Transform* >(i_one)->m_position.y + static_cast< Transform* >(i_one)->m_size.y >= static_cast< Transform* >(i_two)->m_position.y && static_cast< Transform* >(i_two)->m_position.y + static_cast< Transform* >(i_two)->m_size.y >= static_cast< Transform* >(i_one)->m_position.y;
-  
-  return collisionX && collisionY;
-  
+  bool l_collisionX = static_cast< Transform* >(i_one)->m_position.x +
+                      static_cast< Transform* >(i_one)->m_size.x >=
+                      static_cast< Transform* >(i_two)->m_position.x &&
+                      static_cast< Transform* >(i_two)->m_position.x +
+                      static_cast< Transform* >(i_two)->m_size.x >=
+                      static_cast< Transform* >(i_one)->m_position.x;
+
+  bool l_collisionY = static_cast< Transform* >(i_one)->m_position.y +
+                      static_cast< Transform* >(i_one)->m_size.y >=
+                      static_cast< Transform* >(i_two)->m_position.y &&
+                      static_cast< Transform* >(i_two)->m_position.y +
+                      static_cast< Transform* >(i_two)->m_size.y >=
+                      static_cast< Transform* >(i_one)->m_position.y;
+
+  return (l_collisionX && l_collisionY);
 }
 
 void Window::performCollisions() {
   std::vector< Node* >::iterator l_it;
-  for (l_it = g_obstaclesList.begin() + 1; l_it != g_obstaclesList.end(); ++l_it) {
-    if ( !static_cast< Transform* >(*l_it)->m_destroyed ) {
-      if (checkCollision(g_headMtx, *l_it)) {
+
+  for( std::vector< Node* >::iterator l_it = g_obstaclesList.begin() + 1;
+       l_it != g_obstaclesList.end(); ++l_it ) {
+    if( !static_cast< Transform * >(*l_it)->m_destroyed ) {
+      if( checkCollision( g_headMtx, *l_it ) ) {
         static_cast< Transform* >(*l_it)->m_destroyed = true;
       }
     }
@@ -297,7 +339,7 @@ void Window::performCollisions() {
 }
 
 GLFWwindow* Window::createWindow( int i_width,
-                                   int i_height ) {
+                                  int i_height ) {
   //! Initialize GLFW
   if( !glfwInit() ) {
     fprintf( stderr, "Failed to initialize GLFW\n" );
@@ -348,26 +390,34 @@ void Window::displayCallback( GLFWwindow* i_window ) {
   //! Clear the color and depth buffers
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-  //! Use GridBigShader
+  //! Using GridBigShader, draw black background
   glUseProgram( g_gridBigShader );
   g_gridBig->draw( g_gridBigShader, Window::m_V);
 
-  //! Use GridSmallShader
+  //! Using GridSmallShader, draw small white tiles
   glUseProgram( g_gridSmallShader );
   g_gridSmall->draw( g_gridSmallShader, Window::m_V );
 
-  //! Use SnakeShader
+  //! Using SnakeShader, draw snake
   glUseProgram( g_snakeShader );
   g_snake->draw( g_snakeShader, Window::m_V );
-  
+
+  //! Using SnakeContourShader, draw outline of snake
+  glUseProgram( g_snakeContourShader );
+  static_cast< Transform * >(g_snake)->drawSnakeContour( g_snakeContourShader,
+                                                         Window::m_V );
+
+  //! Using ObstaclesShader, draw the obstacles
   glUseProgram( g_obstaclesShader );
   g_obstacles->draw( g_obstaclesShader, Window::m_V );
-  
+
+  //! Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
   glUseProgram( g_boundingBoxShader );
   if( g_drawBbox )
-    for (g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end(); ++g_nodeIt) {
-      static_cast<Transform*>(*g_nodeIt)->drawBoundingBox(g_boundingBoxShader, Window::m_V );
-  }
+    for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
+          ++g_nodeIt )
+      static_cast< Transform * >(*g_nodeIt)->drawBoundingBox( g_boundingBoxShader,
+                                                              Window::m_V );
 
   //! Gets events, including input such as keyboard and mouse or window resizing
   glfwPollEvents();
@@ -389,13 +439,14 @@ void Window::idleCallback() {
   static_cast< Transform * >(g_snake)->update( l_moveMtx * move );
 
   //! Update camera pos, lookat and snake pos
-  g_yPos             += g_velocity;
-  Window::m_camPos.y += g_velocity;
-  g_camLookAt.y      += g_velocity;
+  g_yPos             += Window::m_velocity;
+  Window::m_camPos.y += Window::m_velocity;
+  g_camLookAt.y      += Window::m_velocity;
 
   //! Update head's bounding box position
-  static_cast< Transform* >( g_headMtx )->m_position.y += g_velocity;
+  static_cast< Transform* >( g_headMtx )->m_position.y += Window::m_velocity;
   static_cast< Transform * >(g_headMtx)->generateBoundingBox();
+  static_cast< Transform * >(g_snake)->generateSnakeContour( Window::m_nBody );
 
   //! Perform collision check
   performCollisions();
@@ -435,27 +486,27 @@ void Window::keyCallback( GLFWwindow *i_window,
       case GLFW_KEY_UP:
       case GLFW_KEY_W:
 #ifdef __APPLE__
-        g_velocity  = 0.2f;
+        Window::m_velocity  = 0.2f;
 #else
-        g_velocity  = 0.03f;
+        Window::m_velocity  = 0.02f;
 #endif
         break;
 
       case GLFW_KEY_DOWN:
       case GLFW_KEY_S:
 #ifdef __APPLE__
-        g_velocity  = 0.1f;
+        Window::m_velocity  = 0.05f;
 #else
-        g_velocity  = 0.01f;
+        Window::m_velocity  = 0.005f;
 #endif
         break;
     }
   }
   else if( i_action == GLFW_RELEASE ) {
 #ifdef __APPLE__
-        g_velocity  = 0.1f;
+        Window::m_velocity  = 0.05f;
 #else
-        g_velocity  = 0.01f;
+        Window::m_velocity  = 0.005f;
 #endif
   }
 }
