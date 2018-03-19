@@ -77,7 +77,8 @@ public:
   
   glm::vec3 m_position, m_size;
   bool m_destroyed;
-
+  int m_bboxColor, m_type;
+  
   void addChild( Node *i_child );
   void removeChild();
 
@@ -105,6 +106,8 @@ private:
 public:
   Geometry( const char *i_fileName );
   ~Geometry();
+  
+  int m_obstacleType;
 
   void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
   void update( const glm::mat4 &i_mtx );

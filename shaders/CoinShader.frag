@@ -50,7 +50,6 @@ in vec3 FragCoord;
 in vec4 ViewSpace;
 
 uniform vec4 u_camPos;
-uniform int u_obstacleType;
 
 out vec4 FragColor;
 
@@ -60,8 +59,8 @@ void main() {
   
   vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) - vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
   
-  vec4 l_obstacleColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
-  l_obstacleColor += vec4( CalcDirLight(dirLight, normalize(Normal), viewDirection), 0.0f );
+  vec4 l_coinColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
+  l_coinColor += vec4( CalcDirLight(dirLight, normalize(Normal), viewDirection), 0.0f );
   
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
@@ -75,7 +74,7 @@ void main() {
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  FragColor   = mix( l_fogColor, l_obstacleColor, l_fogFactor );
+  FragColor   = mix( l_fogColor, l_coinColor, l_fogFactor );
 }
 
 // Calculates the color when using a directional light.
@@ -88,21 +87,10 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
   float diff = max(dot(normal, lightDir), 0.0);
   // Specular shading
   vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.1f);
-  
-  vec3 ambient, diffuse, specular;
-  
-  if (u_obstacleType == 1) {
-    // Combine results
-    ambient = light.ambient * vec3(0.135, 0.2225, 0.1575);//vec3(texture(material.diffuse, TexCoords));
-    diffuse = light.diffuse * diff * vec3(0.54, 0.89, 0.63);//vec3(texture(material.diffuse, TexCoords));
-    specular = light.specular * spec * vec3(0.5, 0.5, 0.5) * dot(vec3(0.5, 0.5, 0.5), light.specular);//vec3(texture(material.specular, TexCoords));
-  }
-  else if (u_obstacleType == 2) {
-    // Combine results
-    ambient = light.ambient * vec3(0.05375, 0.05375, 0.05375);//vec3(texture(material.diffuse, TexCoords));
-    diffuse = light.diffuse * diff * vec3(0.18275, 0.17, 0.22525);//vec3(texture(material.diffuse, TexCoords));
-    specular = light.specular * spec * vec3(0.332741, 0.328634, 0.346435) * dot(vec3(0.332741, 0.328634, 0.346435), light.specular);//vec3(texture(material.specular, TexCoords));
-  }
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.8f);
+  // Combine results
+  vec3 ambient = light.ambient * vec3(0.24725, 0.1995, 0.0745);//vec3(texture(material.diffuse, TexCoords));
+  vec3 diffuse = light.diffuse * diff * vec3(0.75164, 0.60648, 0.22648);//vec3(texture(material.diffuse, TexCoords));
+  vec3 specular = light.specular * spec * vec3(0.628281, 0.555802, 0.366065) * dot(vec3(0.628281, 0.555802, 0.366065), light.specular);//vec3(texture(material.specular, TexCoords));
   return (ambient + diffuse + specular);
 }

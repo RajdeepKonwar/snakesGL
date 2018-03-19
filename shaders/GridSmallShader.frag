@@ -46,15 +46,21 @@ uniform DirLight dirLight2;
 in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
+in vec4 vPosition;
+in vec4 vPrevPosition;
 
 uniform vec4 u_camPos;
 
 out vec4 FragColor;
+out vec2 oVelocity;
 
 void main() {
   
-  //Directional lighting
+  vec2 a = ( vPosition.xy / vPosition.w ) * 0.5f + 0.5f;
+  vec2 b = ( vPrevPosition.xy / vPrevPosition.w ) * 0.5f + 0.5f;
+  oVelocity = a - b;
   
+  //Directional lighting
   vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) - vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
   
   //vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white

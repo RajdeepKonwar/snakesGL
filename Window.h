@@ -59,6 +59,9 @@ public:
 
   static glm::mat4  m_P;        //! P for projection
   static glm::mat4  m_V;        //! V for view
+  
+  static glm::mat4  m_prevP;
+  static glm::mat4  m_prevV;
 
   static void initializeObjects();
   static void cleanUp();

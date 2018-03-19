@@ -25,30 +25,63 @@
 # SOFTWARE.
 #
 # @section DESCRIPTION
-# This is the path config file for snakesGL.
+# Coin.
+#
+# Vertices: 14
+# Faces:    24
+#
 ##
 
-# Shaders
-grid_big_vert_shader=./shaders/GridBigShader.vert
-grid_big_frag_shader=./shaders/GridBigShader.frag
-grid_small_vert_shader=./shaders/GridSmallShader.vert
-grid_small_frag_shader=./shaders/GridSmallShader.frag
-snake_vert_shader=./shaders/SnakeShader.vert
-snake_frag_shader=./shaders/SnakeShader.frag
-obstacles_vert_shader=./shaders/ObstaclesShader.vert
-obstacles_frag_shader=./shaders/ObstaclesShader.frag
-bounding_box_vert_shader=./shaders/BoundingBoxShader.vert
-bounding_box_frag_shader=./shaders/BoundingBoxShader.frag
-snake_contour_vert_shader=./shaders/SnakeContourShader.vert
-snake_contour_frag_shader=./shaders/SnakeContourShader.frag
-coin_vert_shader=./shaders/CoinShader.vert
-coin_frag_shader=./shaders/CoinShader.frag
+vn 0 -0.333 -0.577
+v 0 -0.1 0.1726
+vn 0.5 -0.333 -0.2887
+v 0.5 -0.1 0.4613
+vn 0.5 -0.333 0.2887
+v 0.5 -0.1 1.0387
+vn 0 -0.333 0.577
+v 0 -0.1 1.3273
+vn -0.5 -0.333 0.2887
+v -0.5 -0.1 1.0387
+vn -0.5 -0.333 -0.2887
+v -0.5 -0.1 0.4613
+vn 0 0.333 -0.577
+v 0 0.1 0.1726
+vn 0.5 0.333 -0.2887
+v 0.5 0.1 0.4613
+vn 0.5 0.333 0.2887
+v 0.5 0.1 1.0387
+vn 0 0.333 0.577
+v 0 0.1 1.3273
+vn -0.5 0.333 0.2887
+v -0.5 0.1 1.0387
+vn -0.5 0.333 -0.2887
+v -0.5 0.1 0.4613
+vn 0 -1 0
+v 0 -0.1 0.75
+vn 0 1 0
+v 0 0.1 0.75
 
-# Wavefront obj model files
-body=./obj/body.obj
-head=./obj/head.obj
-tail=./obj/tail.obj
-tile_big=./obj/tile_big.obj
-tile_small=./obj/tile_small.obj
-coin=./obj/coin.obj
-wall=./obj/wall.obj
+f 1//1 2//2 13//13
+f 2//2 3//3 13//13
+f 3//3 4//4 13//13
+f 4//4 5//5 13//13
+f 5//5 6//6 13//13
+f 6//6 1//1 13//13
+f 7//7 14//14 8//8
+f 8//8 14//14 9//9
+f 9//9 14//14 10//10
+f 10//10 14//14 11//11
+f 11//11 14//14 12//12
+f 12//12 14//14 7//7
+f 7//7 2//2 1//1
+f 7//7 8//8 2//2
+f 8//8 3//3 2//2
+f 8//8 9//9 3//3
+f 9//9 10//10 4//4
+f 9//9 4//4 3//3
+f 10//10 5//5 4//4
+f 10//10 11//11 5//5
+f 11//11 6//6 5//5
+f 11//11 12//12 6//6
+f 12//12 1//1 6//6
+f 12//12 7//7 1//1

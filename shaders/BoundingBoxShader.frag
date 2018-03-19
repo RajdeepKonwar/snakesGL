@@ -35,6 +35,7 @@ in vec4 ViewSpace;
 
 uniform vec4 u_camPos;
 uniform bool u_destroyed;
+uniform int  u_bboxColor;
 
 out vec4 FragColor;
 
@@ -50,11 +51,13 @@ void main() {
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
 
   vec4 l_bboxColor;
-  if( u_destroyed )
-    l_bboxColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );
-  else
+  if( u_bboxColor == 1 )
+    l_bboxColor = vec4( 1.0f, 1.0f, 1.0f, 1.0f );
+  else if ( u_bboxColor == 2 )
     l_bboxColor = vec4( 0.0f, 1.0f, 0.0f, 1.0f );
-
+  else if ( u_bboxColor == 3 )
+    l_bboxColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );
+    
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   FragColor   = mix( l_fogColor, l_bboxColor, l_fogFactor );
 }

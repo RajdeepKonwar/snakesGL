@@ -40,7 +40,7 @@
 
 Node::~Node() {}
 
-Transform::Transform( const glm::mat4 &i_mtx ): m_destroyed(false) {
+Transform::Transform( const glm::mat4 &i_mtx ): m_destroyed(false), m_type(0), m_bboxColor(2) {
   m_tMtx  = i_mtx;
 }
 
@@ -121,13 +121,15 @@ void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
   GLuint l_uDestroyed  = glGetUniformLocation( i_shaderProgram, "u_destroyed"  );
-
+  GLuint l_uBBoxColor  = glGetUniformLocation( i_shaderProgram, "u_bboxColor"  );
+  
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
   glUniform1i( l_uDestroyed, this->m_destroyed );
-
+  glUniform1i( l_uBBoxColor, this->m_bboxColor );
+  
   glBindVertexArray( m_bboxVAO );
   glLineWidth( 1.0f );
   glDrawArrays( GL_LINES, 0, m_bboxVertices.size() );
@@ -328,7 +330,7 @@ void Geometry::load( const char *i_fileName ) {
   l_in.close();
 }
 
-Geometry::Geometry( const char *i_fileName ) {
+Geometry::Geometry( const char *i_fileName ) : m_obstacleType(1) {
   //! parse and load the obj file
   load( i_fileName );
 
@@ -377,6 +379,9 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
   
+  GLuint l_uPrevProjection = glGetUniformLocation( i_shaderProgram, "u_prevProjection" );
+  GLuint l_uPrevModelView  = glGetUniformLocation( i_shaderProgram, "u_prevModelView"  );
+  
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
                                                               0.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.ambient"   ),
@@ -394,11 +399,17 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
               0.6f, 0.6f, 0.6f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.specular"  ),
               0.7f, 0.7f, 0.7f );
-
+  
+  GLuint l_uObstacleType = glGetUniformLocation( i_shaderProgram, "u_obstacleType" );
+  glUniform1i( l_uObstacleType, this->m_obstacleType );
+  
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
                Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+  
+  glUniformMatrix4fv( l_uPrevProjection, 1, GL_FALSE, &Window::m_prevP[0][0] );
+  glUniformMatrix4fv( l_uPrevModelView,  1, GL_FALSE, &Window::m_prevV[0][0] );
 
   glBindVertexArray( m_VAO );
   glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),
