@@ -66,7 +66,7 @@ void Transform::generateBoundingBox() {
   float l_yMin  = m_position.y - m_size.y;
   float l_yMax  = m_position.y;
   float l_zMin  = m_position.z;
-  float l_zMax  = m_size.z;
+  float l_zMax  = m_position.z + m_size.z;
 
   //! The 8 vertices of the bounding box
   glm::vec3 l_v1( l_xMin, l_yMin, l_zMin );
@@ -131,7 +131,7 @@ void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
   glBindVertexArray( 0 );
 }
 
-void Transform::generateSnakeContour( const int &i_nBody ) {
+void Transform::generateSnakeContour() {
   int l_i;
   static float s_headPos[4]   = { 0.78f, 0.78f, 1.8f, 0.78f };
 
@@ -380,13 +380,13 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
 
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
-                                                              0.0f, 1.0f, 1.0f );
+                                                            0.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.ambient"   ),
                                                             0.2f, 0.2f, 0.2f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.diffuse"   ),
                                                             1.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.specular"  ),
-                                                              0.3f, 0.3f, 0.3f );
+                                                            0.3f, 0.3f, 0.3f );
 
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.direction" ),
               0.0f, 0.1f, 1.2f );

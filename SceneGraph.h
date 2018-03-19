@@ -88,7 +88,7 @@ public:
   void drawBoundingBox( const GLuint    &i_shaderProgram,
                         const glm::mat4 &i_mtx );
 
-  void generateSnakeContour( const int &i_nBody );
+  void generateSnakeContour();
   void drawSnakeContour( const GLuint    &i_shaderProgram,
                          const glm::mat4 &i_mtx );
 
