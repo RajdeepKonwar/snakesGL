@@ -59,7 +59,8 @@ public:
   virtual ~Node() = 0;
 
   //! pure virtual functions
-  virtual void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) = 0;
+  virtual void draw( const GLuint    &i_shaderProgram,
+                     const glm::mat4 &i_mtx ) = 0;
   virtual void update( const glm::mat4 &i_mtx ) = 0;
 };
 
@@ -77,7 +78,8 @@ public:
   
   glm::vec3 m_position, m_size;
   bool m_destroyed;
-  int m_bboxColor, m_type;
+  int m_bboxColor;  //! 1 for white, 2 for green, 3 for red
+  int m_type;       //! 0 for head, 1 for pyramid, 2 for coin, 3 for wall
   
   void addChild( Node *i_child );
   void removeChild();
@@ -90,7 +92,8 @@ public:
   void drawSnakeContour( const GLuint    &i_shaderProgram,
                          const glm::mat4 &i_mtx );
 
-  void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
+  void draw( const GLuint    &i_shaderProgram,
+             const glm::mat4 &i_mtx );
   void update( const glm::mat4 &i_mtx );
 };
 
@@ -106,12 +109,13 @@ private:
 public:
   Geometry( const char *i_fileName );
   ~Geometry();
-  
+
+  //! 1 for pyramid, 2 for coin, 3 for wall
   int m_obstacleType;
 
-  void draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx );
+  void draw( const GLuint    &i_shaderProgram,
+             const glm::mat4 &i_mtx );
   void update( const glm::mat4 &i_mtx );
 };
-
 
 #endif

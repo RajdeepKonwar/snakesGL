@@ -50,14 +50,15 @@ void main() {
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
 
-  vec4 l_bboxColor;
+  vec4 l_bboxColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
+
   if( u_bboxColor == 1 )
-    l_bboxColor = vec4( 1.0f, 1.0f, 1.0f, 1.0f );
+    l_bboxColor = vec4( 1.0f, 1.0f, 1.0f, 1.0f );   //! white
   else if ( u_bboxColor == 2 )
-    l_bboxColor = vec4( 0.0f, 1.0f, 0.0f, 1.0f );
+    l_bboxColor = vec4( 0.0f, 1.0f, 0.0f, 1.0f );   //! green
   else if ( u_bboxColor == 3 )
-    l_bboxColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );
-    
+    l_bboxColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );   //! red
+
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   FragColor   = mix( l_fogColor, l_bboxColor, l_fogFactor );
 }

@@ -44,7 +44,7 @@ int Window::m_nTile = 50;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader;
-GLuint g_boundingBoxShader, g_snakeContourShader, g_coinShader;
+GLuint g_boundingBoxShader, g_snakeContourShader;
 
 //! Overclocking on apple to get better fps lul
 #ifdef __APPLE__
@@ -61,7 +61,6 @@ float g_rotAngle = 0.0f;
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
 Node *g_obstacles;
-Node *g_coins;
 
 //! Individual elements' transform mtx
 Node *g_headMtx, *g_tailMtx, *g_pyramidMtx, *g_coinMtx, *g_wallMtx;
@@ -81,8 +80,6 @@ glm::mat4 Window::m_V;
 glm::mat4 Window::m_prevP;
 glm::mat4 Window::m_prevV;
 
-glm::mat4 move = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-
 //! functions as constructor
 void Window::initializeObjects() {
   int l_i, l_j;
@@ -101,7 +98,6 @@ void Window::initializeObjects() {
   std::string l_obstaclesVertShader,    l_obstaclesFragShader;
   std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
   std::string l_snakeContourVertShader, l_snakeContourFragShader;
-  std::string l_coinVertShader,         l_coinFragShader;
   std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
@@ -146,10 +142,6 @@ void Window::initializeObjects() {
       l_snakeContourVertShader  = l_varValue;
     else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
       l_snakeContourFragShader  = l_varValue;
-    else if( l_varName.compare( "coin_vert_shader" ) == 0 )
-      l_coinVertShader  = l_varValue;
-    else if( l_varName.compare( "coin_frag_shader" ) == 0 )
-      l_coinFragShader  = l_varValue;
 
     else if( l_varName.compare( "head" ) == 0 )
       l_head                    = l_varValue;
@@ -180,74 +172,103 @@ void Window::initializeObjects() {
   g_tileBig   = new Geometry( l_tileBig.c_str()   );
   g_coin      = new Geometry( l_coin.c_str()      );
   g_wall      = new Geometry( l_wall.c_str()      );
-  
-  //! Transform nodes
+
+  //! Set geometry obstacle type (for color, 1 by default)
+  static_cast< Geometry * >(g_coin)->m_obstacleType = 2;
+  static_cast< Geometry * >(g_wall)->m_obstacleType = 3;
+
+  //! Group nodes
   g_gridBig   = new Transform( glm::mat4( 1.0f ) );
   g_gridSmall = new Transform( glm::mat4( 1.0f ) );
   g_snake     = new Transform( glm::mat4( 1.0f ) );
+  g_obstacles = new Transform( glm::mat4(1.0f) );
+
+  //! Transform modes
   g_headMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
-  g_obstacles = new Transform( glm::mat4(1.0f) );
-  g_coins     = new Transform( glm::mat4(1.0f) );
-  g_coinMtx = new Transform( glm::translate( glm::mat4(1.0f),
-                                            glm::vec3( 0.0f, 20.0f, 0.0f ) ) );
-  g_wallMtx = new Transform( glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 30.0f, 0.0f)));
-  static_cast< Geometry* >(g_wall)->m_obstacleType = 2;
 
-  //! Initialize snake contour
-  static_cast< Transform * >(g_snake)->generateSnakeContour( Window::m_nBody );
+  //! Snake body parts' transform mtx
+  for( l_i = 0; l_i < Window::m_nBody; l_i++ )
+    g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
+                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
 
-  //! Using head as pyramid obstacle
+  //! Tail transform mtx
+  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
+                  glm::vec3( 0.0f,
+                             -1.0f * (float) Window::m_nBody + 0.5f,
+                             0.0f ) ) );
+
+  //! Coin transform mtx
+  g_coinMtx   = new Transform( glm::translate( glm::mat4(1.0f),
+                                               glm::vec3( 0.0f, 20.0f, 0.0f ) ) );
+
+  //! Wall transform mtx
+  g_wallMtx   = new Transform( glm::translate( glm::mat4(1.0f),
+                                               glm::vec3( 0.0f, 30.0f, 0.0f ) ) );
+
+  //! Reuse head (rotated by 45) as pyramid obstacle
   glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4(1.0f),
                                             glm::vec3( 0.0f, 6.0f, 0.0f ) ) *
                             glm::rotate( glm::mat4( 1.0f ),
                                          glm::radians( -45.0f ),
                                          glm::vec3( 0.0f, 0.0f, 1.0f ) );
   g_pyramidMtx  = new Transform ( l_moveRotMtx );
-  
+
+  //! Initialize snake contour (white)
+  static_cast< Transform * >(g_snake)->generateSnakeContour( Window::m_nBody );
+
+  //! Type for collision detection
   static_cast< Transform* >(g_pyramidMtx)->m_type = 1;
-  static_cast< Transform* >(g_coinMtx)->m_type = 2;
-  static_cast< Transform* >(g_wallMtx)->m_type = 3;
-  
+  static_cast< Transform* >(g_coinMtx)->m_type    = 2;
+  static_cast< Transform* >(g_wallMtx)->m_type    = 3;
+
+  //! Head's bounding box is white
   static_cast< Transform* >(g_headMtx)->m_bboxColor = 1;
 
+  //! Add pyramid as child of obstacles
   static_cast< Transform* >(g_obstacles)->addChild( g_pyramidMtx );
   static_cast< Transform* >(g_pyramidMtx)->addChild( g_head );
-  
-  static_cast< Transform* >(g_obstacles)->addChild( g_wallMtx );
-  static_cast< Transform* >(g_wallMtx)->addChild( g_wall );
-  
-  static_cast< Transform* >(g_coins)->addChild( g_coinMtx );
+
+  //! Add coin as child of obstacles
+  static_cast< Transform* >(g_obstacles)->addChild( g_coinMtx );
   static_cast< Transform* >(g_coinMtx)->addChild( g_coin );
 
+  //! Add wall as child of obstacles
+  static_cast< Transform* >(g_obstacles)->addChild( g_wallMtx );
+  static_cast< Transform* >(g_wallMtx)->addChild( g_wall );
+
   //! Bounding boxes' initial positions and sizes
+  //! Head
   static_cast< Transform* >( g_headMtx )->m_position = glm::vec3( -1.0f,
                                                                    1.8f,
                                                                    0.0f );
   static_cast< Transform* >( g_headMtx )->m_size     = glm::vec3(  2.0f,
                                                                    1.5f,
                                                                    0.75f );
-  
+
+  //! Pyramid
   static_cast< Transform* >( g_pyramidMtx )->m_position = glm::vec3( -0.7f,
                                                                       6.7f,
                                                                       0.01f );
   static_cast< Transform* >( g_pyramidMtx )->m_size     = glm::vec3(  1.4f,
                                                                       1.4f,
                                                                       0.75f );
-  
-  static_cast< Transform* >( g_wallMtx )->m_position = glm::vec3( -0.7f,
-                                                                    30.7f,
-                                                                    0.01f );
-  static_cast< Transform* >( g_wallMtx )->m_size     = glm::vec3(  1.4f,
-                                                                    1.4f,
-                                                                    1.0f );
-  
+
+  //! Coin
   static_cast< Transform* >( g_coinMtx )->m_position    = glm::vec3( -0.5f,
                                                                      20.1f,
                                                                      0.1726f);
   static_cast< Transform* >( g_coinMtx )->m_size        = glm::vec3( 1.0f,
                                                                      0.2f,
                                                                      1.3f );
+
+  //! Wall
+  static_cast< Transform* >( g_wallMtx )->m_position = glm::vec3( -0.7f,
+                                                                    30.7f,
+                                                                    0.01f );
+  static_cast< Transform* >( g_wallMtx )->m_size     = glm::vec3(  1.4f,
+                                                                    1.4f,
+                                                                    1.0f );
 
   //! Arrange tiles to form grid
   for( l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
@@ -264,36 +285,31 @@ void Window::initializeObjects() {
      }
    }
 
+  //! Add big tiles to big grid group
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end();
         ++g_nodeIt ) {
     static_cast< Transform * >(g_gridBig)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileBig );
   }
 
+  //! Add small tiles to small grid group
   for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end();
         ++g_nodeIt ) {
     static_cast< Transform * >(g_gridSmall)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
   }
 
-  //! Snake body parts
-  for( l_i = 0; l_i < Window::m_nBody; l_i++ )
-    g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
-
-  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
-                  glm::vec3( 0.0f,
-                             -1.0f * (float) Window::m_nBody + 0.5f,
-                             0.0f ) ) );
-
+  //! Add head to snake
   static_cast< Transform * >(g_snake)->addChild( g_headMtx );
   static_cast< Transform * >(g_headMtx)->addChild( g_head );
 
+  //! Add body parts to snake
   for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt ) {
     static_cast< Transform * >(g_snake)->addChild( *g_nodeIt );
     static_cast< Transform * >(*g_nodeIt)->addChild( g_body );
   }
 
+  //! Add tail to snake
   static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
   static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
 
@@ -321,8 +337,6 @@ void Window::initializeObjects() {
                                        l_boundingBoxFragShader.c_str()  );
   g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
                                        l_snakeContourFragShader.c_str() );
-  g_coinShader          = LoadShaders( l_coinVertShader.c_str(),
-                                       l_coinFragShader.c_str()         );
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -330,10 +344,13 @@ void Window::cleanUp() {
   delete g_snake;
   delete g_gridBig;
   delete g_gridSmall;
+  delete g_obstacles;
+
   delete g_headMtx;
   delete g_tailMtx;
-  delete g_obstacles;
   delete g_pyramidMtx;
+  delete g_coinMtx;
+  delete g_wallMtx;
 
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
@@ -348,12 +365,14 @@ void Window::cleanUp() {
   delete g_tail;
   delete g_tileBig;
   delete g_tileSmall;
+  delete g_coin;
+  delete g_wall;
 
-  glDeleteProgram( g_gridBigShader   );
-  glDeleteProgram( g_gridSmallShader );
-  glDeleteProgram( g_snakeShader     );
-  glDeleteProgram( g_obstaclesShader   );
-  glDeleteProgram( g_boundingBoxShader );
+  glDeleteProgram( g_gridBigShader      );
+  glDeleteProgram( g_gridSmallShader    );
+  glDeleteProgram( g_snakeShader        );
+  glDeleteProgram( g_obstaclesShader    );
+  glDeleteProgram( g_boundingBoxShader  );
   glDeleteProgram( g_snakeContourShader );
 }
 
@@ -388,13 +407,20 @@ void Window::performCollisions() {
 
   for( std::vector< Node* >::iterator l_it = g_obstaclesList.begin() + 1;
        l_it != g_obstaclesList.end(); ++l_it ) {
+    //! Only check for undestroyed obstacles
     if( !static_cast< Transform * >(*l_it)->m_destroyed ) {
+      //! Check each obstacle wrt head
       if( checkCollision( g_headMtx, *l_it ) ) {
-        if (static_cast< Transform* >(*l_it)->m_type == 3) {
-          static_cast< Transform* >(*l_it)->m_bboxColor = 3;
+        /** Collision with wall
+         *  Set both head and wall bbox to red, stop motion of snake
+         **/
+        if( static_cast< Transform* >(*l_it)->m_type == 3 ) {
+          static_cast< Transform* >(*l_it)->m_bboxColor     = 3;
           static_cast< Transform* >(g_headMtx)->m_bboxColor = 3;
           Window::m_velocity = 0.0f;
         }
+
+        //! Set obstacle's bbox to red and destroy it (don't display)
         else {
           static_cast< Transform* >(*l_it)->m_bboxColor = 3;
           static_cast< Transform* >(*l_it)->m_destroyed = true;
@@ -478,8 +504,8 @@ void Window::displayCallback( GLFWwindow* i_window ) {
   g_obstacles->draw( g_obstaclesShader, Window::m_V );
   
   //! Using CoinShader, draw the coins
-  glUseProgram( g_coinShader );
-  g_coins->draw( g_coinShader, Window::m_V );
+  // glUseProgram( g_coinShader );
+  // g_coins->draw( g_coinShader, Window::m_V );
 
   //! Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
   glUseProgram( g_boundingBoxShader );

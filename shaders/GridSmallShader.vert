@@ -35,21 +35,13 @@ layout (location = 1) in vec3 a_normal;
 
 uniform mat4 u_projection;
 uniform mat4 u_modelView;
-uniform mat4 u_prevProjection;
-uniform mat4 u_prevModelView;
 
 out vec3 Normal;
 out vec3 FragCoord;
 out vec4 ViewSpace;
 
-out vec4 vPosition;
-out vec4 vPrevPosition;
-
 void main() {
-  vPosition = u_projection * u_modelView * vec4( a_pos, 1.0f );
-  vPrevPosition = u_prevProjection * u_prevModelView * vec4( a_pos, 1.0f );
-  
-  gl_Position = vPosition;
+  gl_Position = u_projection * u_modelView * vec4( a_pos, 1.0f );
   ViewSpace   = u_modelView * vec4( a_pos, 1.0f );
   FragCoord   = a_pos;
   Normal      = a_normal;

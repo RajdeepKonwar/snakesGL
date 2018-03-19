@@ -36,32 +36,29 @@ struct DirLight {
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
-  
-  int turnedOn;
 };
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
-uniform DirLight dirLight;
-
-uniform int bodypart;
+vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir );
 
 in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
 
-uniform vec4 u_camPos;
+uniform DirLight dirLight;
+uniform vec4     u_camPos;
 
 out vec4 FragColor;
 
 void main() {
-  
   // Directional Lighting
   
-  vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) - vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
+  vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) -
+                       vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
   
   vec4 l_snakeColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
-  l_snakeColor += vec4( CalcDirLight(dirLight, normalize(Normal), viewDirection), 0.0f );
-  
+  l_snakeColor += vec4( CalcDirLight( dirLight, normalize( Normal ), viewDirection ),
+                        0.0f );
+
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
@@ -70,27 +67,29 @@ void main() {
   float l_maxFogDist = 17.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  
+
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   FragColor   = mix( l_fogColor, l_snakeColor, l_fogFactor );
 }
 
-// Calculates the color when using a directional light.
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
-{
-  vec3 lightDir = normalize(light.direction);
-  //if (FragPos.z < 0) {lightDir = normalize(-light.direction);}
-  
-  // Diffuse shading
-  float diff = max(dot(normal, lightDir), 0.0);
-  // Specular shading
-  vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 0.6f);
-  // Combine results
-  vec3 ambient = light.ambient * vec3(0.1745f, 0.01175f, 0.01175f);//vec3(texture(material.diffuse, TexCoords));
-  vec3 diffuse = light.diffuse * diff * vec3(0.61424f, 0.04136f, 0.04136f);//vec3(texture(material.diffuse, TexCoords));
-  vec3 specular = light.specular * spec * vec3(0.727811f, 0.626959f, 0.626959f) * dot(vec3(0.727811f, 0.626959f, 0.626959f), light.specular);//vec3(texture(material.specular, TexCoords));
+//! Calculates the color when using a directional light.
+vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
+  vec3 lightDir = normalize( light.direction );
+
+  //! Diffuse shading
+  float diff = max( dot( normal, lightDir ), 0.0 );
+
+  //! Specular shading
+  vec3 reflectDir = reflect( -lightDir, normal );
+  float spec = pow( max( dot( viewDir, reflectDir ), 0.0 ), 0.6 );
+
+  //! Combine results
+  vec3 ambient  = light.ambient  * vec3( 0.1745f, 0.01175f, 0.01175f );
+  vec3 diffuse  = light.diffuse  * diff * vec3( 0.61424f, 0.04136f, 0.04136f );
+  vec3 specular = light.specular * spec * vec3( 0.727811f, 0.626959f, 0.626959f )
+                  * dot(vec3(0.727811f, 0.626959f, 0.626959f), light.specular);
+
   return (ambient + diffuse + specular);
 }

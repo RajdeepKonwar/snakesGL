@@ -40,8 +40,15 @@
 
 Node::~Node() {}
 
-Transform::Transform( const glm::mat4 &i_mtx ): m_destroyed(false), m_type(0), m_bboxColor(2) {
-  m_tMtx  = i_mtx;
+Transform::Transform( const glm::mat4 &i_mtx ): m_tMtx(i_mtx), m_destroyed(false),
+                                                m_bboxColor(2), m_type(0) {}
+
+Transform::~Transform() {
+  glDeleteVertexArrays( 1, &m_bboxVAO  );
+  glDeleteVertexArrays( 1, &m_snakeVAO );
+
+  glDeleteBuffers( 1, &m_bboxVBO  );
+  glDeleteBuffers( 1, &m_snakeVBO );
 }
 
 void Transform::addChild( Node *i_child ) {
@@ -51,18 +58,6 @@ void Transform::addChild( Node *i_child ) {
 //! untested: don't use
 void Transform::removeChild() {
   m_ptrs.pop_back();
-}
-
-void Transform::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
-  if ( m_destroyed )
-    return;
-  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
-        ++l_it )
-    (*l_it)->draw( i_shaderProgram, i_mtx * m_tMtx );
-}
-
-void Transform::update( const glm::mat4 &i_mtx ) {
-  m_tMtx  = i_mtx;
 }
 
 void Transform::generateBoundingBox() {
@@ -230,12 +225,17 @@ void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
   glBindVertexArray( 0 );
 }
 
-Transform::~Transform() {
-  glDeleteVertexArrays( 1, &m_bboxVAO  );
-  glDeleteVertexArrays( 1, &m_snakeVAO );
+void Transform::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
+  if ( m_destroyed )
+    return;
 
-  glDeleteBuffers( 1, &m_bboxVBO  );
-  glDeleteBuffers( 1, &m_snakeVBO );
+  for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
+        ++l_it )
+    (*l_it)->draw( i_shaderProgram, i_mtx * m_tMtx );
+}
+
+void Transform::update( const glm::mat4 &i_mtx ) {
+  m_tMtx  = i_mtx;
 }
 
 void Geometry::load( const char *i_fileName ) {
@@ -378,10 +378,7 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
-  
-  GLuint l_uPrevProjection = glGetUniformLocation( i_shaderProgram, "u_prevProjection" );
-  GLuint l_uPrevModelView  = glGetUniformLocation( i_shaderProgram, "u_prevModelView"  );
-  
+
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
                                                               0.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.ambient"   ),
@@ -390,7 +387,7 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
                                                             1.0f, 1.0f, 1.0f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.specular"  ),
                                                               0.3f, 0.3f, 0.3f );
-  
+
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.direction" ),
               0.0f, 0.1f, 1.2f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.ambient"   ),
@@ -399,21 +396,19 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
               0.6f, 0.6f, 0.6f );
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.specular"  ),
               0.7f, 0.7f, 0.7f );
-  
+
   GLuint l_uObstacleType = glGetUniformLocation( i_shaderProgram, "u_obstacleType" );
   glUniform1i( l_uObstacleType, this->m_obstacleType );
-  
+
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
                Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
-  
-  glUniformMatrix4fv( l_uPrevProjection, 1, GL_FALSE, &Window::m_prevP[0][0] );
-  glUniformMatrix4fv( l_uPrevModelView,  1, GL_FALSE, &Window::m_prevV[0][0] );
 
   glBindVertexArray( m_VAO );
   glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),
                   GL_UNSIGNED_INT, 0 );
+
   glBindVertexArray( 0 );
 }
 

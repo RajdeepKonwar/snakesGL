@@ -25,7 +25,7 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Obstacle Vertex Shader.
+ * Obstacles Vertex Shader.
  **/
 
 #version 330 core

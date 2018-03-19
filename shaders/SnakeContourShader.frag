@@ -49,7 +49,7 @@ void main() {
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
 
-  vec4 l_snakeCtrColor  = vec4( 1.0f, 1.0f, 1.0f, 1.0f );
+  vec4 l_snakeCtrColor  = vec4( 1.0f, 1.0f, 1.0f, 1.0f );   //! white
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   FragColor   = mix( l_fogColor, l_snakeCtrColor, l_fogFactor );
