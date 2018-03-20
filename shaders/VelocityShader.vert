@@ -25,36 +25,27 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Snake Contour Fragment Shader.
+ * Velocity Shader.
  **/
 
 #version 330 core
 
-in vec3 FragCoord;
-in vec4 ViewSpace;
+layout (location = 0) in vec3 a_pos;
 
-uniform vec4 u_camPos;
-uniform bool u_destroyed;
-uniform bool u_fog;
+uniform mat4 u_prevProjection;
+uniform mat4 u_prevModelView;
 
-out vec4 FragColor;
+uniform mat4 u_projection;
+uniform mat4 u_modelView;
+
+out vec4 vPosition;
+out vec4 vPrevPosition;
 
 void main() {
-  //! Linear fog
-  vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
-  float l_dist      = length( l_distVector );
+  
+  vPosition = u_projection * u_modelView * vec4( a_pos, 1.0f );
+  vPrevPosition = u_prevProjection * u_prevModelView * vec4( a_pos, 1.0f );
+  
+  gl_Position = vPosition;
 
-  float l_minFogDist = 2.0f;
-  float l_maxFogDist = 17.0f;
-
-  float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
-
-  vec4 l_snakeCtrColor  = vec4( 1.0f, 1.0f, 1.0f, 1.0f );   //! white
-
-  l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  if (u_fog)
-    FragColor   = mix( l_fogColor, l_snakeCtrColor, l_fogFactor );
-  else
-    FragColor   = l_snakeCtrColor;
 }

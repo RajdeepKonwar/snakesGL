@@ -125,6 +125,9 @@ void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
   glUniform1i( l_uDestroyed, this->m_destroyed );
   glUniform1i( l_uBBoxColor, this->m_bboxColor );
   
+  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
+  glUniform1i( l_uFog, Window::m_fog );
+  
   glBindVertexArray( m_bboxVAO );
   glLineWidth( 1.0f );
   glDrawArrays( GL_LINES, 0, m_bboxVertices.size() );
@@ -218,6 +221,9 @@ void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+  
+  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
+  glUniform1i( l_uFog, Window::m_fog );
 
   glBindVertexArray( m_snakeVAO );
   glLineWidth( 2.0f );
@@ -399,6 +405,9 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
 
   GLuint l_uObstacleType = glGetUniformLocation( i_shaderProgram, "u_obstacleType" );
   glUniform1i( l_uObstacleType, this->m_obstacleType );
+  
+  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
+  glUniform1i( l_uFog, Window::m_fog );
 
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );

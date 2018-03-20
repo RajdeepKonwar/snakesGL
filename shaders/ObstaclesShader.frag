@@ -47,6 +47,7 @@ in vec4 ViewSpace;
 uniform DirLight dirLight;
 uniform vec4     u_camPos;
 uniform int      u_obstacleType;
+uniform bool u_fog;
 
 out vec4 FragColor;
 
@@ -71,7 +72,11 @@ void main() {
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  FragColor   = mix( l_fogColor, l_obstacleColor, l_fogFactor );
+  if (u_fog)
+    FragColor   = mix( l_fogColor, l_obstacleColor, l_fogFactor );
+  else
+    FragColor   = l_obstacleColor;
+  
 }
 
 //! Calculates the color when using a directional light.

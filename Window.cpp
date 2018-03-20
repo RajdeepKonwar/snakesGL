@@ -32,18 +32,19 @@
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"
-#define CONFIG_FILE  "./snakesGL.conf"
+#define CONFIG_FILE  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/snakesGL.conf"
 
 //! Static data members
 int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 10;
+int Window::m_nTile = 13;
+bool Window::m_fog = true;
 
 //! Global variables
 GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader;
-GLuint g_boundingBoxShader, g_snakeContourShader;
+GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader, g_motionBlurFragShader;
 
 //! Overclocking on apple to get better fps lul
 #ifdef __APPLE__
@@ -69,7 +70,7 @@ std::vector< Node * >::iterator g_nodeIt;
 Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall, *g_coin, *g_wall;
 
 //! Default camera parameters
-// glm::vec3 Window::m_camPos( 0.0f, 1.8f, 5.0f );//! e | Position of camera (top)
+//glm::vec3 Window::m_camPos( 0.0f, 1.8f, 5.0f );//! e | Position of camera (top)
 glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.0f );//! e | Position of camera
 glm::vec3 g_camLookAt( 0.0f, 1.8f, 0.0f );      //! d | Where camera looks at
 glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
@@ -77,6 +78,8 @@ glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
+glm::mat4 Window::m_prevP;
+glm::mat4 Window::m_prevV;
 
 //! functions as constructor
 void Window::initializeObjects() {
@@ -96,6 +99,8 @@ void Window::initializeObjects() {
   std::string l_obstaclesVertShader,    l_obstaclesFragShader;
   std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
   std::string l_snakeContourVertShader, l_snakeContourFragShader;
+  std::string l_velocityVertShader,     l_velocityFragShader;
+  std::string l_motionBlurFragShader;
   std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
@@ -140,6 +145,12 @@ void Window::initializeObjects() {
       l_snakeContourVertShader  = l_varValue;
     else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
       l_snakeContourFragShader  = l_varValue;
+    else if( l_varName.compare( "velocity_vert_shader" ) == 0 )
+      l_velocityVertShader  = l_varValue;
+    else if( l_varName.compare( "velocity_frag_shader" ) == 0 )
+      l_velocityFragShader  = l_varValue;
+    else if( l_varName.compare( "motion_blur_frag_shader" ) == 0 )
+      l_motionBlurFragShader  = l_varValue;
 
     else if( l_varName.compare( "head" ) == 0 )
       l_head                    = l_varValue;
@@ -334,6 +345,8 @@ void Window::initializeObjects() {
                                        l_boundingBoxFragShader.c_str()  );
   g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
                                        l_snakeContourFragShader.c_str() );
+  g_velocityShader  = LoadShaders(     l_velocityVertShader.c_str(),
+                                       l_velocityFragShader.c_str()     );
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -371,6 +384,7 @@ void Window::cleanUp() {
   glDeleteProgram( g_obstaclesShader    );
   glDeleteProgram( g_boundingBoxShader  );
   glDeleteProgram( g_snakeContourShader );
+  glDeleteProgram( g_velocityShader     );
 }
 
 bool Window::checkCollision( Node *i_one,
@@ -470,6 +484,19 @@ GLFWwindow* Window::createWindow( int i_width,
 }
 
 void Window::displayCallback( GLFWwindow* i_window ) {
+  
+  GLuint l_uPrevProjection = glGetUniformLocation( g_velocityShader, "u_prevProjection" );
+  GLuint l_uPrevModelView  = glGetUniformLocation( g_velocityShader, "u_prevModelView"  );
+  GLuint l_uProjection = glGetUniformLocation( g_velocityShader, "u_projection" );
+  GLuint l_uModelView  = glGetUniformLocation( g_velocityShader, "u_modelView"  );
+  
+  glUniformMatrix4fv( l_uPrevProjection, 1, GL_FALSE, &Window::m_prevP[0][0] );
+  glUniformMatrix4fv( l_uPrevModelView,  1, GL_FALSE, &Window::m_prevV[0][0] );
+  glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
+  glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &Window::m_V[0][0] );
+  
+  glUseProgram( g_velocityShader );
+  
   //! Clear the color and depth buffers
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -507,6 +534,8 @@ void Window::displayCallback( GLFWwindow* i_window ) {
 
   //! Swap buffers
   glfwSwapBuffers( i_window );
+  
+  Window::m_prevV = Window::m_V;
   
   //! Refresh view matrix with new camera position every display callback
   Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
@@ -584,6 +613,9 @@ void Window::resizeCallback( GLFWwindow* i_window,
     Window::m_P = glm::perspective( 45.0f, (float) i_width / (float) i_height,
                                     0.1f, 2000.0f );
     Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
+    
+    Window::m_prevP = Window::m_P;
+    Window::m_prevV = Window::m_V;
   }
 }
 
@@ -598,10 +630,16 @@ void Window::keyCallback( GLFWwindow *i_window,
         glfwSetWindowShouldClose( i_window, GL_TRUE );
         break;
 
+      case GLFW_KEY_F:
+        Window::m_fog = !Window::m_fog;
+        break;
+      case GLFW_KEY_B:
+        g_drawBbox = !g_drawBbox;
+        break;
       case GLFW_KEY_UP:
       case GLFW_KEY_W:
-        // if( Window::m_velocity == 0.0f )
-        //   break;
+         if( Window::m_velocity == 0.0f )
+           break;
 
 #ifdef __APPLE__
         Window::m_velocity  = 0.2f;
@@ -621,6 +659,9 @@ void Window::keyCallback( GLFWwindow *i_window,
     }
   }
   else if( i_action == GLFW_RELEASE ) {
+    if( Window::m_velocity == 0.0f )
+      return;
+    
 #ifdef __APPLE__
         Window::m_velocity  = 0.05f;
 #else

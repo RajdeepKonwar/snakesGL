@@ -34,6 +34,7 @@ in vec3 FragCoord;
 in vec4 ViewSpace;
 
 uniform vec4 u_camPos;
+uniform bool u_fog;
 
 out vec4 FragColor;
 
@@ -50,5 +51,8 @@ void main() {
   vec4 l_tileColor  = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+  if (u_fog)
+    FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
+  else
+    FragColor   = l_tileColor;
 }
