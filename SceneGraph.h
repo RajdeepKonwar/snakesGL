@@ -75,12 +75,12 @@ private:
 public:
   Transform( const glm::mat4 &i_mtx );
   ~Transform();
-  
-  glm::vec3 m_position, m_size;
+
   bool m_destroyed;
-  int m_bboxColor;  //! 1 for white, 2 for green, 3 for red
-  int m_type;       //! 0 for head, 1 for pyramid, 2 for coin, 3 for wall
-  
+  int m_bboxColor;        //! 1 for white, 2 for green, 3 for red
+  int m_type;             //! 0 for head, 1 for pyramid, 2 for coin, 3 for wall
+  glm::vec3 m_position, m_size;
+
   void addChild( Node *i_child );
   void removeChild();
 

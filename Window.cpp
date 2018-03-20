@@ -43,8 +43,8 @@ int Window::m_nTile = 13;
 bool Window::m_fog = true;
 
 //! Global variables
-GLuint g_gridBigShader, g_gridSmallShader, g_snakeShader, g_obstaclesShader;
-GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader, g_motionBlurFragShader;
+GLuint g_gridBigShader,     g_gridSmallShader,    g_snakeShader, g_obstaclesShader;
+GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader;
 
 //! Overclocking on apple to get better fps lul
 #ifdef __APPLE__
@@ -57,13 +57,16 @@ float g_yPos      = 0.0f;
 int g_move        = 1;
 bool g_drawBbox   = true;
 float g_rotAngle  = 0.0f;
+int g_nPyramids   = 20;
+int g_nCoins      = 1;
+int g_nWalls      = 20;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
 Node *g_obstacles;
 
 //! Individual elements' transform mtx
-Node *g_headMtx, *g_tailMtx, *g_pyramidMtx, *g_coinMtx, *g_wallMtx;
+Node *g_headMtx, *g_tailMtx, **g_pyramidMtx, **g_coinMtx, **g_wallMtx;
 std::vector< Node * > g_tileBigPos, g_tileSmallPos, g_bodyMtx, g_obstaclesList;
 std::vector< Node * >::iterator g_nodeIt;
 
@@ -81,9 +84,18 @@ glm::mat4 Window::m_V;
 glm::mat4 Window::m_prevP;
 glm::mat4 Window::m_prevV;
 
+float Window::randGen() {
+  int l_randMax = Window::m_nTile - 2;
+  int l_randMin = -l_randMax;
+  int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+
+  return (2.0f * (float) l_rand);
+}
+
 //! functions as constructor
 void Window::initializeObjects() {
-  int l_i, l_j;
+  //! Seed the randomizer
+  srand( time( nullptr ) );
 
   //! Parse config file for shader and obj paths
   std::ifstream l_confFn( CONFIG_FILE, std::ios::in );
@@ -99,8 +111,6 @@ void Window::initializeObjects() {
   std::string l_obstaclesVertShader,    l_obstaclesFragShader;
   std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
   std::string l_snakeContourVertShader, l_snakeContourFragShader;
-  std::string l_velocityVertShader,     l_velocityFragShader;
-  std::string l_motionBlurFragShader;
   std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
@@ -145,12 +155,6 @@ void Window::initializeObjects() {
       l_snakeContourVertShader  = l_varValue;
     else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
       l_snakeContourFragShader  = l_varValue;
-    else if( l_varName.compare( "velocity_vert_shader" ) == 0 )
-      l_velocityVertShader  = l_varValue;
-    else if( l_varName.compare( "velocity_frag_shader" ) == 0 )
-      l_velocityFragShader  = l_varValue;
-    else if( l_varName.compare( "motion_blur_frag_shader" ) == 0 )
-      l_motionBlurFragShader  = l_varValue;
 
     else if( l_varName.compare( "head" ) == 0 )
       l_head                    = l_varValue;
@@ -190,64 +194,16 @@ void Window::initializeObjects() {
   g_gridBig   = new Transform( glm::mat4( 1.0f ) );
   g_gridSmall = new Transform( glm::mat4( 1.0f ) );
   g_snake     = new Transform( glm::mat4( 1.0f ) );
-  g_obstacles = new Transform( glm::mat4(1.0f) );
+  g_obstacles = new Transform( glm::mat4( 1.0f ) );
 
   //! Transform modes
   g_headMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
 
-  //! Snake body parts' transform mtx
-  for( l_i = 0; l_i < Window::m_nBody; l_i++ )
-    g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
-
-  //! Tail transform mtx
-  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
-                  glm::vec3( 0.0f,
-                             -1.0f * (float) Window::m_nBody + 0.5f,
-                             0.0f ) ) );
-
-  //! Coin transform mtx
-  g_coinMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                               glm::vec3( 0.0f, 14.0f, 0.0f ) ) );
-
-  //! Wall transform mtx
-  g_wallMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                               glm::vec3( 0.0f, 20.0f, 0.0f ) ) );
-
-  //! Reuse head (rotated by 45) as pyramid obstacle
-  glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4( 1.0f ),
-                                            glm::vec3( 0.0f, 6.0f, 0.0f ) ) *
-                            glm::rotate( glm::mat4( 1.0f ),
-                                         glm::radians( -45.0f ),
-                                         glm::vec3( 0.0f, 0.0f, 1.0f ) );
-  g_pyramidMtx  = new Transform ( l_moveRotMtx );
-
-  //! Initialize snake contour (white)
-  static_cast< Transform * >(g_snake)->generateSnakeContour();
-
-  //! Type for collision detection
-  static_cast< Transform * >(g_pyramidMtx)->m_type = 1;
-  static_cast< Transform * >(g_coinMtx)->m_type    = 2;
-  static_cast< Transform * >(g_wallMtx)->m_type    = 3;
-
   //! Head's bounding box is white
   static_cast< Transform * >(g_headMtx)->m_bboxColor = 1;
 
-  //! Add pyramid as child of obstacles
-  static_cast< Transform * >(g_obstacles)->addChild( g_pyramidMtx );
-  static_cast< Transform * >(g_pyramidMtx)->addChild( g_head );
-
-  //! Add coin as child of obstacles
-  static_cast< Transform * >(g_obstacles)->addChild( g_coinMtx );
-  static_cast< Transform * >(g_coinMtx)->addChild( g_coin );
-
-  //! Add wall as child of obstacles
-  static_cast< Transform * >(g_obstacles)->addChild( g_wallMtx );
-  static_cast< Transform * >(g_wallMtx)->addChild( g_wall );
-
   //! Bounding boxes' initial positions and sizes
-  //! Head
   static_cast< Transform * >( g_headMtx )->m_position   = glm::vec3( -1.0f,
                                                                       1.8f,
                                                                       0.01f );
@@ -255,33 +211,143 @@ void Window::initializeObjects() {
                                                                       1.5f,
                                                                       0.75f );
 
-  //! Pyramid
-  static_cast< Transform * >( g_pyramidMtx )->m_position  = glm::vec3( -0.7f,
-                                                                        6.7f,
-                                                                        0.01f );
-  static_cast< Transform * >( g_pyramidMtx )->m_size      = glm::vec3(  1.4f,
+  //! Add head to snake
+  static_cast< Transform * >(g_snake)->addChild( g_headMtx );
+  static_cast< Transform * >(g_headMtx)->addChild( g_head );
+
+  //! Add head to obstacles list as first item (for collision detection)
+  g_obstaclesList.push_back( g_headMtx );
+
+  //! Snake body parts' transform mtx
+  for( int l_i = 0; l_i < Window::m_nBody; l_i++ )
+    g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
+                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
+
+  //! Add body parts to snake
+  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt ) {
+    static_cast< Transform * >(g_snake)->addChild( *g_nodeIt );
+    static_cast< Transform * >(*g_nodeIt)->addChild( g_body );
+  }
+
+  //! Tail transform mtx
+  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
+                  glm::vec3( 0.0f,
+                             -1.0f * (float) Window::m_nBody + 0.5f,
+                             0.0f ) ) );
+
+  //! Add tail to snake
+  static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
+  static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
+
+  //! Initialize snake contour (white)
+  static_cast< Transform * >(g_snake)->generateSnakeContour();
+
+  //! Pyramids transform mtx
+  g_pyramidMtx  = new Node * [g_nPyramids];
+  for( int l_k = 0; l_k < g_nPyramids; l_k++ ) {
+    float l_randX = randGen();
+    float l_randY = randGen();
+
+    //! Reuse head (rotated by 45) as pyramid obstacle
+    glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4( 1.0f ),
+                                              glm::vec3( (float) l_randX,
+                                                         (float) l_randY,
+                                                         0.0f ) ) *
+                              glm::rotate( glm::mat4( 1.0f ),
+                                           glm::radians( -45.0f ),
+                                           glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    g_pyramidMtx[l_k] = new Transform( l_moveRotMtx );
+
+    //! Type for collision detection
+    static_cast< Transform * >(g_pyramidMtx[l_k])->m_type       = 1;
+
+    //! Bounding boxes' initial positions and sizes
+    static_cast< Transform * >( g_pyramidMtx[l_k] )->m_position = glm::vec3(
+                                                        -0.7f + (float) l_randX,
+                                                         0.7f + (float) l_randY,
+                                                         0.01f );
+    static_cast< Transform * >( g_pyramidMtx[l_k] )->m_size     = glm::vec3(
+                                                                        1.4f,
                                                                         1.4f,
                                                                         0.75f );
 
-  //! Coin
-  static_cast< Transform * >( g_coinMtx )->m_position   = glm::vec3( -0.5f,
-                                                                      14.1f,
-                                                                      0.1726f );
-  static_cast< Transform * >( g_coinMtx )->m_size       = glm::vec3(  1.0f,
-                                                                      0.2f,
-                                                                      1.15f );
+    //! Add pyramid as child of obstacles
+    static_cast< Transform * >(g_obstacles)->addChild( g_pyramidMtx[l_k] );
+    static_cast< Transform * >(g_pyramidMtx[l_k])->addChild( g_head );
 
-  //! Wall
-  static_cast< Transform * >( g_wallMtx )->m_position   = glm::vec3( -0.7f,
-                                                                      20.7f,
-                                                                      0.01f );
-  static_cast< Transform * >( g_wallMtx )->m_size       = glm::vec3(  1.4f,
-                                                                      1.4f,
-                                                                      1.0f );
+    //! Add to obstacles list (for collision detection)
+    g_obstaclesList.push_back( g_pyramidMtx[l_k] );
+  }
+
+  //! Coins transform mtx
+  g_coinMtx  = new Node * [g_nCoins];
+  for( int l_k = 0; l_k < g_nCoins; l_k++ ) {
+    float l_randX = randGen();
+    float l_randY = randGen();
+
+    g_coinMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
+                                                     glm::vec3( (float) l_randX,
+                                                                (float) l_randY,
+                                                                0.0f ) ) );
+
+    //! Type for collision detection
+    static_cast< Transform * >(g_coinMtx[l_k])->m_type  = 2;
+
+    //! Bounding boxes' initial positions and sizes
+    static_cast< Transform * >( g_coinMtx[l_k] )->m_position  = glm::vec3(
+                                                        -0.5f + (float) l_randX,
+                                                         0.1f + (float) l_randY,
+                                                         0.1726f );
+    static_cast< Transform * >( g_coinMtx[l_k] )->m_size      = glm::vec3( 1.0f,
+                                                                           0.2f,
+                                                                           1.15f );
+
+    //! Add coin as child of obstacles
+    static_cast< Transform * >(g_obstacles)->addChild( g_coinMtx[l_k] );
+    static_cast< Transform * >(g_coinMtx[l_k])->addChild( g_coin );
+
+    //! Add to obstacles list (for collision detection)
+    g_obstaclesList.push_back( g_coinMtx[l_k] );
+  }
+
+  //! Walls transform mtx
+  g_wallMtx  = new Node * [g_nWalls];
+  for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
+    float l_randX = randGen();
+    float l_randY = randGen();
+
+    g_wallMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
+                                     glm::vec3( (float) l_randX, (float) l_randY,
+                                                0.0f ) ) );
+
+    //! Type for collision detection
+    static_cast< Transform * >(g_wallMtx[l_k])->m_type        = 3;
+
+    //! Bounding boxes' initial positions and sizes
+    static_cast< Transform * >( g_wallMtx[l_k] )->m_position  = glm::vec3(
+                                                        -0.7f + (float) l_randX,
+                                                         0.7f + (float) l_randY,
+                                                         0.01f );
+    static_cast< Transform * >( g_wallMtx[l_k] )->m_size      = glm::vec3( 1.4f,
+                                                                           1.4f,
+                                                                           1.0f );
+
+    //! Add wall as child of obstacles
+    static_cast< Transform * >(g_obstacles)->addChild( g_wallMtx[l_k] );
+    static_cast< Transform * >(g_wallMtx[l_k])->addChild( g_wall );
+
+    //! Add to obstacles list (for collision detection)
+    g_obstaclesList.push_back( g_wallMtx[l_k] );
+  }
+
+  //! Initialize obstacles' bounding boxes
+  for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
+       ++g_nodeIt )
+    static_cast< Transform * >(*g_nodeIt)->generateBoundingBox();
 
   //! Arrange tiles to form grid
-  for( l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
-    for( l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
+  for( int l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
+    for( int l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3(  l_j * 2.0f,
                                                          l_i * 2.0f,
@@ -307,31 +373,6 @@ void Window::initializeObjects() {
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
   }
 
-  //! Add head to snake
-  static_cast< Transform * >(g_snake)->addChild( g_headMtx );
-  static_cast< Transform * >(g_headMtx)->addChild( g_head );
-
-  //! Add body parts to snake
-  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt ) {
-    static_cast< Transform * >(g_snake)->addChild( *g_nodeIt );
-    static_cast< Transform * >(*g_nodeIt)->addChild( g_body );
-  }
-
-  //! Add tail to snake
-  static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
-  static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
-
-  //! Populate obstacles list
-  g_obstaclesList.push_back( g_headMtx );
-  g_obstaclesList.push_back( g_pyramidMtx );
-  g_obstaclesList.push_back( g_coinMtx );
-  g_obstaclesList.push_back( g_wallMtx );
-
-  //! Initialize bounding boxes
-  for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
-       ++g_nodeIt )
-    static_cast< Transform * >(*g_nodeIt)->generateBoundingBox();
-
   //! Load the shader programs
   g_gridBigShader       = LoadShaders( l_gridBigVertShader.c_str(),
                                        l_gridBigFragShader.c_str()      );
@@ -345,8 +386,6 @@ void Window::initializeObjects() {
                                        l_boundingBoxFragShader.c_str()  );
   g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
                                        l_snakeContourFragShader.c_str() );
-  g_velocityShader  = LoadShaders(     l_velocityVertShader.c_str(),
-                                       l_velocityFragShader.c_str()     );
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -355,12 +394,18 @@ void Window::cleanUp() {
   delete g_gridBig;
   delete g_gridSmall;
   delete g_obstacles;
-
   delete g_headMtx;
   delete g_tailMtx;
-  delete g_pyramidMtx;
-  delete g_coinMtx;
-  delete g_wallMtx;
+
+  // for( int l_i = 0; l_i < g_nPyramids; l_i++ )
+  //   delete[] g_pyramidMtx[l_i];
+  // delete g_pyramidMtx;
+  // for( int l_i = 0; l_i < g_nCoins; l_i++ )
+  //   delete[] g_coinMtx[l_i];
+  // delete g_coinMtx;
+  // for( int l_i = 0; l_i < g_nWalls; l_i++ )
+  //   delete[] g_wallMtx[l_i];
+  // delete g_wallMtx;
 
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
@@ -384,7 +429,6 @@ void Window::cleanUp() {
   glDeleteProgram( g_obstaclesShader    );
   glDeleteProgram( g_boundingBoxShader  );
   glDeleteProgram( g_snakeContourShader );
-  glDeleteProgram( g_velocityShader     );
 }
 
 bool Window::checkCollision( Node *i_one,
@@ -484,16 +528,19 @@ GLFWwindow* Window::createWindow( int i_width,
 }
 
 void Window::displayCallback( GLFWwindow* i_window ) {
-  
-  GLuint l_uPrevProjection = glGetUniformLocation( g_velocityShader, "u_prevProjection" );
-  GLuint l_uPrevModelView  = glGetUniformLocation( g_velocityShader, "u_prevModelView"  );
-  GLuint l_uProjection = glGetUniformLocation( g_velocityShader, "u_projection" );
-  GLuint l_uModelView  = glGetUniformLocation( g_velocityShader, "u_modelView"  );
+  GLuint l_uPrevProjection  = glGetUniformLocation( g_velocityShader,
+                                                    "u_prevProjection" );
+  GLuint l_uPrevModelView   = glGetUniformLocation( g_velocityShader,
+                                                    "u_prevModelView"  );
+  GLuint l_uProjection      = glGetUniformLocation( g_velocityShader,
+                                                    "u_projection" );
+  GLuint l_uModelView       = glGetUniformLocation( g_velocityShader,
+                                                    "u_modelView"  );
   
   glUniformMatrix4fv( l_uPrevProjection, 1, GL_FALSE, &Window::m_prevP[0][0] );
   glUniformMatrix4fv( l_uPrevModelView,  1, GL_FALSE, &Window::m_prevV[0][0] );
-  glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
-  glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &Window::m_V[0][0] );
+  glUniformMatrix4fv( l_uProjection,     1, GL_FALSE, &Window::m_P[0][0]     );
+  glUniformMatrix4fv( l_uModelView,      1, GL_FALSE, &Window::m_V[0][0]     );
   
   glUseProgram( g_velocityShader );
   
@@ -554,33 +601,41 @@ void Window::idleCallback() {
                                         glm::vec3( 0.0f, g_yPos, 0.0f ) );
   static_cast< Transform * >(g_snake)->update( l_moveMtx );
 
-  //! Rotate coin
-  glm::mat4 l_rotMtx = glm::translate( glm::mat4( 1.0f ),
-                                       glm::vec3( 0.0f, 14.0f, 0.0f ) ) *
-                       glm::rotate( glm::mat4( 1.0f ), glm::radians( g_rotAngle ),
-                                    glm::vec3( 0.0f, 0.0f, -1.0f ) );
-  static_cast< Transform * >(g_coinMtx)->update( l_rotMtx );
+  for( int l_i = 0; l_i < g_nCoins; l_i++ ) {
+    //! Find tile center
+    float l_xCntr = static_cast< Transform * >(g_coinMtx[l_i])->m_position.x +
+                    static_cast< Transform * >(g_coinMtx[l_i])->m_size.x / 2.0f;
+    float l_yCntr = static_cast< Transform * >(g_coinMtx[l_i])->m_position.y -
+                    static_cast< Transform * >(g_coinMtx[l_i])->m_size.y / 2.0f;
 
-  //! Update coin's bounding box
-  static_cast< Transform * >(g_coinMtx)->m_position.x = 0.5f *
-                                cos( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
-  static_cast< Transform * >(g_coinMtx)->m_position.y = 0.5f *
-                                sin( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
+    //! Rotate coins
+    glm::mat4 l_rotMtx  = glm::translate( glm::mat4( 1.0f ),
+                                          glm::vec3( l_xCntr, l_yCntr, 0.0f ) ) *
+                          glm::rotate( glm::mat4( 1.0f ), glm::radians( g_rotAngle ),
+                                       glm::vec3( 0.0f, 0.0f, -1.0f ) );
+    static_cast< Transform * >(g_coinMtx[l_i])->update( l_rotMtx );
 
-  //! Keep lower left corner st x is negative and y is positive
-  if( static_cast< Transform * >(g_coinMtx)->m_position.x > 0.0f )
-    static_cast< Transform * >(g_coinMtx)->m_position.x *= -1.0f;
-  if( static_cast< Transform * >(g_coinMtx)->m_position.y < 0.0f )
-    static_cast< Transform * >(g_coinMtx)->m_position.y *= -1.0f;
+    //! Update coin's bounding box
+    static_cast< Transform * >(g_coinMtx[l_i])->m_position.x = 0.5f *
+                               cos( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
+    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y = 0.5f *
+                               sin( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
 
-  //! Update box size accordingly
-  static_cast< Transform * >(g_coinMtx)->m_size.x = abs( 2.0f *
-                          static_cast< Transform * >(g_coinMtx)->m_position.x );
-  static_cast< Transform * >(g_coinMtx)->m_size.y = abs( 2.0f *
-                          static_cast< Transform * >(g_coinMtx)->m_position.y );
-  static_cast< Transform * >(g_coinMtx)->m_position.y += 14.0f;
+    //! Keep lower left corner such that x is negative and y is positive
+    if( static_cast< Transform * >(g_coinMtx[l_i])->m_position.x > 0.0f )
+      static_cast< Transform * >(g_coinMtx[l_i])->m_position.x *= -1.0f;
+    if( static_cast< Transform * >(g_coinMtx[l_i])->m_position.y < 0.0f )
+      static_cast< Transform * >(g_coinMtx[l_i])->m_position.y *= -1.0f;
 
-  static_cast< Transform * >(g_coinMtx)->generateBoundingBox();
+    //! Update box size accordingly
+    // static_cast< Transform * >(g_coinMtx[l_i])->m_position.x += l_xCntr;
+    static_cast< Transform * >(g_coinMtx[l_i])->m_size.x = abs( 2.0f *
+                            static_cast< Transform * >(g_coinMtx[l_i])->m_position.x );
+    static_cast< Transform * >(g_coinMtx[l_i])->m_size.y = abs( 2.0f *
+                            static_cast< Transform * >(g_coinMtx[l_i])->m_position.y );
+    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y += 14.1f;
+    static_cast< Transform * >(g_coinMtx[l_i])->generateBoundingBox();
+  }
 
   //! Update camera pos, lookat and snake pos
   g_yPos             += Window::m_velocity;
@@ -630,12 +685,17 @@ void Window::keyCallback( GLFWwindow *i_window,
         glfwSetWindowShouldClose( i_window, GL_TRUE );
         break;
 
+      //! Toggle fog
       case GLFW_KEY_F:
         Window::m_fog = !Window::m_fog;
         break;
+
+      //! Toggle Bounding boxes
       case GLFW_KEY_B:
         g_drawBbox = !g_drawBbox;
         break;
+
+      //! Accelerate
       case GLFW_KEY_UP:
       case GLFW_KEY_W:
          if( Window::m_velocity == 0.0f )
@@ -648,6 +708,7 @@ void Window::keyCallback( GLFWwindow *i_window,
 #endif
         break;
 
+      //! Slow down
       case GLFW_KEY_DOWN:
       case GLFW_KEY_S:
 #ifdef __APPLE__
@@ -658,6 +719,7 @@ void Window::keyCallback( GLFWwindow *i_window,
         break;
     }
   }
+
   else if( i_action == GLFW_RELEASE ) {
     if( Window::m_velocity == 0.0f )
       return;

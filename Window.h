@@ -45,6 +45,9 @@
 #include "Shader.h"
 
 class Window {
+private:
+  static float randGen();
+
 public:
   static int        m_width;
   static int        m_height;
