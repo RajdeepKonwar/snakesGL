@@ -32,7 +32,7 @@
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"
-#define CONFIG_FILE  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/snakesGL.conf"
+#define CONFIG_FILE  "./snakesGL.conf"
 
 //! Static data members
 int Window::m_width;
