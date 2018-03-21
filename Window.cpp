@@ -39,7 +39,7 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 13;
+int Window::m_nTile = 80;
 bool Window::m_fog = true;
 
 //! Global variables
@@ -57,9 +57,9 @@ float g_yPos      = 0.0f;
 int g_move        = 1;
 bool g_drawBbox   = true;
 float g_rotAngle  = 0.0f;
-int g_nPyramids   = 20;
+int g_nPyramids   = 50;
 int g_nCoins      = 1;
-int g_nWalls      = 20;
+int g_nWalls      = 50;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -84,8 +84,16 @@ glm::mat4 Window::m_V;
 glm::mat4 Window::m_prevP;
 glm::mat4 Window::m_prevV;
 
-float Window::randGen() {
-  int l_randMax = Window::m_nTile - 2;
+float Window::randGenX() {
+  int l_randMax = 8;
+  int l_randMin = -8;
+  int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+
+  return (2.0f * (float) l_rand);
+}
+
+float Window::randGenY() {
+  int l_randMax = Window::m_nTile;
   int l_randMin = -l_randMax;
   int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
 
@@ -245,8 +253,8 @@ void Window::initializeObjects() {
   //! Pyramids transform mtx
   g_pyramidMtx  = new Node * [g_nPyramids];
   for( int l_k = 0; l_k < g_nPyramids; l_k++ ) {
-    float l_randX = randGen();
-    float l_randY = randGen();
+    float l_randX = randGenX();
+    float l_randY = randGenY();
 
     //! Reuse head (rotated by 45) as pyramid obstacle
     glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4( 1.0f ),
@@ -282,8 +290,8 @@ void Window::initializeObjects() {
   //! Coins transform mtx
   g_coinMtx  = new Node * [g_nCoins];
   for( int l_k = 0; l_k < g_nCoins; l_k++ ) {
-    float l_randX = randGen();
-    float l_randY = randGen();
+    float l_randX = randGenX();
+    float l_randY = randGenY();
 
     g_coinMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                      glm::vec3( (float) l_randX,
@@ -313,8 +321,8 @@ void Window::initializeObjects() {
   //! Walls transform mtx
   g_wallMtx  = new Node * [g_nWalls];
   for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
-    float l_randX = randGen();
-    float l_randY = randGen();
+    float l_randX = randGenX();
+    float l_randY = randGenY();
 
     g_wallMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
                                      glm::vec3( (float) l_randX, (float) l_randY,
@@ -346,8 +354,8 @@ void Window::initializeObjects() {
     static_cast< Transform * >(*g_nodeIt)->generateBoundingBox();
 
   //! Arrange tiles to form grid
-  for( int l_i = -Window::m_nTile; l_i <= Window::m_nTile; l_i++ ) {
-    for( int l_j = -Window::m_nTile; l_j <= Window::m_nTile; l_j++ ) {
+  for( int l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
+    for( int l_j = -8; l_j <= 8; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3(  l_j * 2.0f,
                                                          l_i * 2.0f,

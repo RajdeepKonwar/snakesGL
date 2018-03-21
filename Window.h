@@ -46,7 +46,8 @@
 
 class Window {
 private:
-  static float randGen();
+  static float randGenX();
+  static float randGenY();
 
 public:
   static int        m_width;
