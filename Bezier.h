@@ -36,12 +36,10 @@ class Bezier {
         glm::mat4 B;
   
         std::vector< glm::vec3 > vertices[101];
-        std::vector< glm::vec3 > normals[100];
   
     public:
-    
+        int m_surface;
         Bezier(glm::vec3 points[16]);
-        ~Bezier();
   
         GLuint VAO[101], VBO[101];
   

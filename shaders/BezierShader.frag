@@ -35,6 +35,7 @@ in vec4 ViewSpace;
 
 uniform vec4 u_camPos;
 uniform bool u_fog;
+uniform int u_surface;
 
 out vec4 FragColor;
 
@@ -48,7 +49,22 @@ void main() {
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
-  vec4 l_bezierColor  = vec4( 0.0f, 0.6f, 0.7f, 1.0f );
+
+  vec4 l_bezierColor  = vec4( 0.0f, 0.6f, 0.7f, 1.0f );  
+  switch( u_surface ) {
+    case 1:
+      l_bezierColor  = vec4( 0.0f, 0.8f, 0.9f, 1.0f );  
+      break;
+    case 2:
+      l_bezierColor  = vec4( 0.9f, 1.0f, 0.0f, 1.0f );  
+      break;
+    case 3:
+      l_bezierColor  = vec4( 0.0f, 0.8f, 0.1f, 1.0f );  
+      break;
+    case 4:
+      l_bezierColor  = vec4( 1.0f, 0.5f, 0.0f, 1.0f );  
+      break;
+  }
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   if (u_fog)

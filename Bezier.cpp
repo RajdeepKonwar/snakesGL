@@ -106,9 +106,9 @@ Bezier::Bezier(glm::vec3 points[16])
 }
 
 void Bezier::draw(GLuint shaderProgram) {
-  
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &Window::m_P[0][0]);
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "modelView"), 1, GL_FALSE, &Window::m_V[0][0]);
+  glUniform1i( glGetUniformLocation( shaderProgram, "u_surface" ), m_surface );
   
   GLuint l_uFog = glGetUniformLocation( shaderProgram, "u_fog" );
   glUniform1i( l_uFog, Window::m_fog );
@@ -124,8 +124,3 @@ void Bezier::draw(GLuint shaderProgram) {
   }
   
 }
-
-Bezier::~Bezier() {
-
-}
-

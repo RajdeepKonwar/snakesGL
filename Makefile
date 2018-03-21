@@ -32,12 +32,14 @@ CXX ?= g++
 CXXFLAGS=-std=c++11 -O3 -Wall
 LDFLAGS=-lGL -lGLU -lGLEW -lglfw3 -L/usr/local/lib -lXi -lGLEW -lGLU -lm -lGL -lm -lpthread -pthread -ldl -ldrm -lXdamage -lX11-xcb -lxcb-glx -lxcb-dri2 -lglfw -lrt -lm -ldl -lXrandr -lXinerama -lXxf86vm -lXext -lXcursor -lXrender -lXfixes -lX11 -lpthread -lxcb -lXau -lXdmcp
 
-OBJECTS=snakesGL.o SceneGraph.o Shader.o Window.o
+OBJECTS=snakesGL.o Bezier.o SceneGraph.o Shader.o Window.o
 
 snakesGL: $(OBJECTS)
 					$(CXX) $(CXXFLAGS) $(OBJECTS) -o snakesGL $(LDFLAGS)
 
 snakesGL.o: snakesGL.cpp
+
+Bezier.o: Bezier.cpp
 
 SceneGraph.o: SceneGraph.cpp
 

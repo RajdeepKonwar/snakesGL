@@ -39,7 +39,7 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 80;
+int Window::m_nTile = 40;
 bool Window::m_fog = true;
 
 //! Global variables
@@ -498,8 +498,8 @@ void Window::initializeObjects() {
   patch[2] = new Bezier(points2);
   patch[3] = new Bezier(points3);
   
-  
-  
+  for( int i = 0; i < 4; i++ )
+    patch[i]->m_surface = i + 1;
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
