@@ -3,3 +3,5 @@
 
 ## Blog
 https://snakesgl.wordpress.com/
+
+![Alt text](https://github.com/RajdeepKonwar/snakesGL/blob/master/Screenshot.png)
