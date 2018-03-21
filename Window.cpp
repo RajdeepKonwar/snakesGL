@@ -32,10 +32,7 @@
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"
-#define CONFIG_FILE  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/snakesGL.conf"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#define CONFIG_FILE  "./snakesGL.conf"
 
 //! Static data members
 int Window::m_width;
