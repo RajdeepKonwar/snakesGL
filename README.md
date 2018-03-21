@@ -4,4 +4,4 @@
 ## Blog
 https://snakesgl.wordpress.com/
 
-![snakesGL](https://snakesgl.files.wordpress.com/2018/03/screenshot-from-2018-03-21-03-51-21.png?w=660)
+[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
