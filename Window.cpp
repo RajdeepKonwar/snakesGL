@@ -44,7 +44,7 @@ bool Window::m_fog = true;
 
 //! Global variables
 GLuint g_gridBigShader,     g_gridSmallShader,    g_snakeShader, g_obstaclesShader;
-GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader;
+GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader, g_bezierShader;
 
 //! Overclocking on apple to get better fps lul
 #ifdef __APPLE__
@@ -55,7 +55,7 @@ float Window::m_velocity  = 0.005f;
 
 float g_yPos      = 0.0f;
 int g_move        = 1;
-bool g_drawBbox   = true;
+bool g_drawBbox   = false;
 float g_rotAngle  = 0.0f;
 int g_nPyramids   = 50;
 int g_nCoins      = 1;
@@ -72,10 +72,12 @@ std::vector< Node * >::iterator g_nodeIt;
 
 Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall, *g_coin, *g_wall;
 
+Bezier * patch[4];
+
 //! Default camera parameters
 //glm::vec3 Window::m_camPos( 0.0f, 1.8f, 5.0f );//! e | Position of camera (top)
-glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.0f );//! e | Position of camera
-glm::vec3 g_camLookAt( 0.0f, 1.8f, 0.0f );      //! d | Where camera looks at
+glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.5f );//! e | Position of camera
+glm::vec3 g_camLookAt( 0.0f, 2.5f, 0.0f );      //! d | Where camera looks at
 glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 
 glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
@@ -94,7 +96,7 @@ float Window::randGenX() {
 
 float Window::randGenY() {
   int l_randMax = Window::m_nTile;
-  int l_randMin = -l_randMax;
+  int l_randMin = 2;
   int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
 
   return (2.0f * (float) l_rand);
@@ -119,6 +121,7 @@ void Window::initializeObjects() {
   std::string l_obstaclesVertShader,    l_obstaclesFragShader;
   std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
   std::string l_snakeContourVertShader, l_snakeContourFragShader;
+  std::string l_bezierVertShader, l_bezierFragShader;
   std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
@@ -163,6 +166,10 @@ void Window::initializeObjects() {
       l_snakeContourVertShader  = l_varValue;
     else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
       l_snakeContourFragShader  = l_varValue;
+    else if( l_varName.compare( "bezier_vert_shader" ) == 0 )
+      l_bezierVertShader  = l_varValue;
+    else if( l_varName.compare( "bezier_frag_shader" ) == 0 )
+      l_bezierFragShader  = l_varValue;
 
     else if( l_varName.compare( "head" ) == 0 )
       l_head                    = l_varValue;
@@ -398,6 +405,101 @@ void Window::initializeObjects() {
                                        l_boundingBoxFragShader.c_str()  );
   g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
                                        l_snakeContourFragShader.c_str() );
+  g_bezierShader        = LoadShaders( l_bezierVertShader.c_str(),
+                                       l_bezierFragShader.c_str()       );
+  
+  
+  glm::vec3 points0[16] = {
+
+    glm::vec3(-4, 12.50, 0.25),    //p0
+    glm::vec3(-3.5, 13.0, 0.25),
+    glm::vec3(-3, 13.0, 0.25),
+    glm::vec3(-2.5, 12.50, 0.25),  //p3
+    glm::vec3(-4, 12.25, 0.75),
+    glm::vec3(-3.5, 13.50, 0.75),
+    glm::vec3(-3, 13.50, 0.75),
+    glm::vec3(-2.5, 12.25, 0.75),  //p7
+    glm::vec3(-4, 13.0, 1.25),
+    glm::vec3(-3.5, 12.50, 1.25),
+    glm::vec3(-3, 12.50, 1.25),
+    glm::vec3(-2.5, 13.0, 1.25),   //p11
+    glm::vec3(-4, 12.50, 1.75),
+    glm::vec3(-3.5, 12.0, 1.75),
+    glm::vec3(-3, 12.0, 1.75),
+    glm::vec3(-2.5, 12.50, 1.75),  //p15
+    
+  };
+  
+  glm::vec3 points1[16] = {
+    
+    glm::vec3(-2.5, 12.50, 0.25),  //p0
+    glm::vec3(-2, 12.0, 0.25),
+    glm::vec3(-1.5, 13.0, 0.25),
+    glm::vec3(-1, 12.50, 0.25),    //p3
+    glm::vec3(-2.5, 12.25, 0.75),
+    glm::vec3(-2, 11.0, 0.75),
+    glm::vec3(-1.5, 13.50, 0.75),
+    glm::vec3(-1, 12.25, 0.75),     //p7
+    glm::vec3(-2.5, 13.0, 1.25),
+    glm::vec3(-2, 13.50, 1.25),
+    glm::vec3(-1.5, 12.50, 1.25),
+    glm::vec3(-1, 13.0, 1.25),     //p11
+    glm::vec3(-2.5, 12.50, 1.75),
+    glm::vec3(-2, 13.0, 1.75),
+    glm::vec3(-1.5, 12.0, 1.75),
+    glm::vec3(-1, 12.50, 1.75),    //p15
+    
+  };
+  
+  glm::vec3 points2[16] = {
+    
+    glm::vec3(-2.5, 12.50, 1.75),  //p0
+    glm::vec3(-2, 13.0, 1.75),
+    glm::vec3(-1.5, 12.0, 1.75),
+    glm::vec3(-1, 12.50, 1.75),    //p3
+    glm::vec3(-2.5, 12.0, 2.25),
+    glm::vec3(-2, 12.5, 2.25),
+    glm::vec3(-1.5, 11.50, 2.25),
+    glm::vec3(-1, 12.0, 2.25),     //p7
+    glm::vec3(-2.5, 13.0, 2.75),
+    glm::vec3(-2, 13.50, 2.75),
+    glm::vec3(-1.5, 12.50, 2.75),
+    glm::vec3(-1, 13.0, 2.75),     //p11
+    glm::vec3(-2.5, 12.50, 3.25),
+    glm::vec3(-2, 13.0, 3.25),
+    glm::vec3(-1.5, 12.0, 3.25),
+    glm::vec3(-1, 12.50, 3.25),    //p15
+    
+  };
+  
+  glm::vec3 points3[16] = {
+    
+    glm::vec3(-4, 12.50, 1.75),      //p0
+    glm::vec3(-3.5, 12.0, 1.75),
+    glm::vec3(-3, 12.0, 1.75),
+    glm::vec3(-2.5, 12.50, 1.75),    //p3
+    glm::vec3(-4, 12.0, 2.25),
+    glm::vec3(-3.5, 12.5, 2.25),
+    glm::vec3(-3, 11.50, 2.25),
+    glm::vec3(-2.5, 12.0, 2.25),     //p7
+    glm::vec3(-4, 13.0, 2.75),
+    glm::vec3(-3.5, 13.50, 2.75),
+    glm::vec3(-3, 12.50, 2.75),
+    glm::vec3(-2.5, 13.0, 2.75),     //p11
+    glm::vec3(-4, 12.50, 3.25),
+    glm::vec3(-3.5, 13.0, 3.25),
+    glm::vec3(-3, 12.0, 3.25),
+    glm::vec3(-2.5, 12.50, 3.25),    //p15
+    
+  };
+  
+  patch[0] = new Bezier(points0);
+  patch[1] = new Bezier(points1);
+  patch[2] = new Bezier(points2);
+  patch[3] = new Bezier(points3);
+  
+  
+  
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -587,7 +689,11 @@ void Window::displayCallback( GLFWwindow* i_window ) {
           ++g_nodeIt )
       static_cast< Transform * >(*g_nodeIt)->drawBoundingBox( g_boundingBoxShader,
                                                               Window::m_V );
-
+  
+  glUseProgram( g_bezierShader );
+  for (int i = 0; i < 4; i++) {
+    patch[i]->draw( g_bezierShader );
+  }
   //! Gets events, including input such as keyboard and mouse or window resizing
   glfwPollEvents();
 
