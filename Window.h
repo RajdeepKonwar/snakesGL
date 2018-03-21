@@ -44,6 +44,7 @@
 #include "Bezier.h"
 #include "SceneGraph.h"
 #include "Shader.h"
+#include "Particles.h"
 
 class Window {
 private:

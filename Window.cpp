@@ -32,7 +32,10 @@
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"
-#define CONFIG_FILE  "./snakesGL.conf"
+#define CONFIG_FILE  "/Users/lukerohrer/Desktop/CSE167/FinalProj/FinalProj/snakesGL.conf"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 //! Static data members
 int Window::m_width;
@@ -407,7 +410,7 @@ void Window::initializeObjects() {
                                        l_snakeContourFragShader.c_str() );
   g_bezierShader        = LoadShaders( l_bezierVertShader.c_str(),
                                        l_bezierFragShader.c_str()       );
-  
+
   
   glm::vec3 points0[16] = {
 
@@ -656,7 +659,6 @@ void Window::displayCallback( GLFWwindow* i_window ) {
   glUniformMatrix4fv( l_uProjection,     1, GL_FALSE, &Window::m_P[0][0]     );
   glUniformMatrix4fv( l_uModelView,      1, GL_FALSE, &Window::m_V[0][0]     );
   
-  glUseProgram( g_velocityShader );
   
   //! Clear the color and depth buffers
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -694,6 +696,9 @@ void Window::displayCallback( GLFWwindow* i_window ) {
   for (int i = 0; i < 4; i++) {
     patch[i]->draw( g_bezierShader );
   }
+  
+
+  
   //! Gets events, including input such as keyboard and mouse or window resizing
   glfwPollEvents();
 
@@ -710,6 +715,7 @@ void Window::idleCallback() {
   if( !g_move )
     return;
 
+  
   if( g_rotAngle >= 360.0f )
     g_rotAngle = 0.0f;
   g_rotAngle += 1.5f;

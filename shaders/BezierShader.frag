@@ -62,7 +62,7 @@ void main() {
       l_bezierColor  = vec4( 0.48f, 0.73f, 0.0f, 1.0f );
       break;
     case 4:
-      l_bezierColor  = vec4( 0.96f, 0.325f, 0.1f, 1.0f );  
+      l_bezierColor  = vec4( 0.96f, 0.325f, 0.08f, 1.0f );  
       break;
   }
 

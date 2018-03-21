@@ -44,6 +44,14 @@ in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
 
+in vec3 WorldPos;
+in vec3 WorldNormal;
+
+const vec3 DiffuseLight = vec3(0.15f, 0.05f, 0.0f);
+const vec3 RimColor = vec3(0.2, 0.2, 0.2);
+
+const float gamma = 1.0/0.3;
+
 uniform DirLight dirLight;
 uniform vec4     u_camPos;
 uniform int      u_obstacleType;
@@ -56,10 +64,20 @@ void main() {
   vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) -
                        vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
 
-  vec4 l_obstacleColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
+  vec4 l_obstacleColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  
   l_obstacleColor += vec4( CalcDirLight( dirLight, normalize( Normal ),
                                          viewDirection ), 0.0f );
 
+  // Rim shading
+  vec3 diffuse = DiffuseLight * max(0, dot(dirLight.direction, WorldNormal));
+  float rim = 1 - max( dot( viewDirection, WorldNormal ), 0 );
+  rim = smoothstep(0.6, 1.0, rim);
+  vec3 finalRim = RimColor * vec3(rim, rim, rim);
+  
+  vec3 finalColor = finalRim + diffuse + vec3(l_obstacleColor);
+  
+  vec3 finalColorGamma = vec3( pow(finalColor.r, gamma), pow(finalColor.g, gamma), pow(finalColor.b, gamma) );
+  
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
@@ -73,9 +91,9 @@ void main() {
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   if (u_fog)
-    FragColor   = mix( l_fogColor, l_obstacleColor, l_fogFactor );
+    FragColor   = mix( l_fogColor, vec4(finalColorGamma, 1), l_fogFactor );
   else
-    FragColor   = l_obstacleColor;
+    FragColor   = vec4(finalColorGamma, 1);
   
 }
 
@@ -88,7 +106,7 @@ vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
 
   // Specular shading
   vec3 reflectDir = reflect( -lightDir, normal );
-  float spec      = pow( max( dot( viewDir, reflectDir ), 0.0 ), 0.1 );
+  float spec      = pow( max( dot( viewDir, reflectDir ), 0.0 ), 0.9 );
 
   //! Combine results
   vec3 ambient, diffuse, specular;
@@ -111,10 +129,10 @@ vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
 
   //! wall
   else if( u_obstacleType == 3 ) {
-    ambient   = light.ambient  * vec3( 0.05375, 0.05375, 0.05375 );
-    diffuse   = light.diffuse  * diff * vec3( 0.18275, 0.17, 0.22525 );
-    specular  = light.specular * spec * vec3( 0.332741, 0.328634, 0.346435 ) *
-                dot( vec3( 0.332741, 0.328634, 0.346435), light.specular );
+    ambient   = light.ambient  * vec3( 0.25, 0.25, 0.25 );
+    diffuse   = light.diffuse  * diff * vec3( 0.4, 0.4, 0.4 );
+    specular  = light.specular * spec * vec3( 0.774597, 0.774597, 0.774597 ) *
+                dot( vec3( 0.774597, 0.774597, 0.774597), light.specular );
   }
 
   return (ambient + diffuse + specular);
