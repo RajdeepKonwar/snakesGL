@@ -53,16 +53,16 @@ void main() {
   vec4 l_bezierColor  = vec4( 0.0f, 0.6f, 0.7f, 1.0f );  
   switch( u_surface ) {
     case 1:
-      l_bezierColor  = vec4( 0.0f, 0.8f, 0.9f, 1.0f );  
+      l_bezierColor  = vec4( 0.0f, 0.63f, 0.95f, 1.0f );
       break;
     case 2:
-      l_bezierColor  = vec4( 0.9f, 1.0f, 0.0f, 1.0f );  
+      l_bezierColor  = vec4( 1.0f, 0.73f, 0.0f, 1.0f );
       break;
     case 3:
-      l_bezierColor  = vec4( 0.0f, 0.8f, 0.1f, 1.0f );  
+      l_bezierColor  = vec4( 0.48f, 0.73f, 0.0f, 1.0f );
       break;
     case 4:
-      l_bezierColor  = vec4( 1.0f, 0.5f, 0.0f, 1.0f );  
+      l_bezierColor  = vec4( 0.96f, 0.325f, 0.1f, 1.0f );  
       break;
   }
 
