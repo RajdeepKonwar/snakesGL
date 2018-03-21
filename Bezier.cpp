@@ -48,9 +48,9 @@ Bezier::Bezier( const glm::vec3 i_points[16] ) {
                       glm::vec4( i_points[3].z, i_points[7].z, i_points[11].z, i_points[15].z ) );
 
   m_B = glm::mat4( glm::vec4( -1.0f,  3.0f, -3.0f, 1.0f ),
-                  glm::vec4(  3.0f, -6.0f,  3.0f, 0.0f ),
-                  glm::vec4( -3.0f,  3.0f,  0.0f, 0.0f ),
-                  glm::vec4(  1.0f,  0.0f,  0.0f, 0.0f ) );
+                   glm::vec4(  3.0f, -6.0f,  3.0f, 0.0f ),
+                   glm::vec4( -3.0f,  3.0f,  0.0f, 0.0f ),
+                   glm::vec4(  1.0f,  0.0f,  0.0f, 0.0f ) );
 
   m_C[0] = m_B * m_G[0] * m_B;
   m_C[1] = m_B * m_G[1] * m_B;

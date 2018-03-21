@@ -39,7 +39,7 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 30;
+int Window::m_nTile = 20;
 bool Window::m_fog  = true;
 
 //! Global variables
@@ -254,11 +254,15 @@ void Window::initializeObjects() {
   //! Initialize snake contour (white)
   static_cast< Transform * >(g_snake)->generateSnakeContour();
 
+  float l_randX, l_randY;
+
   //! Pyramids transform mtx
   g_pyramidMtx  = new Node * [g_nPyramids];
   for( int l_k = 0; l_k < g_nPyramids; l_k++ ) {
-    float l_randX = randGenX();
-    float l_randY = randGenY();
+    do {
+      l_randX = randGenX();
+      l_randY = randGenY();
+    } while( l_randY >= 12.0f && l_randY <= 14.0f );
 
     //! Reuse head (rotated by 45) as pyramid obstacle
     glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4( 1.0f ),
@@ -294,8 +298,10 @@ void Window::initializeObjects() {
   //! Coins transform mtx
   g_coinMtx  = new Node * [g_nCoins];
   for( int l_k = 0; l_k < g_nCoins; l_k++ ) {
-    float l_randX = randGenX();
-    float l_randY = randGenY();
+    do {
+      l_randX = randGenX();
+      l_randY = randGenY();
+    } while( l_randY >= 12.0f && l_randY <= 14.0f );
 
     g_coinMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
                                                      glm::vec3( (float) l_randX,
@@ -325,12 +331,10 @@ void Window::initializeObjects() {
   //! Walls transform mtx
   g_wallMtx  = new Node * [g_nWalls+1];
   for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
-    float l_randX;
-    float l_randY = randGenY();
-
     do {
       l_randX = randGenX();
-    } while( l_randX == 0.0f );
+      l_randY = randGenY();
+    } while( l_randX == 0.0f || (l_randY >= 12.0f && l_randY <= 14.0f ) );
 
     g_wallMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
                                      glm::vec3( (float) l_randX, (float) l_randY,
@@ -387,7 +391,7 @@ void Window::initializeObjects() {
 
   //! Arrange tiles to form grid
   for( int l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
-    for( int l_j = -12; l_j <= 12; l_j++ ) {
+    for( int l_j = -8; l_j <= 8; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3(  l_j * 2.0f,
                                                          l_i * 2.0f,
