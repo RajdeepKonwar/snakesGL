@@ -28,8 +28,8 @@
  * Window, scene and objects manager.
  **/
 
-#ifndef _SHADER_H_
-#define _SHADER_H_
+#ifndef SHADER_H
+#define SHADER_H
 
 GLuint LoadShaders( const char *i_vertexFilePath,
                     const char *i_fragmentFilePath );

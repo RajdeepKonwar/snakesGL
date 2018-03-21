@@ -94,9 +94,6 @@ void setupOpenGLSettings() {
 
   //! Set clear color
   glClearColor( 0.3f, 0.3f, 0.3f, 1.0f );   //! grey
-  // glClearColor( 0.4f, 0.8f, 0.8f, 1.0f );   //! sky-blue
-  // glClearColor( 0.5f, 0.0f, 0.5f, 1.0f );   //! purple
-  // glClearColor( 1.0f, 0.6f, 1.0f, 1.0f );  //! orange
 
   //! Clear the z-buffer
   glClearDepth( 1 );
@@ -114,6 +111,7 @@ void printVersions() {
 #endif
 }
 
+//! Display FPS (Frames per second)
 void showFPS() {
   static float s_frameTimes[NUM_SAMPLES];
   static int   s_currFrame = 0;

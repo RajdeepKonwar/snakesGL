@@ -39,8 +39,8 @@ int Window::m_width;
 int Window::m_height;
 int Window::m_move  = 0;
 int Window::m_nBody = 3;
-int Window::m_nTile = 40;
-bool Window::m_fog = true;
+int Window::m_nTile = 30;
+bool Window::m_fog  = true;
 
 //! Global variables
 GLuint g_gridBigShader,     g_gridSmallShader,    g_snakeShader, g_obstaclesShader;
@@ -54,12 +54,11 @@ float Window::m_velocity  = 0.005f;
 #endif
 
 float g_yPos      = 0.0f;
-int g_move        = 1;
 bool g_drawBbox   = false;
 float g_rotAngle  = 0.0f;
-int g_nPyramids   = 50;
-int g_nCoins      = 1;
-int g_nWalls      = 50;
+int g_nPyramids   = 80;
+int g_nCoins      = 5;
+int g_nWalls      = 60;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -83,12 +82,10 @@ glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
 glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
-glm::mat4 Window::m_prevP;
-glm::mat4 Window::m_prevV;
 
 float Window::randGenX() {
-  int l_randMax = 8;
-  int l_randMin = -8;
+  int l_randMax =  12;
+  int l_randMin = -12;
   int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
 
   return (2.0f * (float) l_rand);
@@ -121,7 +118,7 @@ void Window::initializeObjects() {
   std::string l_obstaclesVertShader,    l_obstaclesFragShader;
   std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
   std::string l_snakeContourVertShader, l_snakeContourFragShader;
-  std::string l_bezierVertShader, l_bezierFragShader;
+  std::string l_bezierVertShader,       l_bezierFragShader;
   std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
 
   while( getline( l_confFn, l_lineBuf ) ) {
@@ -167,9 +164,9 @@ void Window::initializeObjects() {
     else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
       l_snakeContourFragShader  = l_varValue;
     else if( l_varName.compare( "bezier_vert_shader" ) == 0 )
-      l_bezierVertShader  = l_varValue;
+      l_bezierVertShader        = l_varValue;
     else if( l_varName.compare( "bezier_frag_shader" ) == 0 )
-      l_bezierFragShader  = l_varValue;
+      l_bezierFragShader        = l_varValue;
 
     else if( l_varName.compare( "head" ) == 0 )
       l_head                    = l_varValue;
@@ -182,9 +179,9 @@ void Window::initializeObjects() {
     else if( l_varName.compare( "tile_small" ) == 0 )
       l_tileSmall               = l_varValue;
     else if( l_varName.compare( "coin" ) == 0 )
-      l_coin               = l_varValue;
+      l_coin                    = l_varValue;
     else if( l_varName.compare( "wall" ) == 0 )
-      l_wall               = l_varValue;
+      l_wall                    = l_varValue;
     else
       std::cout << "\nUnknown setting (" << l_varName << "). Ignored."
                 << std::endl;
@@ -326,7 +323,7 @@ void Window::initializeObjects() {
   }
 
   //! Walls transform mtx
-  g_wallMtx  = new Node * [g_nWalls];
+  g_wallMtx  = new Node * [g_nWalls+1];
   for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
     float l_randX;
     float l_randY = randGenY();
@@ -359,6 +356,30 @@ void Window::initializeObjects() {
     g_obstaclesList.push_back( g_wallMtx[l_k] );
   }
 
+  //! Last wall in way to stop motion
+  g_wallMtx[g_nWalls] = new Transform( glm::translate( glm::mat4( 1.0f ),
+                                         glm::vec3( 0.0f, 2 * Window::m_nTile,
+                                                    0.0f ) ) );
+
+  //! Type for collision detection
+  static_cast< Transform * >(g_wallMtx[g_nWalls])->m_type        = 3;
+
+  //! Bounding boxes' initial positions and sizes
+  static_cast< Transform * >( g_wallMtx[g_nWalls] )->m_position  = glm::vec3(
+                                               -0.7f,
+                                                0.7f + 2 * Window::m_nTile,
+                                                0.01f );
+  static_cast< Transform * >( g_wallMtx[g_nWalls] )->m_size      = glm::vec3( 1.4f,
+                                                                              1.4f,
+                                                                              1.0f );
+
+  //! Add wall as child of obstacles
+  static_cast< Transform * >(g_obstacles)->addChild( g_wallMtx[g_nWalls] );
+  static_cast< Transform * >(g_wallMtx[g_nWalls])->addChild( g_wall );
+
+  //! Add to obstacles list (for collision detection)
+  g_obstaclesList.push_back( g_wallMtx[g_nWalls] );
+
   //! Initialize obstacles' bounding boxes
   for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
        ++g_nodeIt )
@@ -366,7 +387,7 @@ void Window::initializeObjects() {
 
   //! Arrange tiles to form grid
   for( int l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
-    for( int l_j = -8; l_j <= 8; l_j++ ) {
+    for( int l_j = -12; l_j <= 12; l_j++ ) {
       g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
                                              glm::vec3(  l_j * 2.0f,
                                                          l_i * 2.0f,
@@ -392,6 +413,96 @@ void Window::initializeObjects() {
     static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
   }
 
+  //! Bezier surface 1 control points
+  glm::vec3 points0[16] = {
+    glm::vec3( -4,   12.50, 0.25 ),   //! p0
+    glm::vec3( -3.5, 13.0,  0.25 ),
+    glm::vec3( -3,   13.0,  0.25 ),
+    glm::vec3( -2.5, 12.50, 0.25 ),   //! p3
+    glm::vec3( -4,   12.25, 0.75 ),
+    glm::vec3( -3.5, 13.50, 0.75 ),
+    glm::vec3( -3,   13.50, 0.75 ),
+    glm::vec3( -2.5, 12.25, 0.75 ),   //! p7
+    glm::vec3( -4,   13.0,  1.25 ),
+    glm::vec3( -3.5, 12.50, 1.25 ),
+    glm::vec3( -3,   12.50, 1.25 ),
+    glm::vec3( -2.5, 13.0,  1.25 ),   //! p11
+    glm::vec3( -4,   12.50, 1.75 ),
+    glm::vec3( -3.5, 12.0,  1.75 ),
+    glm::vec3( -3,   12.0,  1.75 ),
+    glm::vec3( -2.5, 12.50, 1.75 ),   //! p15
+  };
+
+  //! Bezier surface 2 control points
+  glm::vec3 points1[16] = {
+    glm::vec3( -2.5, 12.50, 0.25 ),   //! p0
+    glm::vec3( -2,   12.0,  0.25 ),
+    glm::vec3( -1.5, 13.0,  0.25 ),
+    glm::vec3( -1,   12.50, 0.25 ),   //! p3
+    glm::vec3( -2.5, 12.25, 0.75 ),
+    glm::vec3( -2,   11.0,  0.75 ),
+    glm::vec3( -1.5, 13.50, 0.75 ),
+    glm::vec3( -1,   12.25, 0.75 ),   //! p7
+    glm::vec3( -2.5, 13.0,  1.25 ),
+    glm::vec3( -2,   13.50, 1.25 ),
+    glm::vec3( -1.5, 12.50, 1.25 ),
+    glm::vec3( -1,   13.0,  1.25 ),   //! p11
+    glm::vec3( -2.5, 12.50, 1.75 ),
+    glm::vec3( -2,   13.0,  1.75 ),
+    glm::vec3( -1.5, 12.0,  1.75 ),
+    glm::vec3( -1,   12.50, 1.75 ),   //! p15
+  };
+
+  //! Bezier surface 3 control points
+  glm::vec3 points2[16] = {
+    glm::vec3( -2.5, 12.50, 1.75 ),   //! p0
+    glm::vec3( -2,   13.0,  1.75 ),
+    glm::vec3( -1.5, 12.0,  1.75 ),
+    glm::vec3( -1,   12.50, 1.75 ),   //! p3
+    glm::vec3( -2.5, 12.0,  2.25 ),
+    glm::vec3( -2,   12.5,  2.25 ),
+    glm::vec3( -1.5, 11.50, 2.25 ),
+    glm::vec3( -1,   12.0,  2.25 ),   //! p7
+    glm::vec3( -2.5, 13.0,  2.75 ),
+    glm::vec3( -2,   13.50, 2.75 ),
+    glm::vec3( -1.5, 12.50, 2.75 ),
+    glm::vec3( -1,   13.0,  2.75 ),   //! p11
+    glm::vec3( -2.5, 12.50, 3.25 ),
+    glm::vec3( -2,   13.0,  3.25 ),
+    glm::vec3( -1.5, 12.0,  3.25 ),
+    glm::vec3( -1,   12.50, 3.25 ),   //! p15
+  };
+
+  //! Bezier surface 4 control points
+  glm::vec3 points3[16] = {
+    glm::vec3( -4,   12.50, 1.75 ),   //! p0
+    glm::vec3( -3.5, 12.0,  1.75 ),
+    glm::vec3( -3,   12.0,  1.75 ),
+    glm::vec3( -2.5, 12.50, 1.75 ),   //! p3
+    glm::vec3( -4,   12.0,  2.25 ),
+    glm::vec3( -3.5, 12.5,  2.25 ),
+    glm::vec3( -3,   11.50, 2.25 ),
+    glm::vec3( -2.5, 12.0,  2.25 ),   //! p7
+    glm::vec3( -4,   13.0,  2.75 ),
+    glm::vec3( -3.5, 13.50, 2.75 ),
+    glm::vec3( -3,   12.50, 2.75 ),
+    glm::vec3( -2.5, 13.0,  2.75 ),   //! p11
+    glm::vec3( -4,   12.50, 3.25 ),
+    glm::vec3( -3.5, 13.0,  3.25 ),
+    glm::vec3( -3,   12.0,  3.25 ),
+    glm::vec3( -2.5, 12.50, 3.25 ),   //! p15
+  };
+
+  //! Create 4 Bezier patches (C0 and C1 continuous)
+  patch[0] = new Bezier( points0 );
+  patch[1] = new Bezier( points1 );
+  patch[2] = new Bezier( points2 );
+  patch[3] = new Bezier( points3 );
+
+  //! Surface color info
+  for( int i = 0; i < 4; i++ )
+    patch[i]->m_surface = i + 1;
+
   //! Load the shader programs
   g_gridBigShader       = LoadShaders( l_gridBigVertShader.c_str(),
                                        l_gridBigFragShader.c_str()      );
@@ -407,99 +518,6 @@ void Window::initializeObjects() {
                                        l_snakeContourFragShader.c_str() );
   g_bezierShader        = LoadShaders( l_bezierVertShader.c_str(),
                                        l_bezierFragShader.c_str()       );
-
-  
-  glm::vec3 points0[16] = {
-
-    glm::vec3(-4, 12.50, 0.25),    //p0
-    glm::vec3(-3.5, 13.0, 0.25),
-    glm::vec3(-3, 13.0, 0.25),
-    glm::vec3(-2.5, 12.50, 0.25),  //p3
-    glm::vec3(-4, 12.25, 0.75),
-    glm::vec3(-3.5, 13.50, 0.75),
-    glm::vec3(-3, 13.50, 0.75),
-    glm::vec3(-2.5, 12.25, 0.75),  //p7
-    glm::vec3(-4, 13.0, 1.25),
-    glm::vec3(-3.5, 12.50, 1.25),
-    glm::vec3(-3, 12.50, 1.25),
-    glm::vec3(-2.5, 13.0, 1.25),   //p11
-    glm::vec3(-4, 12.50, 1.75),
-    glm::vec3(-3.5, 12.0, 1.75),
-    glm::vec3(-3, 12.0, 1.75),
-    glm::vec3(-2.5, 12.50, 1.75),  //p15
-    
-  };
-  
-  glm::vec3 points1[16] = {
-    
-    glm::vec3(-2.5, 12.50, 0.25),  //p0
-    glm::vec3(-2, 12.0, 0.25),
-    glm::vec3(-1.5, 13.0, 0.25),
-    glm::vec3(-1, 12.50, 0.25),    //p3
-    glm::vec3(-2.5, 12.25, 0.75),
-    glm::vec3(-2, 11.0, 0.75),
-    glm::vec3(-1.5, 13.50, 0.75),
-    glm::vec3(-1, 12.25, 0.75),     //p7
-    glm::vec3(-2.5, 13.0, 1.25),
-    glm::vec3(-2, 13.50, 1.25),
-    glm::vec3(-1.5, 12.50, 1.25),
-    glm::vec3(-1, 13.0, 1.25),     //p11
-    glm::vec3(-2.5, 12.50, 1.75),
-    glm::vec3(-2, 13.0, 1.75),
-    glm::vec3(-1.5, 12.0, 1.75),
-    glm::vec3(-1, 12.50, 1.75),    //p15
-    
-  };
-  
-  glm::vec3 points2[16] = {
-    
-    glm::vec3(-2.5, 12.50, 1.75),  //p0
-    glm::vec3(-2, 13.0, 1.75),
-    glm::vec3(-1.5, 12.0, 1.75),
-    glm::vec3(-1, 12.50, 1.75),    //p3
-    glm::vec3(-2.5, 12.0, 2.25),
-    glm::vec3(-2, 12.5, 2.25),
-    glm::vec3(-1.5, 11.50, 2.25),
-    glm::vec3(-1, 12.0, 2.25),     //p7
-    glm::vec3(-2.5, 13.0, 2.75),
-    glm::vec3(-2, 13.50, 2.75),
-    glm::vec3(-1.5, 12.50, 2.75),
-    glm::vec3(-1, 13.0, 2.75),     //p11
-    glm::vec3(-2.5, 12.50, 3.25),
-    glm::vec3(-2, 13.0, 3.25),
-    glm::vec3(-1.5, 12.0, 3.25),
-    glm::vec3(-1, 12.50, 3.25),    //p15
-    
-  };
-  
-  glm::vec3 points3[16] = {
-    
-    glm::vec3(-4, 12.50, 1.75),      //p0
-    glm::vec3(-3.5, 12.0, 1.75),
-    glm::vec3(-3, 12.0, 1.75),
-    glm::vec3(-2.5, 12.50, 1.75),    //p3
-    glm::vec3(-4, 12.0, 2.25),
-    glm::vec3(-3.5, 12.5, 2.25),
-    glm::vec3(-3, 11.50, 2.25),
-    glm::vec3(-2.5, 12.0, 2.25),     //p7
-    glm::vec3(-4, 13.0, 2.75),
-    glm::vec3(-3.5, 13.50, 2.75),
-    glm::vec3(-3, 12.50, 2.75),
-    glm::vec3(-2.5, 13.0, 2.75),     //p11
-    glm::vec3(-4, 12.50, 3.25),
-    glm::vec3(-3.5, 13.0, 3.25),
-    glm::vec3(-3, 12.0, 3.25),
-    glm::vec3(-2.5, 12.50, 3.25),    //p15
-    
-  };
-  
-  patch[0] = new Bezier(points0);
-  patch[1] = new Bezier(points1);
-  patch[2] = new Bezier(points2);
-  patch[3] = new Bezier(points3);
-  
-  for( int i = 0; i < 4; i++ )
-    patch[i]->m_surface = i + 1;
 }
 
 //! Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -511,15 +529,9 @@ void Window::cleanUp() {
   delete g_headMtx;
   delete g_tailMtx;
 
-  // for( int l_i = 0; l_i < g_nPyramids; l_i++ )
-  //   delete[] g_pyramidMtx[l_i];
-  // delete g_pyramidMtx;
-  // for( int l_i = 0; l_i < g_nCoins; l_i++ )
-  //   delete[] g_coinMtx[l_i];
-  // delete g_coinMtx;
-  // for( int l_i = 0; l_i < g_nWalls; l_i++ )
-  //   delete[] g_wallMtx[l_i];
-  // delete g_wallMtx;
+  delete g_pyramidMtx;
+  delete g_coinMtx;
+  delete g_wallMtx;
 
   for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
     delete *g_nodeIt;
@@ -543,8 +555,10 @@ void Window::cleanUp() {
   glDeleteProgram( g_obstaclesShader    );
   glDeleteProgram( g_boundingBoxShader  );
   glDeleteProgram( g_snakeContourShader );
+  glDeleteProgram( g_bezierShader       );
 }
 
+//! Since everything is on the grid, no need of collision-check in z-direction
 bool Window::checkCollision( Node *i_one,
                              Node *i_two ) {
   bool l_collisionX = static_cast< Transform * >(i_one)->m_position.x +
@@ -564,6 +578,7 @@ bool Window::checkCollision( Node *i_one,
   return l_collisionX && l_collisionY;
 }
 
+//! Perform inter-object collision-checks
 void Window::performCollisions() {
   std::vector< Node* >::iterator l_it;
 
@@ -642,21 +657,6 @@ GLFWwindow* Window::createWindow( int i_width,
 }
 
 void Window::displayCallback( GLFWwindow* i_window ) {
-  GLuint l_uPrevProjection  = glGetUniformLocation( g_velocityShader,
-                                                    "u_prevProjection" );
-  GLuint l_uPrevModelView   = glGetUniformLocation( g_velocityShader,
-                                                    "u_prevModelView"  );
-  GLuint l_uProjection      = glGetUniformLocation( g_velocityShader,
-                                                    "u_projection" );
-  GLuint l_uModelView       = glGetUniformLocation( g_velocityShader,
-                                                    "u_modelView"  );
-  
-  glUniformMatrix4fv( l_uPrevProjection, 1, GL_FALSE, &Window::m_prevP[0][0] );
-  glUniformMatrix4fv( l_uPrevModelView,  1, GL_FALSE, &Window::m_prevV[0][0] );
-  glUniformMatrix4fv( l_uProjection,     1, GL_FALSE, &Window::m_P[0][0]     );
-  glUniformMatrix4fv( l_uModelView,      1, GL_FALSE, &Window::m_V[0][0]     );
-  
-  
   //! Clear the color and depth buffers
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -688,31 +688,25 @@ void Window::displayCallback( GLFWwindow* i_window ) {
           ++g_nodeIt )
       static_cast< Transform * >(*g_nodeIt)->drawBoundingBox( g_boundingBoxShader,
                                                               Window::m_V );
-  
+
+  //! Using BezierShader, draw the 4 Bezier surfaces
   glUseProgram( g_bezierShader );
-  for (int i = 0; i < 4; i++) {
+  for( int i = 0; i < 4; i++ ) {
     patch[i]->draw( g_bezierShader );
   }
-  
 
-  
   //! Gets events, including input such as keyboard and mouse or window resizing
   glfwPollEvents();
 
   //! Swap buffers
   glfwSwapBuffers( i_window );
-  
-  Window::m_prevV = Window::m_V;
-  
+
   //! Refresh view matrix with new camera position every display callback
   Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
 }
 
 void Window::idleCallback() {
-  if( !g_move )
-    return;
-
-  
+  //! Update coin rotation angle
   if( g_rotAngle >= 360.0f )
     g_rotAngle = 0.0f;
   g_rotAngle += 1.5f;
@@ -789,9 +783,6 @@ void Window::resizeCallback( GLFWwindow* i_window,
     Window::m_P = glm::perspective( 45.0f, (float) i_width / (float) i_height,
                                     0.1f, 2000.0f );
     Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
-    
-    Window::m_prevP = Window::m_P;
-    Window::m_prevV = Window::m_V;
   }
 }
 

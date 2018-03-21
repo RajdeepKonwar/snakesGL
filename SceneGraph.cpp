@@ -117,15 +117,14 @@ void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
   GLuint l_uDestroyed  = glGetUniformLocation( i_shaderProgram, "u_destroyed"  );
   GLuint l_uBBoxColor  = glGetUniformLocation( i_shaderProgram, "u_bboxColor"  );
-  
+  GLuint l_uFog        = glGetUniformLocation( i_shaderProgram, "u_fog"        );
+
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
   glUniform1i( l_uDestroyed, this->m_destroyed );
   glUniform1i( l_uBBoxColor, this->m_bboxColor );
-  
-  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
   glUniform1i( l_uFog, Window::m_fog );
   
   glBindVertexArray( m_bboxVAO );
@@ -216,13 +215,12 @@ void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
   GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
   GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
   GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
+  GLuint l_uFog        = glGetUniformLocation( i_shaderProgram, "u_fog"        );
 
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
               Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
-  
-  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
   glUniform1i( l_uFog, Window::m_fog );
 
   glBindVertexArray( m_snakeVAO );
@@ -232,7 +230,7 @@ void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
 }
 
 void Transform::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
-  if ( m_destroyed )
+  if( m_destroyed )
     return;
 
   for( std::list< Node * >::iterator l_it = m_ptrs.begin(); l_it != m_ptrs.end();
@@ -286,7 +284,7 @@ void Geometry::load( const char *i_fileName ) {
     }
 
     //! vertices
-    else if ( l_line[0] == 'v' && l_line[1] == ' ' ) {
+    else if( l_line[0] == 'v' && l_line[1] == ' ' ) {
       std::istringstream l_ss( l_line );
       std::vector< std::string > l_tokens;
 
@@ -381,9 +379,16 @@ Geometry::~Geometry() {
 void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   glm::mat4 l_modelView = i_mtx;
 
-  GLuint l_uProjection = glGetUniformLocation( i_shaderProgram, "u_projection" );
-  GLuint l_uModelView  = glGetUniformLocation( i_shaderProgram, "u_modelView"  );
-  GLuint l_uCamPos     = glGetUniformLocation( i_shaderProgram, "u_camPos"     );
+  GLuint l_uProjection    = glGetUniformLocation( i_shaderProgram,
+                                                            "u_projection"   );
+  GLuint l_uModelView     = glGetUniformLocation( i_shaderProgram,
+                                                            "u_modelView"    );
+  GLuint l_uCamPos        = glGetUniformLocation( i_shaderProgram,
+                                                            "u_camPos"       );
+  GLuint l_uFog           = glGetUniformLocation( i_shaderProgram,
+                                                            "u_fog"          );
+  GLuint l_uObstacleType  = glGetUniformLocation( i_shaderProgram,
+                                                            "u_obstacleType" );
 
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight.direction" ),
                                                             0.0f, 1.0f, 1.0f );
@@ -403,16 +408,12 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   glUniform3f( glGetUniformLocation( i_shaderProgram, "dirLight2.specular"  ),
               0.7f, 0.7f, 0.7f );
 
-  GLuint l_uObstacleType = glGetUniformLocation( i_shaderProgram, "u_obstacleType" );
-  glUniform1i( l_uObstacleType, this->m_obstacleType );
-  
-  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
-  glUniform1i( l_uFog, Window::m_fog );
-
   glUniformMatrix4fv( l_uProjection, 1, GL_FALSE, &Window::m_P[0][0] );
   glUniformMatrix4fv( l_uModelView,  1, GL_FALSE, &l_modelView[0][0] );
   glUniform3f( l_uCamPos,
                Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+  glUniform1i( l_uObstacleType, this->m_obstacleType );
+  glUniform1i( l_uFog, Window::m_fog );
 
   glBindVertexArray( m_VAO );
   glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),

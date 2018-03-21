@@ -25,7 +25,7 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Grid Big Fragment Shader.
+ * Bezier Surface Fragment Shader.
  **/
 
 #version 330 core

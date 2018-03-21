@@ -46,7 +46,7 @@ in vec4 ViewSpace;
 
 uniform DirLight dirLight;
 uniform vec4     u_camPos;
-uniform bool u_fog;
+uniform bool     u_fog;
 
 out vec4 FragColor;
 

@@ -47,15 +47,15 @@ in vec4 ViewSpace;
 in vec3 WorldPos;
 in vec3 WorldNormal;
 
-const vec3 DiffuseLight = vec3(0.15f, 0.05f, 0.0f);
-const vec3 RimColor = vec3(0.2, 0.2, 0.2);
+const vec3 DiffuseLight = vec3( 0.15f, 0.05f, 0.0f );
+const vec3 RimColor     = vec3( 0.2f, 0.2f, 0.2f );
 
-const float gamma = 1.0/0.3;
+const float gamma       = 1.0f / 0.3f;
 
 uniform DirLight dirLight;
 uniform vec4     u_camPos;
 uniform int      u_obstacleType;
-uniform bool u_fog;
+uniform bool     u_fog;
 
 out vec4 FragColor;
 
@@ -69,15 +69,18 @@ void main() {
                                          viewDirection ), 0.0f );
 
   // Rim shading
-  vec3 diffuse = DiffuseLight * max(0, dot(dirLight.direction, WorldNormal));
-  float rim = 1 - max( dot( viewDirection, WorldNormal ), 0 );
-  rim = smoothstep(0.6, 1.0, rim);
-  vec3 finalRim = RimColor * vec3(rim, rim, rim);
+  vec3 l_diffuse    = DiffuseLight * max( 0, dot( dirLight.direction,
+                                                  WorldNormal ) );
+  float l_rim       = 1 - max( dot( viewDirection, WorldNormal ), 0 );
+  l_rim             = smoothstep( 0.6, 1.0, l_rim );
+  vec3 l_finalRim   = RimColor * vec3( l_rim, l_rim, l_rim );
   
-  vec3 finalColor = finalRim + diffuse + vec3(l_obstacleColor);
+  vec3 l_finalColor = l_finalRim + l_diffuse + vec3( l_obstacleColor );
   
-  vec3 finalColorGamma = vec3( pow(finalColor.r, gamma), pow(finalColor.g, gamma), pow(finalColor.b, gamma) );
-  
+  vec3 l_finalColorGamma  = vec3( pow( l_finalColor.r, gamma ),
+                                  pow( l_finalColor.g, gamma ),
+                                  pow( l_finalColor.b, gamma ) );
+
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
@@ -91,10 +94,9 @@ void main() {
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
   if (u_fog)
-    FragColor   = mix( l_fogColor, vec4(finalColorGamma, 1), l_fogFactor );
+    FragColor   = mix( l_fogColor, vec4( l_finalColorGamma, 1 ), l_fogFactor );
   else
-    FragColor   = vec4(finalColorGamma, 1);
-  
+    FragColor   = vec4( l_finalColorGamma, 1 );
 }
 
 //! Calculates the color when using a directional light.

@@ -25,7 +25,7 @@
  * SOFTWARE.
  *
  * @section DESCRIPTION
- * Grid Big Vertex Shader.
+ * Bezier Surface Vertex Shader.
  **/
 
 #version 330 core

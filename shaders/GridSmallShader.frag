@@ -51,15 +51,14 @@ uniform bool u_fog;
 out vec4 FragColor;
 
 void main() {
-  //Directional lighting
+  //! Directional lighting
   vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) -
                                    vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
-  
-  //vec4 l_tileColor  = vec4( 8.0f / l_dist, 1.0f, 1.0f, 1.0f ); //! white
+
   vec4 l_tileColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
   l_tileColor += vec4 ( CalcDirLight( dirLight2, normalize(Normal), viewDirection ),
                         0.0f );
-  
+
   //! Linear fog
   vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
   float l_dist      = length( l_distVector );
@@ -68,7 +67,7 @@ void main() {
   float l_maxFogDist = 17.0f;
 
   float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  
+
   vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
 
   l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
@@ -76,13 +75,11 @@ void main() {
     FragColor   = mix( l_fogColor, l_tileColor, l_fogFactor );
   else
     FragColor   = l_tileColor;
-  
 }
 
 // Calculates the color when using a directional light.
 vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
   vec3 lightDir = normalize( light.direction );
-
 
   //! Diffuse shading
   float diff = max( dot( normal, lightDir ), 0.0 );
@@ -92,8 +89,8 @@ vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
   float spec      = pow( max( dot( viewDir, reflectDir ), 0.0 ), 0.25 );
 
   //! Combine results
-  vec3 ambient  = light.ambient * vec3( 0.0f, 0.0f, 0.0f );
-  vec3 diffuse  = light.diffuse * diff * vec3( 0.55f, 0.55f, 0.55f );
+  vec3 ambient  = light.ambient  * vec3( 0.0f, 0.0f, 0.0f );
+  vec3 diffuse  = light.diffuse  * diff * vec3( 0.55f, 0.55f, 0.55f );
   vec3 specular = light.specular * spec * vec3( 0.7f, 0.7f, 0.7f ) *
                   dot( vec3( 0.7f, 0.7f, 0.7f ), light.specular );
 

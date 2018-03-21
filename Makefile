@@ -25,7 +25,7 @@
 # SOFTWARE.
 #
 # @section DESCRIPTION
-# makefile.
+# Makefile.
 ##
 
 CXX ?= g++

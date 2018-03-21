@@ -28,8 +28,8 @@
  * Window class.
  **/
 
-#ifndef _WINDOW_H_
-#define _WINDOW_H_
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <iostream>
 
@@ -64,9 +64,7 @@ public:
 
   static glm::mat4  m_P;        //! P for projection
   static glm::mat4  m_V;        //! V for view
-  static glm::mat4  m_prevP;
-  static glm::mat4  m_prevV;
-  
+
   static bool m_fog;
 
   static void initializeObjects();

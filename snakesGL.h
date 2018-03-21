@@ -28,8 +28,8 @@
  * snakesGL header.
  **/
 
-#ifndef _SNAKESGL_H_
-#define _SNAKESGL_H_
+#ifndef SNAKESGL_H
+#define SNAKESGL_H
 
 #define GLFW_INCLUDE_GLEXT
 #ifdef __APPLE__

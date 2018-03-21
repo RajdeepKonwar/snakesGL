@@ -28,8 +28,8 @@
  * Window, scene and objects manager.
  **/
 
-#ifndef _SCENE_GRAPH_H_
-#define _SCENE_GRAPH_H_
+#ifndef SCENE_GRAPH_H
+#define SCENE_GRAPH_H
 
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
