@@ -321,8 +321,12 @@ void Window::initializeObjects() {
   //! Walls transform mtx
   g_wallMtx  = new Node * [g_nWalls];
   for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
-    float l_randX = randGenX();
+    float l_randX;
     float l_randY = randGenY();
+
+    do {
+      l_randX = randGenX();
+    } while( l_randX == 0.0f );
 
     g_wallMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
                                      glm::vec3( (float) l_randX, (float) l_randY,
