@@ -4,4 +4,4 @@
 ## Blog
 https://snakesgl.wordpress.com/
 
-![Alt text](https://github.com/RajdeepKonwar/snakesGL/blob/master/Screenshot.png)
+![snakesGL](https://snakesgl.files.wordpress.com/2018/03/screenshot-from-2018-03-21-03-51-21.png?w=660)
