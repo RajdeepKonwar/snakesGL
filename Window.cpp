@@ -35,12 +35,12 @@
 #define CONFIG_FILE  "./snakesGL.conf"
 
 //! Static data members
-int Window::m_width;
-int Window::m_height;
-int Window::m_move  = 0;
-int Window::m_nBody = 3;
-int Window::m_nTile = 20;
-bool Window::m_fog  = true;
+int   Window::m_width;
+int   Window::m_height;
+int   Window::m_move  = 0;
+int   Window::m_nBody = 3;
+int   Window::m_nTile = 20;
+bool  Window::m_fog   = true;
 
 //! Global variables
 GLuint g_gridBigShader,     g_gridSmallShader,    g_snakeShader, g_obstaclesShader;
@@ -54,11 +54,11 @@ float Window::m_velocity  = 0.005f;
 #endif
 
 float g_yPos      = 0.0f;
-bool g_drawBbox   = false;
+bool  g_drawBbox  = false;
 float g_rotAngle  = 0.0f;
-int g_nPyramids   = 80;
-int g_nCoins      = 5;
-int g_nWalls      = 60;
+int   g_nPyramids = 80;
+int   g_nCoins    = 5;
+int   g_nWalls    = 60;
 
 Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
 Node *g_snake;                  //! Snake transform mtx
@@ -71,7 +71,7 @@ std::vector< Node * >::iterator g_nodeIt;
 
 Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall, *g_coin, *g_wall;
 
-Bezier * patch[4];
+Bezier *patch[4];
 
 //! Default camera parameters
 //glm::vec3 Window::m_camPos( 0.0f, 1.8f, 5.0f );//! e | Position of camera (top)
