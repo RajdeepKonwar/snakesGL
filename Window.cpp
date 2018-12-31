@@ -29,6 +29,9 @@
  **/
 
 #include <fstream>
+#ifdef _WIN32
+	#include <string>
+#endif
 #include "Window.h"
 
 #define WINDOW_TITLE "snakesGL"

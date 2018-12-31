@@ -32,12 +32,18 @@
 #define WINDOW_H
 
 #include <iostream>
+#include <ctime>
+#include <cmath>
 
 #define GLFW_INCLUDE_GLEXT
 #ifdef __APPLE__
-#define GLFW_INCLUDE_GLCOREARB
+	#define GLFW_INCLUDE_GLCOREARB
 #else
-#include <GL/glew.h>
+	#include <GL/glew.h>
+#endif
+
+#ifndef M_PI
+	#define M_PI 3.14159265358979323846
 #endif
 
 #include <GLFW/glfw3.h>
