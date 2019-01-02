@@ -2,9 +2,9 @@
  * @file This file is part of snakesGL.
  *
  * @section LICENSE
- * MIT License
+ * GNU General Public License v2.0
  *
- * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ * Copyright (c) 2018-2019 Rajdeep Konwar, Luke Rohrer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -105,7 +105,7 @@ float Window::randGenY() {
 //! functions as constructor
 void Window::initializeObjects() {
   //! Seed the randomizer
-  srand( time( nullptr ) );
+  srand(static_cast<unsigned int>(time( nullptr ) ));
 
   //! Parse config file for shader and obj paths
   std::ifstream l_confFn( CONFIG_FILE, std::ios::in );
@@ -738,10 +738,10 @@ void Window::idleCallback() {
     static_cast< Transform * >(g_coinMtx[l_i])->update( l_rotMtx );
 
     //! Update coin's bounding box
-    static_cast< Transform * >(g_coinMtx[l_i])->m_position.x = 0.5f *
-                               cos( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
-    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y = 0.5f *
-                               sin( M_PI - glm::radians( g_rotAngle ) ) + 0.01f;
+    static_cast< Transform * >(g_coinMtx[l_i])->m_position.x = static_cast<float>(0.5f *
+                               cos( M_PI - glm::radians( g_rotAngle ) ) + 0.01f);
+    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y = static_cast<float>(0.5f *
+                               sin( M_PI - glm::radians( g_rotAngle ) ) + 0.01f);
 
     //! Keep lower left corner such that x is negative and y is positive
     if( static_cast< Transform * >(g_coinMtx[l_i])->m_position.x > 0.0f )

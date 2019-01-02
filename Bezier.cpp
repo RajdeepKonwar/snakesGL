@@ -2,9 +2,9 @@
  * @file This file is part of snakesGL.
  *
  * @section LICENSE
- * MIT License
+ * GNU General Public License v2.0
  *
- * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ * Copyright (c) 2018-2019 Rajdeep Konwar, Luke Rohrer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -127,7 +127,7 @@ void Bezier::draw( const GLuint &i_shaderProgram ) {
 
   for( int l_i = 0; l_i <= 100; l_i++ ) {
     glBindVertexArray( m_VAO[l_i] );
-    glDrawArrays( GL_TRIANGLE_STRIP, 0, m_vertices[l_i].size() );
+    glDrawArrays( GL_TRIANGLE_STRIP, 0, static_cast<GLsizei>(m_vertices[l_i].size()) );
     glBindVertexArray( 0 );
   }
 }

@@ -2,9 +2,9 @@
  * @file This file is part of snakesGL.
  *
  * @section LICENSE
- * MIT License
+ * GNU General Public License v2.0
  *
- * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ * Copyright (c) 2018-2019 Rajdeep Konwar, Luke Rohrer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -115,10 +115,10 @@ void printVersions() {
 void showFPS() {
   static float s_frameTimes[NUM_SAMPLES];
   static int   s_currFrame = 0;
-  static float s_prevTicks = clock();
+  static float s_prevTicks = static_cast<float>(clock());
 
   int l_count, l_i;
-  float l_currTicks = clock();
+  float l_currTicks = static_cast<float>(clock());
   float l_frameTime = l_currTicks - s_prevTicks;
 
   s_frameTimes[s_currFrame % NUM_SAMPLES] = l_frameTime;

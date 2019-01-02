@@ -2,9 +2,9 @@
  * @file This file is part of snakesGL.
  *
  * @section LICENSE
- * MIT License
+ * GNU General Public License v2.0
  *
- * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ * Copyright (c) 2018-2019 Rajdeep Konwar, Luke Rohrer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -128,7 +128,7 @@ void Transform::drawBoundingBox( const GLuint    &i_shaderProgram,
   
   glBindVertexArray( m_bboxVAO );
   glLineWidth( 1.0f );
-  glDrawArrays( GL_LINES, 0, m_bboxVertices.size() );
+  glDrawArrays( GL_LINES, 0, static_cast<GLsizei>(m_bboxVertices.size()) );
   glBindVertexArray( 0 );
 }
 
@@ -224,7 +224,7 @@ void Transform::drawSnakeContour( const GLuint    &i_shaderProgram,
 
   glBindVertexArray( m_snakeVAO );
   glLineWidth( 2.0f );
-  glDrawArrays( GL_LINES, 0, m_snakeVertices.size() );
+  glDrawArrays( GL_LINES, 0, static_cast<GLsizei>(m_snakeVertices.size()) );
   glBindVertexArray( 0 );
 }
 
@@ -267,9 +267,9 @@ void Geometry::load( const char *i_fileName ) {
         l_tokens.push_back( l_next );
       }
 
-      l_n1  = atof( l_tokens[1].c_str() );
-      l_n2  = atof( l_tokens[2].c_str() );
-      l_n3  = atof( l_tokens[3].c_str() );
+	  l_n1 = static_cast<float>(atof(l_tokens[1].c_str()));
+	  l_n2 = static_cast<float>(atof(l_tokens[2].c_str()));
+	  l_n3 = static_cast<float>(atof(l_tokens[3].c_str()));
 
       l_mag = sqrtf( pow( l_n1, 2.0f ) + pow( l_n2, 2.0f ) + pow( l_n3, 2.0f ) );
       l_n1  = (l_n1 / l_mag) * 0.5f + 0.5f;
@@ -295,15 +295,15 @@ void Geometry::load( const char *i_fileName ) {
       }
 
       //! Populate vertices
-      l_val = atof( l_tokens[1].c_str() );
+	  l_val = static_cast<float>(atof(l_tokens[1].c_str()));
       m_vertices.push_back( l_val );
       l_x.push_back( l_val );
 
-      l_val = atof( l_tokens[2].c_str() );
+	  l_val = static_cast<float>(atof(l_tokens[2].c_str()));
       m_vertices.push_back( l_val );
       l_y.push_back( l_val );
 
-      l_val = atof( l_tokens[3].c_str() );
+	  l_val = static_cast<float>(atof(l_tokens[3].c_str()));
       m_vertices.push_back( l_val );
       l_z.push_back( l_val );
     }
@@ -415,7 +415,7 @@ void Geometry::draw( const GLuint &i_shaderProgram, const glm::mat4 &i_mtx ) {
   glUniform1i( l_uFog, Window::m_fog );
 
   glBindVertexArray( m_VAO );
-  glDrawElements( GL_TRIANGLES, m_indices.size() * sizeof( GLuint ),
+  glDrawElements( GL_TRIANGLES, static_cast<GLsizei>(m_indices.size() * sizeof( GLuint )),
                   GL_UNSIGNED_INT, 0 );
 
   glBindVertexArray( 0 );

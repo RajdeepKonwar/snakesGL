@@ -2,9 +2,9 @@
  * @file This file is part of snakesGL.
  *
  * @section LICENSE
- * MIT License
+ * GNU General Public License v2.0
  *
- * Copyright (c) 2018 Rajdeep Konwar, Luke Rohrer
+ * Copyright (c) 2018-2019 Rajdeep Konwar, Luke Rohrer
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@
  * Shader manager.
  **/
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <iostream>
