@@ -51,59 +51,46 @@
 #include "SceneGraph.h"
 #include "Shader.h"
 
-class Window {
+class Window
+{
+public:
+	static void initializeObjects();
+	static void cleanUp();
+	static GLFWwindow* createWindow(int width, int height);
+  
+	static bool checkCollision(Node *one, Node *two);
+	static void performCollisions();
+
+	static void displayCallback(GLFWwindow *window);
+	static void idleCallback();
+	static void resizeCallback(GLFWwindow *window, int width, int height);
+
+	static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
+	static void cursorPosCallback(GLFWwindow *window, double xPos, double yPos);
+	static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+	static void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
+
 private:
-  static float randGenX();
-  static float randGenY();
+	static float randGenX();
+	static float randGenY();
 
 public:
-  static int        m_width;
-  static int        m_height;
-  static int        m_move;
-  static int        m_nBody;
-  static int        m_nTile;
+	static int			m_width;
+	static int			m_height;
+	static int			m_move;
+	static int			m_nBody;
+	static int			m_nTile;
 
-  static float      m_velocity;
+	static float		m_velocity;
 
-  static glm::vec3  m_camPos;
-  static glm::vec3  m_lastPoint;
+	static glm::vec3	m_camPos;
+	static glm::vec3	m_lastPoint;
 
-  static glm::mat4  m_P;        //! P for projection
-  static glm::mat4  m_V;        //! V for view
+	static glm::mat4	m_P;        // P for projection
+	static glm::mat4	m_V;        // V for view
 
-  static bool m_fog;
-
-  static void initializeObjects();
-  static void cleanUp();
-  static GLFWwindow * createWindow( int i_width,
-                                    int i_height );
-  
-  static bool checkCollision( Node *i_one,
-                              Node *i_two );
-  static void performCollisions();
-
-  static void displayCallback( GLFWwindow *i_window );
-  static void idleCallback();
-  static void resizeCallback( GLFWwindow *window,
-                              int         i_width,
-                              int         i_height );
-
-  static void keyCallback( GLFWwindow *i_window,
-                           int         i_key,
-                           int         i_scancode,
-                           int         i_action,
-                           int         i_mods );
-
-  static void cursorPosCallback( GLFWwindow *i_window,
-                                 double      i_xPos,
-                                 double      i_yPos );
-  static void mouseButtonCallback( GLFWwindow *i_window,
-                                   int         i_button,
-                                   int         i_action,
-                                   int         i_mods );
-  static void scrollCallback( GLFWwindow *i_window,
-                              double      i_xOffset,
-                              double      i_yOffset );
+	static bool			m_fog;
 };
 
 #endif

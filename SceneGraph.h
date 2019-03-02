@@ -41,7 +41,7 @@
 
 #include <GLFW/glfw3.h>
 
-//! Use of degrees is deprecated. Use radians instead.
+// Use of degrees is deprecated. Use radians instead.
 #ifndef GLM_FORCE_RADIANS
 #define GLM_FORCE_RADIANS
 #endif
@@ -52,70 +52,70 @@
 #include <list>
 #include <vector>
 
-//! abstract Node class
-class Node {
+// Abstract node class
+class Node
+{
 public:
-  //! pure virtual destructor
-  virtual ~Node() = 0;
+	// Pure virtual destructor
+	virtual ~Node() = 0;
 
-  //! pure virtual functions
-  virtual void draw( const GLuint    &i_shaderProgram,
-                     const glm::mat4 &i_mtx ) = 0;
-  virtual void update( const glm::mat4 &i_mtx ) = 0;
+	// Pure virtual functions
+	virtual void draw(const GLuint &shaderProgram, const glm::mat4 &mtx) = 0;
+	virtual void update(const glm::mat4 &mtx) = 0;
 };
 
-//! derived Transform class
-class Transform : public Node {
-private:
-  GLuint                   m_bboxVAO, m_bboxVBO, m_snakeVAO, m_snakeVBO;
-  glm::mat4                m_tMtx;
-  std::list< Node * >      m_ptrs;
-  std::vector< glm::vec3 > m_bboxVertices, m_snakeVertices;
+// Derived transform class
+class Transform : public Node
+{
+public:
+	Transform(const glm::mat4 &mtx);
+	~Transform();
+
+	void addChild(Node *child);
+	void removeChild();
+
+	void generateBoundingBox();
+	void drawBoundingBox(const GLuint &shaderProgram, const glm::mat4 &mtx);
+
+	void generateSnakeContour();
+	void drawSnakeContour(const GLuint &shaderProgram, const glm::mat4 &mtx);
+
+	void draw(const GLuint &shaderProgram, const glm::mat4 &mtx);
+	void update(const glm::mat4 &mtx);
 
 public:
-  Transform( const glm::mat4 &i_mtx );
-  ~Transform();
+	bool m_destroyed = false;
+	int m_bboxColor = 2;			// 1 for white, 2 for green, 3 for red
+	int m_type = 0;					// 0 for head, 1 for pyramid, 2 for coin, 3 for wall
+	glm::vec3 m_position, m_size;
 
-  bool m_destroyed;
-  int m_bboxColor;        //! 1 for white, 2 for green, 3 for red
-  int m_type;             //! 0 for head, 1 for pyramid, 2 for coin, 3 for wall
-  glm::vec3 m_position, m_size;
-
-  void addChild( Node *i_child );
-  void removeChild();
-
-  void generateBoundingBox();
-  void drawBoundingBox( const GLuint    &i_shaderProgram,
-                        const glm::mat4 &i_mtx );
-
-  void generateSnakeContour();
-  void drawSnakeContour( const GLuint    &i_shaderProgram,
-                         const glm::mat4 &i_mtx );
-
-  void draw( const GLuint    &i_shaderProgram,
-             const glm::mat4 &i_mtx );
-  void update( const glm::mat4 &i_mtx );
+private:
+	GLuint					m_bboxVAO, m_bboxVBO, m_snakeVAO, m_snakeVBO;
+	glm::mat4				m_tMtx;
+	std::list<Node *>		m_ptrs;
+	std::vector<glm::vec3>	m_bboxVertices, m_snakeVertices;
 };
 
-//! derived Geometry class
-class Geometry : public Node {
-private:
-  GLuint                  m_VAO, m_VBO, m_NBO, m_EBO;
-  std::vector< GLfloat >  m_vertices, m_normals;
-  std::vector< GLuint >   m_indices;
+// derived Geometry class
+class Geometry : public Node
+{
+public:
+	Geometry(const char *fileName);
+	~Geometry();
 
-  void load( const char *i_fileName );
+	void draw(const GLuint &shaderProgram, const glm::mat4 &mtx);
+	void update(const glm::mat4 &mtx);
+
+private:
+	void load(const char *fileName);
 
 public:
-  Geometry( const char *i_fileName );
-  ~Geometry();
+	int m_obstacleType = 1;		// 1 for pyramid, 2 for coin, 3 for wall
 
-  //! 1 for pyramid, 2 for coin, 3 for wall
-  int m_obstacleType;
-
-  void draw( const GLuint    &i_shaderProgram,
-             const glm::mat4 &i_mtx );
-  void update( const glm::mat4 &i_mtx );
+private:
+	GLuint					m_VAO, m_VBO, m_NBO, m_EBO;
+	std::vector<GLfloat>	m_vertices, m_normals;
+	std::vector<GLuint>		m_indices;
 };
 
 #endif

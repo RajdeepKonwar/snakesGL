@@ -47,21 +47,22 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-class Bezier {
-private:
-  glm::vec3 m_points[16];
-  glm::mat4 m_G[3];
-  glm::mat4 m_C[3];
-  glm::mat4 m_B;
-
-  std::vector< glm::vec3 > m_vertices[101];
-
+class Bezier
+{
 public:
-  int m_surface;
-  GLuint m_VAO[101], m_VBO[101];
+	int m_surface;
+	GLuint m_VAO[101], m_VBO[101];
 
-  Bezier( const glm::vec3 i_points[16] );
-  void draw( const GLuint &i_shaderProgram );
+	Bezier(const glm::vec3 points[16]);
+	void draw(const GLuint &shaderProgram);
+
+private:
+	glm::vec3 m_points[16];
+	glm::mat4 m_G[3];
+	glm::mat4 m_C[3];
+	glm::mat4 m_B;
+
+	std::vector<glm::vec3> m_vertices[101];
 };
 
 #endif /* Bezier_h */

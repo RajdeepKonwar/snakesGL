@@ -32,155 +32,160 @@
 
 #define NUM_SAMPLES 100
 
-GLFWwindow* g_window;
+GLFWwindow* G_window;
 
-void errorCallback(        int   error,
-                     const char *description ) {
-  //! Print error
-  fputs( description, stderr );
+void errorCallback(int error, const char *description)
+{
+	// Print error
+	std::cerr << description << std::endl;
 }
 
-void setupCallbacks() {
-  //! Set the error callback
-  glfwSetErrorCallback( errorCallback );
+void setupCallbacks()
+{
+	// Set the error callback
+	glfwSetErrorCallback(errorCallback);
 
-  //! Set the key callback
-  glfwSetKeyCallback( g_window, Window::keyCallback );
+	// Set the key callback
+	glfwSetKeyCallback(G_window, Window::keyCallback);
 
-  //! Set cursor position callback
-  glfwSetCursorPosCallback( g_window, Window::cursorPosCallback );
+	// Set cursor position callback
+	glfwSetCursorPosCallback(G_window, Window::cursorPosCallback);
 
-  //! Set mouse button callback
-  glfwSetMouseButtonCallback( g_window, Window::mouseButtonCallback );
+	// Set mouse button callback
+	glfwSetMouseButtonCallback(G_window, Window::mouseButtonCallback);
 
-  //! Set scroll callback
-  glfwSetScrollCallback( g_window, Window::scrollCallback );
+	// Set scroll callback
+	glfwSetScrollCallback(G_window, Window::scrollCallback);
 
-  //! Set the window resize callback
-  glfwSetFramebufferSizeCallback( g_window, Window::resizeCallback );
+	// Set the window resize callback
+	glfwSetFramebufferSizeCallback(G_window, Window::resizeCallback);
 }
 
-void setupGlew() {
-  //! Initialize GLEW. Not needed on OSX systems.
-  #ifndef __APPLE__
-  GLenum err = glewInit();
-  if( GLEW_OK != err ) {
-    /* Problem: glewInit failed, something is seriously wrong. */
-    fprintf( stderr, "Error: %s\n", glewGetErrorString( err ) );
-    glfwTerminate();
-  }
-
-  fprintf( stdout, "Current GLEW version: %s\n", glewGetString( GLEW_VERSION ) );
-  #endif
-}
-
-void setupOpenGLSettings() {
+void setupGlew()
+{
+	// Initialize GLEW. Not needed on OSX systems.
 #ifndef __APPLE__
-  //! Setup GLEW. Don't do this on OSX systems.
-  setupGlew();
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		/* Problem: glewInit failed, something is seriously wrong. */
+		std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
+		glfwTerminate();
+	}
+
+	std::cout << "Current GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
 #endif
-  //! Enable depth buffering
-  glEnable( GL_DEPTH_TEST );
-
-  //! Related to shaders and z value comparisons for the depth buffer
-  glDepthFunc( GL_LEQUAL );
-
-  //! Set polygon drawing mode to fill front and back of each polygon
-  //! You can also use the paramter of GL_LINE instead of GL_FILL to see wireframes
-  glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-
-  //! Disable backface culling to render both sides of polygons
-  // glDisable( GL_CULL_FACE );
-
-  //! Set clear color
-  glClearColor( 0.3f, 0.3f, 0.3f, 1.0f );   //! grey
-
-  //! Clear the z-buffer
-  glClearDepth( 1 );
 }
 
-void printVersions() {
-  //! Get info of GPU and supported OpenGL version
-  printf( "Renderer: %s\n", glGetString( GL_RENDERER ) );
-  printf( "OpenGL version supported %s\n", glGetString( GL_VERSION ) );
+void setupOpenGLSettings()
+{
+#ifndef __APPLE__
+	// Setup GLEW. Don't do this on OSX systems.
+	setupGlew();
+#endif
 
-  //! If the shading language symbol is defined
+	// Enable depth buffering
+	glEnable(GL_DEPTH_TEST);
+
+	// Related to shaders and z value comparisons for the depth buffer
+	glDepthFunc(GL_LEQUAL);
+
+	// Set polygon drawing mode to fill front and back of each polygon
+	// You can also use the paramter of GL_LINE instead of GL_FILL to see wireframes
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// Disable backface culling to render both sides of polygons
+	// glDisable( GL_CULL_FACE );
+
+	// Set clear color
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);	// grey
+
+	// Clear the z-buffer
+	glClearDepth(1);
+}
+
+void printVersions()
+{
+	// Get info of GPU and supported OpenGL version
+	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "OpenGL version supported " << glGetString(GL_VERSION) << std::endl;
+
+	// If the shading language symbol is defined
 #ifdef GL_SHADING_LANGUAGE_VERSION
-  std::printf( "Supported GLSL version is %s.\n",
-               (char *) glGetString( GL_SHADING_LANGUAGE_VERSION ) );
+	std::cout << "Supported GLSL version is " << (char *)glGetString(GL_SHADING_LANGUAGE_VERSION) << ".\n";
 #endif
 }
 
-//! Display FPS (Frames per second)
-void showFPS() {
-  static float s_frameTimes[NUM_SAMPLES];
-  static int   s_currFrame = 0;
-  static float s_prevTicks = static_cast<float>(clock());
+// Display FPS (Frames per second)
+void showFPS()
+{
+	static float frameTimes[NUM_SAMPLES];
+	static int   currFrame = 0;
+	static float prevTicks = static_cast<float>(clock());
 
-  int l_count, l_i;
-  float l_currTicks = static_cast<float>(clock());
-  float l_frameTime = l_currTicks - s_prevTicks;
+	int count, i;
+	float currTicks = static_cast<float>(clock());
+	float frameTime = currTicks - prevTicks;
 
-  s_frameTimes[s_currFrame % NUM_SAMPLES] = l_frameTime;
-  s_prevTicks = l_currTicks;
+	frameTimes[currFrame % NUM_SAMPLES] = frameTime;
+	prevTicks = currTicks;
 
-  if( s_currFrame < NUM_SAMPLES )
-    l_count = s_currFrame;
-  else
-    l_count = NUM_SAMPLES;
+	if (currFrame < NUM_SAMPLES)
+		count = currFrame;
+	else
+		count = NUM_SAMPLES;
 
-  float l_frameTimeAvg = 0.0f;
-  for( l_i = 0; l_i < l_count; l_i++ )
-    l_frameTimeAvg += s_frameTimes[l_i];
-  l_frameTimeAvg /= l_count;
+	float frameTimeAvg = 0.0f;
+	for (i = 0; i < count; i++)
+		frameTimeAvg += frameTimes[i];
+	frameTimeAvg /= count;
 
-  float l_fps;
-  if( l_frameTimeAvg > 0.0f )
-    l_fps = (100000.0f) / l_frameTimeAvg;
-  else
-    l_fps = 60.0f;
+	float fps;
+	if (frameTimeAvg > 0.0f)
+		fps = (100000.0f) / frameTimeAvg;
+	else
+		fps = 60.0f;
 
-  s_currFrame++;
-
-  std::cout << "\r" << l_fps << std::flush;
+	currFrame++;
+	std::cout << "\r" << fps << std::flush;
 }
 
-int main( int    i_argc,
-          char **i_argv ) {
-  //! Create the GLFW window
-  g_window = Window::createWindow( 1600, 900 );
+int main(int argc, char **argv)
+{
+	// Create the GLFW window
+	G_window = Window::createWindow(3000, 2000);
 
-  //! Print OpenGL and GLSL versions
-  printVersions();
+	// Print OpenGL and GLSL versions
+	printVersions();
 
-  //! Setup callbacks
-  setupCallbacks();
+	// Setup callbacks
+	setupCallbacks();
 
-  //! Setup OpenGL settings, including lighting, materials, etc.
-  setupOpenGLSettings();
+	// Setup OpenGL settings, including lighting, materials, etc.
+	setupOpenGLSettings();
 
-  //! Initialize objects/pointers for rendering
-  Window::initializeObjects();
+	// Initialize objects/pointers for rendering
+	Window::initializeObjects();
 
-  //! Loop while GLFW window should stay open
-  while( !glfwWindowShouldClose( g_window ) ) {
-    //! Main render display callback. Rendering of objects is done here.
-    Window::displayCallback( g_window );
+	// Loop while GLFW window should stay open
+	while (!glfwWindowShouldClose(G_window))
+	{
+		// Main render display callback. Rendering of objects is done here.
+		Window::displayCallback(G_window);
 
-    //! Idle callback. Updating objects, etc. can be done here.
-    Window::idleCallback();
-    showFPS();
-  }
+		// Idle callback. Updating objects, etc. can be done here.
+		Window::idleCallback();
+		showFPS();
+	}
 
-  std::cout << std::endl;
+	std::cout << std::endl;
+	Window::cleanUp();
 
-  Window::cleanUp();
+	// Destroy the window
+	glfwDestroyWindow(G_window);
 
-  //! Destroy the window
-  glfwDestroyWindow( g_window );
+	// Terminate GLFW
+	glfwTerminate();
 
-  //! Terminate GLFW
-  glfwTerminate();
-
-  return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }

@@ -31,103 +31,105 @@
 #include "Bezier.h"
 #include "Window.h"
 
-Bezier::Bezier( const glm::vec3 i_points[16] ) {
-  m_G[0] = glm::mat4( glm::vec4( i_points[0].x, i_points[4].x, i_points[8].x,  i_points[12].x ),
-                      glm::vec4( i_points[1].x, i_points[5].x, i_points[9].x,  i_points[13].x ),
-                      glm::vec4( i_points[2].x, i_points[6].x, i_points[10].x, i_points[14].x ),
-                      glm::vec4( i_points[3].x, i_points[7].x, i_points[11].x, i_points[15].x ) );
+Bezier::Bezier(const glm::vec3 points[16])
+{
+	m_G[0] = glm::mat4( glm::vec4( points[0].x, points[4].x, points[8].x,  points[12].x ),
+						glm::vec4( points[1].x, points[5].x, points[9].x,  points[13].x ),
+						glm::vec4( points[2].x, points[6].x, points[10].x, points[14].x ),
+						glm::vec4( points[3].x, points[7].x, points[11].x, points[15].x ) );
 
-  m_G[1] = glm::mat4( glm::vec4( i_points[0].y, i_points[4].y, i_points[8].y,  i_points[12].y ),
-                      glm::vec4( i_points[1].y, i_points[5].y, i_points[9].y,  i_points[13].y ),
-                      glm::vec4( i_points[2].y, i_points[6].y, i_points[10].y, i_points[14].y ),
-                      glm::vec4( i_points[3].y, i_points[7].y, i_points[11].y, i_points[15].y ) );
+	m_G[1] = glm::mat4( glm::vec4( points[0].y, points[4].y, points[8].y,  points[12].y ),
+						glm::vec4( points[1].y, points[5].y, points[9].y,  points[13].y ),
+						glm::vec4( points[2].y, points[6].y, points[10].y, points[14].y ),
+						glm::vec4( points[3].y, points[7].y, points[11].y, points[15].y ) );
 
-  m_G[2] = glm::mat4( glm::vec4( i_points[0].z, i_points[4].z, i_points[8].z,  i_points[12].z ),
-                      glm::vec4( i_points[1].z, i_points[5].z, i_points[9].z,  i_points[13].z ),
-                      glm::vec4( i_points[2].z, i_points[6].z, i_points[10].z, i_points[14].z ),
-                      glm::vec4( i_points[3].z, i_points[7].z, i_points[11].z, i_points[15].z ) );
+	m_G[2] = glm::mat4( glm::vec4( points[0].z, points[4].z, points[8].z,  points[12].z ),
+						glm::vec4( points[1].z, points[5].z, points[9].z,  points[13].z ),
+						glm::vec4( points[2].z, points[6].z, points[10].z, points[14].z ),
+						glm::vec4( points[3].z, points[7].z, points[11].z, points[15].z ) );
 
-  m_B = glm::mat4( glm::vec4( -1.0f,  3.0f, -3.0f, 1.0f ),
-                   glm::vec4(  3.0f, -6.0f,  3.0f, 0.0f ),
-                   glm::vec4( -3.0f,  3.0f,  0.0f, 0.0f ),
-                   glm::vec4(  1.0f,  0.0f,  0.0f, 0.0f ) );
+	m_B = glm::mat4(glm::vec4( -1.0f,  3.0f, -3.0f, 1.0f ),
+					glm::vec4(  3.0f, -6.0f,  3.0f, 0.0f ),
+					glm::vec4( -3.0f,  3.0f,  0.0f, 0.0f ),
+					glm::vec4(  1.0f,  0.0f,  0.0f, 0.0f ));
 
-  m_C[0] = m_B * m_G[0] * m_B;
-  m_C[1] = m_B * m_G[1] * m_B;
-  m_C[2] = m_B * m_G[2] * m_B;
+	m_C[0] = m_B * m_G[0] * m_B;
+	m_C[1] = m_B * m_G[1] * m_B;
+	m_C[2] = m_B * m_G[2] * m_B;
 
-  glm::vec4 l_uVector;
-  glm::vec4 l_vVector;
-  glm::vec3 l_xOfuv;
+	glm::vec4 uVector;
+	glm::vec4 vVector;
+	glm::vec3 xOfuv;
 
-  int l_counter = 0;
-  int l_rows    = 0;
+	int counter = 0;
+	int rows    = 0;
 
-  float l_u = 0.0f;
-  float l_v = 0.0f;
+	float u = 0.0f;
+	float v = 0.0f;
 
-  while( l_rows <= 100 ) {
-    while( l_counter < 202 ) {
-      l_uVector = glm::vec4( l_u * l_u * l_u, l_u * l_u, l_u, 1 );
-      l_vVector = glm::vec4( l_v * l_v * l_v, l_v * l_v, l_v, 1 );
+	while (rows <= 100)
+	{
+		while (counter < 202)
+		{
+			uVector = glm::vec4(u * u * u, u * u, u, 1);
+			vVector = glm::vec4(v * v * v, v * v, v, 1);
 
-      l_xOfuv   = glm::vec3( glm::dot( l_vVector, m_C[0] * l_uVector ),
-                             glm::dot( l_vVector, m_C[1] * l_uVector ),
-                             glm::dot( l_vVector, m_C[2] * l_uVector ) );
+			xOfuv	= glm::vec3(glm::dot( vVector, m_C[0] * uVector ),
+								glm::dot( vVector, m_C[1] * uVector ),
+								glm::dot( vVector, m_C[2] * uVector ));
 
-      m_vertices[l_rows].push_back( l_xOfuv );
+			m_vertices[rows].push_back(xOfuv);
 
-      if( l_counter % 2 == 0 )
-        l_u += 0.01f;
-      else {
-        l_u -= 0.01f;
-        l_v += 0.01f;
-      }
+			if (counter % 2 == 0)
+				u += 0.01f;
+			else
+			{
+				u -= 0.01f;
+				v += 0.01f;
+			}
 
-      l_counter++;
-    }
+			counter++;
+		}
 
-    l_counter = 0;
-    l_v       = 0.0f;
-    l_u       = 0.0f + l_rows * 0.01f;
-    l_rows++;
-  }
+		counter = 0;
+		v       = 0.0f;
+		u       = 0.0f + rows * 0.01f;
+		rows++;
+	}
 
-  for( int l_j = 0; l_j <= 100; l_j++ ) {
-    glGenVertexArrays( 1, &m_VAO[l_j] );
-    glGenBuffers( 1, &m_VBO[l_j] );
+	for (int j = 0; j <= 100; j++)
+	{
+		glGenVertexArrays(1, &m_VAO[j]);
+		glGenBuffers(1, &m_VBO[j]);
 
-    glBindVertexArray( m_VAO[l_j] );
-    glBindBuffer( GL_ARRAY_BUFFER, m_VBO[l_j] );
-    glBufferData( GL_ARRAY_BUFFER, m_vertices[l_j].size() * sizeof( glm::vec3 ),
-                  &m_vertices[l_j][0], GL_STATIC_DRAW );
+		glBindVertexArray(m_VAO[j]);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VBO[j]);
+		glBufferData(GL_ARRAY_BUFFER, m_vertices[j].size() * sizeof(glm::vec3), &m_vertices[j][0], GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 0, 3, GL_FLOAT,  GL_FALSE, sizeof( glm::vec3 ), 
-                           (GLvoid*) 0 );
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glBindVertexArray(0);
-  }
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
 }
 
-void Bezier::draw( const GLuint &i_shaderProgram ) {
-  glUniformMatrix4fv( glGetUniformLocation( i_shaderProgram, "projection" ), 1,
-                      GL_FALSE, &Window::m_P[0][0] );
-  glUniformMatrix4fv( glGetUniformLocation( i_shaderProgram, "modelView" ),  1,
-                      GL_FALSE, &Window::m_V[0][0] );
-  glUniform1i( glGetUniformLocation( i_shaderProgram, "u_surface" ), m_surface );
-  
-  GLuint l_uFog = glGetUniformLocation( i_shaderProgram, "u_fog" );
-  glUniform1i( l_uFog, Window::m_fog );
-  
-  GLuint l_uCamPos = glGetUniformLocation( i_shaderProgram, "u_camPos" );
-  glUniform3f( l_uCamPos,
-              Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z );
+void Bezier::draw(const GLuint &i_shaderProgram)
+{
+	glUniformMatrix4fv(glGetUniformLocation(i_shaderProgram, "projection"), 1, GL_FALSE, &Window::m_P[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(i_shaderProgram, "modelView"), 1, GL_FALSE, &Window::m_V[0][0]);
+	glUniform1i(glGetUniformLocation(i_shaderProgram, "u_surface"), m_surface);
 
-  for( int l_i = 0; l_i <= 100; l_i++ ) {
-    glBindVertexArray( m_VAO[l_i] );
-    glDrawArrays( GL_TRIANGLE_STRIP, 0, static_cast<GLsizei>(m_vertices[l_i].size()) );
-    glBindVertexArray( 0 );
-  }
+	GLuint uFog = glGetUniformLocation(i_shaderProgram, "u_fog");
+	glUniform1i(uFog, Window::m_fog);
+
+	GLuint uCamPos = glGetUniformLocation(i_shaderProgram, "u_camPos");
+	glUniform3f(uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z);
+
+	for (int i = 0; i <= 100; i++)
+	{
+		glBindVertexArray(m_VAO[i]);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, static_cast<GLsizei>(m_vertices[i].size()));
+		glBindVertexArray(0);
+	}
 }

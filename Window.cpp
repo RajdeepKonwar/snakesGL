@@ -29,913 +29,854 @@
  **/
 
 #include <fstream>
+
 #ifdef _WIN32
-	#include <string>
+#include <string>
 #endif
+
 #include "Window.h"
 
-#define WINDOW_TITLE "snakesGL"
-#define CONFIG_FILE  "./snakesGL.conf"
+constexpr auto WINDOW_TITLE = "snakesGL";
+constexpr auto CONFIG_FILE = "./snakesGL.conf";
 
-//! Static data members
-int   Window::m_width;
-int   Window::m_height;
-int   Window::m_move  = 0;
-int   Window::m_nBody = 3;
-int   Window::m_nTile = 20;
-bool  Window::m_fog   = true;
+// Static data members
+int Window::m_width;
+int Window::m_height;
+int Window::m_move = 0;
+int Window::m_nBody = 3;
+int Window::m_nTile = 20;
+bool Window::m_fog = true;
 
-//! Global variables
-GLuint g_gridBigShader,     g_gridSmallShader,    g_snakeShader, g_obstaclesShader;
-GLuint g_boundingBoxShader, g_snakeContourShader, g_velocityShader, g_bezierShader;
+// Global variables
+GLuint G_pGridBigShader, G_pGridSmallShader, G_pSnakeShader, G_pObstaclesShader;
+GLuint G_boundingBoxShader, G_pSnakeContourShader, G_velocityShader, G_pBezierShader;
 
-//! Overclocking on apple to get better fps lul
+// Overclocking on apple to get better fps lul
 #ifdef __APPLE__
 float Window::m_velocity  = 0.05f;
 #else
 float Window::m_velocity  = 0.005f;
 #endif
 
-float g_yPos      = 0.0f;
-bool  g_drawBbox  = false;
-float g_rotAngle  = 0.0f;
-int   g_nPyramids = 80;
-int   g_nCoins    = 5;
-int   g_nWalls    = 60;
+float G_yPos = 0.0f;
+bool G_drawBbox = false;
+float G_rotAngle = 0.0f;
+int G_nPyramids = 80;
+int G_nCoins = 5;
+int G_nWalls = 60;
 
-Node *g_gridBig, *g_gridSmall;  //! Big and small grid position transform mtx
-Node *g_snake;                  //! Snake transform mtx
-Node *g_obstacles;
+Node *G_pGridBig, *G_pGridSmall;	// Big and small grid position transform mtx
+Node *G_pSnake;						// Snake transform mtx
+Node *G_pObstacles;
 
-//! Individual elements' transform mtx
-Node *g_headMtx, *g_tailMtx, **g_pyramidMtx, **g_coinMtx, **g_wallMtx;
-std::vector< Node * > g_tileBigPos, g_tileSmallPos, g_bodyMtx, g_obstaclesList;
-std::vector< Node * >::iterator g_nodeIt;
+// Individual elements' transform mtx
+Node *G_pHeadMtx, *G_pTailMtx, **G_pPyramidMtx, **G_pCoinMtx, **G_pWallMtx;
+std::vector<Node *> G_pTileBigPos, G_pTileSmallPos, G_pBodyMtx, G_pObstaclesList;
+std::vector<Node *>::iterator G_nodeIt;
 
-Node *g_head, *g_body, *g_tail, *g_tileBig, *g_tileSmall, *g_coin, *g_wall;
+Node *G_pHead, *G_pBody, *G_pTail, *G_pTileBig, *G_pTileSmall, *G_pCoin, *G_pWall;
 
-Bezier *patch[4];
+Bezier *pPatch[4];
 
-//! Default camera parameters
-//glm::vec3 Window::m_camPos( 0.0f, 1.8f, 5.0f );//! e | Position of camera (top)
-glm::vec3 Window::m_camPos( 0.0f, -3.5f, 3.5f );//! e | Position of camera
-glm::vec3 g_camLookAt( 0.0f, 2.5f, 0.0f );      //! d | Where camera looks at
-glm::vec3 g_camUp( 0.0f, 1.0f, 0.0f );          //! u | What orientation "up" is
+// Default camera parameters
+//glm::vec3 Window::m_camPos(0.0f, 1.8f, 5.0f);		// e | Position of camera (top)
+glm::vec3 Window::m_camPos(0.0f, -3.5f, 3.5f);		// e | Position of camera
+glm::vec3 G_camLookAt(0.0f, 2.5f, 0.0f);			// d | Where camera looks at
+glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);				// u | What orientation "up" is
 
-glm::vec3 Window::m_lastPoint( 0.0f, 0.0f, 0.0f );  //! For mouse tracking
+glm::vec3 Window::m_lastPoint(0.0f, 0.0f, 0.0f);	// For mouse tracking
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
 
-float Window::randGenX() {
-  int l_randMax =  12;
-  int l_randMin = -12;
-  int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+float Window::randGenX()
+{
+	int l_randMax =  12;
+	int l_randMin = -12;
+	int l_rand = rand() % (l_randMax - l_randMin + 1) + l_randMin;
 
-  return (2.0f * (float) l_rand);
+	return (2.0f * static_cast<float>(l_rand));
 }
 
-float Window::randGenY() {
-  int l_randMax = Window::m_nTile;
-  int l_randMin = 2;
-  int l_rand    = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+float Window::randGenY()
+{
+	int l_randMax = Window::m_nTile;
+	int l_randMin = 2;
+	int l_rand = rand() % (l_randMax - l_randMin + 1) + l_randMin;
 
-  return (2.0f * (float) l_rand);
+	return (2.0f * static_cast<float>(l_rand));
 }
 
-//! functions as constructor
-void Window::initializeObjects() {
-  //! Seed the randomizer
-  srand(static_cast<unsigned int>(time( nullptr ) ));
+// functions as constructor
+void Window::initializeObjects()
+{
+	// Seed the randomizer
+	srand(static_cast<unsigned int>(time(nullptr)));
 
-  //! Parse config file for shader and obj paths
-  std::ifstream l_confFn( CONFIG_FILE, std::ios::in );
-  if( !l_confFn.is_open() ) {
-    std::cerr << "Error: cannot open " << CONFIG_FILE << std::endl;
-    exit( EXIT_FAILURE );
-  }
+	// Parse config file for shader and obj paths
+	std::ifstream confFn(CONFIG_FILE, std::ios::in);
+	if (!confFn.is_open())
+	{
+		std::cerr << "Error: cannot open " << CONFIG_FILE << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
-  std::string l_lineBuf;
-  std::string l_gridBigVertShader,      l_gridBigFragShader;
-  std::string l_gridSmallVertShader,    l_gridSmallFragShader;
-  std::string l_snakeVertShader,        l_snakeFragShader;
-  std::string l_obstaclesVertShader,    l_obstaclesFragShader;
-  std::string l_boundingBoxVertShader,  l_boundingBoxFragShader;
-  std::string l_snakeContourVertShader, l_snakeContourFragShader;
-  std::string l_bezierVertShader,       l_bezierFragShader;
-  std::string l_head, l_body, l_tail,   l_tileBig, l_tileSmall, l_coin, l_wall;
+	std::string lineBuf;
+	std::string gridBigVertShader,		gridBigFragShader;
+	std::string gridSmallVertShader,	gridSmallFragShader;
+	std::string snakeVertShader,		snakeFragShader;
+	std::string obstaclesVertShader,	obstaclesFragShader;
+	std::string boundingBoxVertShader,	boundingBoxFragShader;
+	std::string snakeContourVertShader,	snakeContourFragShader;
+	std::string bezierVertShader,		bezierFragShader;
+	std::string head, body, tail, tileBig, tileSmall, coin, wall;
 
-  while( getline( l_confFn, l_lineBuf ) ) {
-    size_t l_k = -1, l_l;
+	while (getline(confFn, lineBuf))
+	{
+		size_t k = -1, l;
 
-    while( (++l_k < l_lineBuf.length()) && (l_lineBuf[l_k] == ' ') );
+		while (++k < lineBuf.length() && lineBuf[k] == ' ');
 
-    if( (l_k >= l_lineBuf.length()) || (l_lineBuf[l_k] == '#') )
-      continue;
+		if (k >= lineBuf.length() || lineBuf[k] == '#')
+			continue;
 
-    l_l = l_k - 1;
+		l = k - 1;
 
-    while( (++l_l < l_lineBuf.length()) && (l_lineBuf[l_l] != '=') );
+		while (++l < lineBuf.length() && lineBuf[l] != '=');
 
-    if( l_l >= l_lineBuf.length() )
-      continue;
+		if (l >= lineBuf.length())
+			continue;
 
-    std::string l_varName       = l_lineBuf.substr( l_k, l_l - l_k );
-    std::string l_varValue      = l_lineBuf.substr( l_l + 1 );
+		std::string varName = lineBuf.substr(k, l - k);
+		std::string varValue = lineBuf.substr(l + 1);
 
-    if( l_varName.compare( "grid_big_vert_shader" ) == 0 )
-      l_gridBigVertShader       = l_varValue;
-    else if( l_varName.compare( "grid_big_frag_shader" ) == 0 )
-      l_gridBigFragShader       = l_varValue;
-    else if( l_varName.compare( "grid_small_vert_shader" ) == 0 )
-      l_gridSmallVertShader     = l_varValue;
-    else if( l_varName.compare( "grid_small_frag_shader" ) == 0 )
-      l_gridSmallFragShader     = l_varValue;
-    else if( l_varName.compare( "snake_vert_shader" ) == 0 )
-      l_snakeVertShader         = l_varValue;
-    else if( l_varName.compare( "snake_frag_shader" ) == 0 )
-      l_snakeFragShader         = l_varValue;
-    else if( l_varName.compare( "obstacles_vert_shader" ) == 0 )
-      l_obstaclesVertShader     = l_varValue;
-    else if( l_varName.compare( "obstacles_frag_shader" ) == 0 )
-      l_obstaclesFragShader     = l_varValue;
-    else if( l_varName.compare( "bounding_box_vert_shader" ) == 0 )
-      l_boundingBoxVertShader   = l_varValue;
-    else if( l_varName.compare( "bounding_box_frag_shader" ) == 0 )
-      l_boundingBoxFragShader   = l_varValue;
-    else if( l_varName.compare( "snake_contour_vert_shader" ) == 0 )
-      l_snakeContourVertShader  = l_varValue;
-    else if( l_varName.compare( "snake_contour_frag_shader" ) == 0 )
-      l_snakeContourFragShader  = l_varValue;
-    else if( l_varName.compare( "bezier_vert_shader" ) == 0 )
-      l_bezierVertShader        = l_varValue;
-    else if( l_varName.compare( "bezier_frag_shader" ) == 0 )
-      l_bezierFragShader        = l_varValue;
+		if (varName.compare("grid_big_vert_shader") == 0)
+			gridBigVertShader = varValue;
+		else if (varName.compare("grid_big_frag_shader") == 0)
+			gridBigFragShader = varValue;
+		else if (varName.compare("grid_small_vert_shader") == 0)
+			gridSmallVertShader = varValue;
+		else if (varName.compare("grid_small_frag_shader") == 0)
+			gridSmallFragShader = varValue;
+		else if (varName.compare("snake_vert_shader") == 0)
+			snakeVertShader = varValue;
+		else if (varName.compare("snake_frag_shader") == 0)
+			snakeFragShader = varValue;
+		else if (varName.compare("obstacles_vert_shader") == 0)
+			obstaclesVertShader = varValue;
+		else if (varName.compare("obstacles_frag_shader") == 0)
+			obstaclesFragShader = varValue;
+		else if (varName.compare("bounding_box_vert_shader") == 0)
+			boundingBoxVertShader = varValue;
+		else if (varName.compare("bounding_box_frag_shader") == 0)
+			boundingBoxFragShader = varValue;
+		else if (varName.compare("snake_contour_vert_shader") == 0)
+			snakeContourVertShader = varValue;
+		else if (varName.compare("snake_contour_frag_shader") == 0)
+			snakeContourFragShader = varValue;
+		else if (varName.compare("bezier_vert_shader") == 0)
+			bezierVertShader = varValue;
+		else if (varName.compare("bezier_frag_shader") == 0)
+			bezierFragShader = varValue;
 
-    else if( l_varName.compare( "head" ) == 0 )
-      l_head                    = l_varValue;
-    else if( l_varName.compare( "body" ) == 0 )
-      l_body                    = l_varValue;
-    else if( l_varName.compare( "tail" ) == 0 )
-      l_tail                    = l_varValue;
-    else if( l_varName.compare( "tile_big" ) == 0 )
-      l_tileBig                 = l_varValue;
-    else if( l_varName.compare( "tile_small" ) == 0 )
-      l_tileSmall               = l_varValue;
-    else if( l_varName.compare( "coin" ) == 0 )
-      l_coin                    = l_varValue;
-    else if( l_varName.compare( "wall" ) == 0 )
-      l_wall                    = l_varValue;
-    else
-      std::cout << "\nUnknown setting (" << l_varName << "). Ignored."
-                << std::endl;
-  }
+		else if (varName.compare("head") == 0)
+			head = varValue;
+		else if (varName.compare("body") == 0)
+			body = varValue;
+		else if (varName.compare("tail") == 0)
+			tail = varValue;
+		else if (varName.compare("tile_big") == 0)
+			tileBig = varValue;
+		else if (varName.compare("tile_small") == 0)
+			tileSmall = varValue;
+		else if (varName.compare("coin") == 0)
+			coin = varValue;
+		else if (varName.compare("wall") == 0)
+			wall = varValue;
+		else
+			std::cout << "\nUnknown setting (" << varName << "). Ignored.\n";
+	}
 
-  l_confFn.close();
+	confFn.close();
 
-  //! Geometry nodes
-  g_head      = new Geometry( l_head.c_str()      );
-  g_body      = new Geometry( l_body.c_str()      );
-  g_tail      = new Geometry( l_tail.c_str()      );
-  g_tileSmall = new Geometry( l_tileSmall.c_str() );
-  g_tileBig   = new Geometry( l_tileBig.c_str()   );
-  g_coin      = new Geometry( l_coin.c_str()      );
-  g_wall      = new Geometry( l_wall.c_str()      );
+	// Geometry nodes
+	G_pHead      = new Geometry( head.c_str()      );
+	G_pBody      = new Geometry( body.c_str()      );
+	G_pTail      = new Geometry( tail.c_str()      );
+	G_pTileSmall = new Geometry( tileSmall.c_str() );
+	G_pTileBig   = new Geometry( tileBig.c_str()   );
+	G_pCoin      = new Geometry( coin.c_str()      );
+	G_pWall      = new Geometry( wall.c_str()      );
 
-  //! Set geometry obstacle type (for color, 1 by default)
-  static_cast< Geometry * >(g_coin)->m_obstacleType = 2;
-  static_cast< Geometry * >(g_wall)->m_obstacleType = 3;
+	// Set geometry obstacle type (for color, 1 by default)
+	static_cast<Geometry *>(G_pCoin)->m_obstacleType = 2;
+	static_cast<Geometry *>(G_pWall)->m_obstacleType = 3;
 
-  //! Group nodes
-  g_gridBig   = new Transform( glm::mat4( 1.0f ) );
-  g_gridSmall = new Transform( glm::mat4( 1.0f ) );
-  g_snake     = new Transform( glm::mat4( 1.0f ) );
-  g_obstacles = new Transform( glm::mat4( 1.0f ) );
+	// Group nodes
+	G_pGridBig = new Transform(glm::mat4(1.0f));
+	G_pGridSmall = new Transform(glm::mat4(1.0f));
+	G_pSnake = new Transform(glm::mat4(1.0f));
+	G_pObstacles = new Transform(glm::mat4(1.0f));
 
-  //! Transform modes
-  g_headMtx   = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                               glm::vec3( 0.0f, 0.8f, 0.0f ) ) );
+	// Transform modes
+	G_pHeadMtx = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.8f, 0.0f)));
 
-  //! Head's bounding box is white
-  static_cast< Transform * >(g_headMtx)->m_bboxColor = 1;
+	// Head's bounding box is white
+	static_cast<Transform *>(G_pHeadMtx)->m_bboxColor = 1;
 
-  //! Bounding boxes' initial positions and sizes
-  static_cast< Transform * >( g_headMtx )->m_position   = glm::vec3( -1.0f,
-                                                                      1.8f,
-                                                                      0.01f );
-  static_cast< Transform * >( g_headMtx )->m_size       = glm::vec3(  2.0f,
-                                                                      1.5f,
-                                                                      0.75f );
+	// Bounding boxes' initial positions and sizes
+	static_cast<Transform *>(G_pHeadMtx)->m_position = glm::vec3(-1.0f, 1.8f, 0.01f);
+	static_cast<Transform *>(G_pHeadMtx)->m_size = glm::vec3(2.0f, 1.5f, 0.75f);
 
-  //! Add head to snake
-  static_cast< Transform * >(g_snake)->addChild( g_headMtx );
-  static_cast< Transform * >(g_headMtx)->addChild( g_head );
+	// Add head to snake
+	static_cast<Transform *>(G_pSnake)->addChild(G_pHeadMtx);
+	static_cast<Transform *>(G_pHeadMtx)->addChild(G_pHead);
 
-  //! Add head to obstacles list as first item (for collision detection)
-  g_obstaclesList.push_back( g_headMtx );
+	// Add head to obstacles list as first item (for collision detection)
+	G_pObstaclesList.push_back(G_pHeadMtx);
 
-  //! Snake body parts' transform mtx
-  for( int l_i = 0; l_i < Window::m_nBody; l_i++ )
-    g_bodyMtx.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                         glm::vec3( 0.0f, -1.0f * (float) l_i, 0.0f ) ) ) );
+	// Snake body parts' transform mtx
+	for (int i = 0; i < Window::m_nBody; i++)
+		G_pBodyMtx.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * (float)i, 0.0f))));
 
-  //! Add body parts to snake
-  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt ) {
-    static_cast< Transform * >(g_snake)->addChild( *g_nodeIt );
-    static_cast< Transform * >(*g_nodeIt)->addChild( g_body );
-  }
+	// Add body parts to snake
+	for (G_nodeIt = G_pBodyMtx.begin(); G_nodeIt != G_pBodyMtx.end(); ++G_nodeIt)
+	{
+		static_cast<Transform *>(G_pSnake)->addChild(*G_nodeIt);
+		static_cast<Transform *>(*G_nodeIt)->addChild(G_pBody);
+	}
 
-  //! Tail transform mtx
-  g_tailMtx = new Transform( glm::translate( glm::mat4( 1.0f ),
-                  glm::vec3( 0.0f,
-                             -1.0f * (float) Window::m_nBody + 0.5f,
-                             0.0f ) ) );
+	// Tail transform mtx
+	G_pTailMtx = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * (float)Window::m_nBody + 0.5f, 0.0f)));
 
-  //! Add tail to snake
-  static_cast< Transform * >(g_snake)->addChild( g_tailMtx );
-  static_cast< Transform * >(g_tailMtx)->addChild( g_tail );
+	// Add tail to snake
+	static_cast<Transform *>(G_pSnake)->addChild(G_pTailMtx);
+	static_cast<Transform *>(G_pTailMtx)->addChild(G_pTail);
 
-  //! Initialize snake contour (white)
-  static_cast< Transform * >(g_snake)->generateSnakeContour();
+	// Initialize snake contour (white)
+	static_cast<Transform *>(G_pSnake)->generateSnakeContour();
 
-  float l_randX, l_randY;
+	float randX, randY;
 
-  //! Pyramids transform mtx
-  g_pyramidMtx  = new Node * [g_nPyramids];
-  for( int l_k = 0; l_k < g_nPyramids; l_k++ ) {
-    do {
-      l_randX = randGenX();
-      l_randY = randGenY();
-    } while( l_randY >= 12.0f && l_randY <= 14.0f );
+	// Pyramids transform mtx
+	G_pPyramidMtx = new Node *[G_nPyramids];
+	for (int k = 0; k < G_nPyramids; k++)
+	{
+		do
+		{
+			randX = randGenX();
+			randY = randGenY();
+		} while (randY >= 12.0f && randY <= 14.0f);
 
-    //! Reuse head (rotated by 45) as pyramid obstacle
-    glm::mat4 l_moveRotMtx  = glm::translate( glm::mat4( 1.0f ),
-                                              glm::vec3( (float) l_randX,
-                                                         (float) l_randY,
-                                                         0.0f ) ) *
-                              glm::rotate( glm::mat4( 1.0f ),
-                                           glm::radians( -45.0f ),
-                                           glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    g_pyramidMtx[l_k] = new Transform( l_moveRotMtx );
+		// Reuse head (rotated by 45) as pyramid obstacle
+		glm::mat4 l_moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		G_pPyramidMtx[k] = new Transform( l_moveRotMtx );
 
-    //! Type for collision detection
-    static_cast< Transform * >(g_pyramidMtx[l_k])->m_type       = 1;
+		// Type for collision detection
+		static_cast<Transform *>(G_pPyramidMtx[k])->m_type = 1;
 
-    //! Bounding boxes' initial positions and sizes
-    static_cast< Transform * >( g_pyramidMtx[l_k] )->m_position = glm::vec3(
-                                                        -0.7f + (float) l_randX,
-                                                         0.7f + (float) l_randY,
-                                                         0.01f );
-    static_cast< Transform * >( g_pyramidMtx[l_k] )->m_size     = glm::vec3(
-                                                                        1.4f,
-                                                                        1.4f,
-                                                                        0.75f );
+		// Bounding boxes' initial positions and sizes
+		static_cast<Transform *>(G_pPyramidMtx[k])->m_position = glm::vec3(-0.7f + (float)randX, 0.7f + (float)randY, 0.01f);
+		static_cast<Transform *>(G_pPyramidMtx[k])->m_size = glm::vec3(1.4f, 1.4f, 0.75f);
 
-    //! Add pyramid as child of obstacles
-    static_cast< Transform * >(g_obstacles)->addChild( g_pyramidMtx[l_k] );
-    static_cast< Transform * >(g_pyramidMtx[l_k])->addChild( g_head );
+		// Add pyramid as child of obstacles
+		static_cast<Transform *>(G_pObstacles)->addChild(G_pPyramidMtx[k]);
+		static_cast<Transform *>(G_pPyramidMtx[k])->addChild(G_pHead);
 
-    //! Add to obstacles list (for collision detection)
-    g_obstaclesList.push_back( g_pyramidMtx[l_k] );
-  }
+		// Add to obstacles list (for collision detection)
+		G_pObstaclesList.push_back(G_pPyramidMtx[k]);
+	}
 
-  //! Coins transform mtx
-  g_coinMtx  = new Node * [g_nCoins];
-  for( int l_k = 0; l_k < g_nCoins; l_k++ ) {
-    do {
-      l_randX = randGenX();
-      l_randY = randGenY();
-    } while( l_randY >= 12.0f && l_randY <= 14.0f );
+	// Coins transform mtx
+	G_pCoinMtx = new Node *[G_nCoins];
+	for (int k = 0; k < G_nCoins; k++)
+	{
+		do
+		{
+			randX = randGenX();
+			randY = randGenY();
+		} while (randY >= 12.0f && randY <= 14.0f);
 
-    g_coinMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                                     glm::vec3( (float) l_randX,
-                                                                (float) l_randY,
-                                                                0.0f ) ) );
+		G_pCoinMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)));
 
-    //! Type for collision detection
-    static_cast< Transform * >(g_coinMtx[l_k])->m_type  = 2;
+		// Type for collision detection
+		static_cast<Transform *>(G_pCoinMtx[k])->m_type = 2;
 
-    //! Bounding boxes' initial positions and sizes
-    static_cast< Transform * >( g_coinMtx[l_k] )->m_position  = glm::vec3(
-                                                        -0.5f + (float) l_randX,
-                                                         0.1f + (float) l_randY,
-                                                         0.1726f );
-    static_cast< Transform * >( g_coinMtx[l_k] )->m_size      = glm::vec3( 1.0f,
-                                                                           0.2f,
-                                                                           1.15f );
+		// Bounding boxes' initial positions and sizes
+		static_cast<Transform *>(G_pCoinMtx[k])->m_position = glm::vec3(-0.5f + (float)randX, 0.1f + (float)randY, 0.1726f);
+		static_cast<Transform *>(G_pCoinMtx[k])->m_size = glm::vec3(1.0f, 0.2f, 1.15f);
 
-    //! Add coin as child of obstacles
-    static_cast< Transform * >(g_obstacles)->addChild( g_coinMtx[l_k] );
-    static_cast< Transform * >(g_coinMtx[l_k])->addChild( g_coin );
+		// Add coin as child of obstacles
+		static_cast<Transform *>(G_pObstacles)->addChild(G_pCoinMtx[k]);
+		static_cast<Transform *>(G_pCoinMtx[k])->addChild(G_pCoin);
 
-    //! Add to obstacles list (for collision detection)
-    g_obstaclesList.push_back( g_coinMtx[l_k] );
-  }
+		// Add to obstacles list (for collision detection)
+		G_pObstaclesList.push_back(G_pCoinMtx[k]);
+	}
 
-  //! Walls transform mtx
-  g_wallMtx  = new Node * [g_nWalls+1];
-  for( int l_k = 0; l_k < g_nWalls; l_k++ ) {
-    do {
-      l_randX = randGenX();
-      l_randY = randGenY();
-    } while( l_randX == 0.0f || (l_randY >= 12.0f && l_randY <= 14.0f ) );
+	// Walls transform mtx
+	G_pWallMtx = new Node *[G_nWalls + 1];
+	for (int k = 0; k < G_nWalls; k++)
+	{
+		do
+		{
+			randX = randGenX();
+			randY = randGenY();
+		} while (randX == 0.0f || (randY >= 12.0f && randY <= 14.0f));
 
-    g_wallMtx[l_k]  = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                     glm::vec3( (float) l_randX, (float) l_randY,
-                                                0.0f ) ) );
+		G_pWallMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)));
 
-    //! Type for collision detection
-    static_cast< Transform * >(g_wallMtx[l_k])->m_type        = 3;
+		// Type for collision detection
+		static_cast<Transform *>(G_pWallMtx[k])->m_type = 3;
 
-    //! Bounding boxes' initial positions and sizes
-    static_cast< Transform * >( g_wallMtx[l_k] )->m_position  = glm::vec3(
-                                                        -0.7f + (float) l_randX,
-                                                         0.7f + (float) l_randY,
-                                                         0.01f );
-    static_cast< Transform * >( g_wallMtx[l_k] )->m_size      = glm::vec3( 1.4f,
-                                                                           1.4f,
-                                                                           1.0f );
+		// Bounding boxes' initial positions and sizes
+		static_cast<Transform *>(G_pWallMtx[k])->m_position = glm::vec3(-0.7f + (float)randX, 0.7f + (float)randY, 0.01f);
+		static_cast<Transform *>(G_pWallMtx[k])->m_size = glm::vec3(1.4f, 1.4f, 1.0f);
 
-    //! Add wall as child of obstacles
-    static_cast< Transform * >(g_obstacles)->addChild( g_wallMtx[l_k] );
-    static_cast< Transform * >(g_wallMtx[l_k])->addChild( g_wall );
+		// Add wall as child of obstacles
+		static_cast<Transform *>(G_pObstacles)->addChild(G_pWallMtx[k]);
+		static_cast<Transform *>(G_pWallMtx[k])->addChild(G_pWall);
 
-    //! Add to obstacles list (for collision detection)
-    g_obstaclesList.push_back( g_wallMtx[l_k] );
-  }
+		// Add to obstacles list (for collision detection)
+		G_pObstaclesList.push_back(G_pWallMtx[k]);
+	}
 
-  //! Last wall in way to stop motion
-  g_wallMtx[g_nWalls] = new Transform( glm::translate( glm::mat4( 1.0f ),
-                                         glm::vec3( 0.0f, 2 * Window::m_nTile,
-                                                    0.0f ) ) );
+	// Last wall in way to stop motion
+	G_pWallMtx[G_nWalls] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2 * Window::m_nTile, 0.0f)));
 
-  //! Type for collision detection
-  static_cast< Transform * >(g_wallMtx[g_nWalls])->m_type        = 3;
+	// Type for collision detection
+	static_cast<Transform *>(G_pWallMtx[G_nWalls])->m_type = 3;
 
-  //! Bounding boxes' initial positions and sizes
-  static_cast< Transform * >( g_wallMtx[g_nWalls] )->m_position  = glm::vec3(
-                                               -0.7f,
-                                                0.7f + 2 * Window::m_nTile,
-                                                0.01f );
-  static_cast< Transform * >( g_wallMtx[g_nWalls] )->m_size      = glm::vec3( 1.4f,
-                                                                              1.4f,
-                                                                              1.0f );
+	// Bounding boxes' initial positions and sizes
+	static_cast<Transform *>(G_pWallMtx[G_nWalls])->m_position = glm::vec3(-0.7f, 0.7f + 2 * Window::m_nTile, 0.01f);
+	static_cast<Transform *>(G_pWallMtx[G_nWalls])->m_size = glm::vec3(1.4f, 1.4f, 1.0f);
 
-  //! Add wall as child of obstacles
-  static_cast< Transform * >(g_obstacles)->addChild( g_wallMtx[g_nWalls] );
-  static_cast< Transform * >(g_wallMtx[g_nWalls])->addChild( g_wall );
+	// Add wall as child of obstacles
+	static_cast<Transform *>(G_pObstacles)->addChild(G_pWallMtx[G_nWalls]);
+	static_cast<Transform *>(G_pWallMtx[G_nWalls])->addChild(G_pWall);
 
-  //! Add to obstacles list (for collision detection)
-  g_obstaclesList.push_back( g_wallMtx[g_nWalls] );
+	// Add to obstacles list (for collision detection)
+	G_pObstaclesList.push_back(G_pWallMtx[G_nWalls]);
 
-  //! Initialize obstacles' bounding boxes
-  for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
-       ++g_nodeIt )
-    static_cast< Transform * >(*g_nodeIt)->generateBoundingBox();
+	// Initialize obstacles' bounding boxes
+	for (G_nodeIt = G_pObstaclesList.begin(); G_nodeIt != G_pObstaclesList.end(); ++G_nodeIt)
+		static_cast<Transform *>(*G_nodeIt)->generateBoundingBox();
 
-  //! Arrange tiles to form grid
-  for( int l_i = -1; l_i <= Window::m_nTile; l_i++ ) {
-    for( int l_j = -8; l_j <= 8; l_j++ ) {
-      g_tileBigPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                                             glm::vec3(  l_j * 2.0f,
-                                                         l_i * 2.0f,
-                                                        -0.1f ) ) ) );
-      g_tileSmallPos.push_back( new Transform( glm::translate( glm::mat4( 1.0f ),
-                                               glm::vec3( l_j * 2.0f,
-                                                          l_i * 2.0f,
-                                                          0.0f ) ) ) );
-     }
-   }
+	// Arrange tiles to form grid
+	for (int i = -1; i <= Window::m_nTile; i++)
+	{
+		for( int j = -8; j <= 8; j++ )
+		{
+			G_pTileBigPos.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(j * 2.0f, i * 2.0f, -0.1f))));
+			G_pTileSmallPos.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(j * 2.0f, i * 2.0f, 0.0f))));
+		}
+	}
 
-  //! Add big tiles to big grid group
-  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end();
-        ++g_nodeIt ) {
-    static_cast< Transform * >(g_gridBig)->addChild( *g_nodeIt );
-    static_cast< Transform * >(*g_nodeIt)->addChild( g_tileBig );
-  }
+	// Add big tiles to big grid group
+	for (G_nodeIt = G_pTileBigPos.begin(); G_nodeIt != G_pTileBigPos.end(); ++G_nodeIt)
+	{
+		static_cast<Transform *>(G_pGridBig)->addChild(*G_nodeIt);
+		static_cast<Transform *>(*G_nodeIt)->addChild(G_pTileBig);
+	}
 
-  //! Add small tiles to small grid group
-  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end();
-        ++g_nodeIt ) {
-    static_cast< Transform * >(g_gridSmall)->addChild( *g_nodeIt );
-    static_cast< Transform * >(*g_nodeIt)->addChild( g_tileSmall );
-  }
+	// Add small tiles to small grid group
+	for (G_nodeIt = G_pTileSmallPos.begin(); G_nodeIt != G_pTileSmallPos.end(); ++G_nodeIt)
+	{
+		static_cast<Transform *>(G_pGridSmall)->addChild(*G_nodeIt);
+		static_cast<Transform *>(*G_nodeIt)->addChild(G_pTileSmall);
+	}
 
-  //! Bezier surface 1 control points
-  glm::vec3 points0[16] = {
-    glm::vec3( -4,   12.50, 0.25 ),   //! p0
-    glm::vec3( -3.5, 13.0,  0.25 ),
-    glm::vec3( -3,   13.0,  0.25 ),
-    glm::vec3( -2.5, 12.50, 0.25 ),   //! p3
-    glm::vec3( -4,   12.25, 0.75 ),
-    glm::vec3( -3.5, 13.50, 0.75 ),
-    glm::vec3( -3,   13.50, 0.75 ),
-    glm::vec3( -2.5, 12.25, 0.75 ),   //! p7
-    glm::vec3( -4,   13.0,  1.25 ),
-    glm::vec3( -3.5, 12.50, 1.25 ),
-    glm::vec3( -3,   12.50, 1.25 ),
-    glm::vec3( -2.5, 13.0,  1.25 ),   //! p11
-    glm::vec3( -4,   12.50, 1.75 ),
-    glm::vec3( -3.5, 12.0,  1.75 ),
-    glm::vec3( -3,   12.0,  1.75 ),
-    glm::vec3( -2.5, 12.50, 1.75 ),   //! p15
-  };
+	// Bezier surface 1 control points
+	glm::vec3 points0[16] = {	glm::vec3( -4,   12.50, 0.25 ),   // p0
+								glm::vec3( -3.5, 13.0,  0.25 ),
+								glm::vec3( -3,   13.0,  0.25 ),
+								glm::vec3( -2.5, 12.50, 0.25 ),   // p3
+								glm::vec3( -4,   12.25, 0.75 ),
+								glm::vec3( -3.5, 13.50, 0.75 ),
+								glm::vec3( -3,   13.50, 0.75 ),
+								glm::vec3( -2.5, 12.25, 0.75 ),   // p7
+								glm::vec3( -4,   13.0,  1.25 ),
+								glm::vec3( -3.5, 12.50, 1.25 ),
+								glm::vec3( -3,   12.50, 1.25 ),
+								glm::vec3( -2.5, 13.0,  1.25 ),   // p11
+								glm::vec3( -4,   12.50, 1.75 ),
+								glm::vec3( -3.5, 12.0,  1.75 ),
+								glm::vec3( -3,   12.0,  1.75 ),
+								glm::vec3( -2.5, 12.50, 1.75 ),   // p15
+							};
 
-  //! Bezier surface 2 control points
-  glm::vec3 points1[16] = {
-    glm::vec3( -2.5, 12.50, 0.25 ),   //! p0
-    glm::vec3( -2,   12.0,  0.25 ),
-    glm::vec3( -1.5, 13.0,  0.25 ),
-    glm::vec3( -1,   12.50, 0.25 ),   //! p3
-    glm::vec3( -2.5, 12.25, 0.75 ),
-    glm::vec3( -2,   11.0,  0.75 ),
-    glm::vec3( -1.5, 13.50, 0.75 ),
-    glm::vec3( -1,   12.25, 0.75 ),   //! p7
-    glm::vec3( -2.5, 13.0,  1.25 ),
-    glm::vec3( -2,   13.50, 1.25 ),
-    glm::vec3( -1.5, 12.50, 1.25 ),
-    glm::vec3( -1,   13.0,  1.25 ),   //! p11
-    glm::vec3( -2.5, 12.50, 1.75 ),
-    glm::vec3( -2,   13.0,  1.75 ),
-    glm::vec3( -1.5, 12.0,  1.75 ),
-    glm::vec3( -1,   12.50, 1.75 ),   //! p15
-  };
+	// Bezier surface 2 control points
+	glm::vec3 points1[16] = {	glm::vec3( -2.5, 12.50, 0.25 ),   // p0
+								glm::vec3( -2,   12.0,  0.25 ),
+								glm::vec3( -1.5, 13.0,  0.25 ),
+								glm::vec3( -1,   12.50, 0.25 ),   // p3
+								glm::vec3( -2.5, 12.25, 0.75 ),
+								glm::vec3( -2,   11.0,  0.75 ),
+								glm::vec3( -1.5, 13.50, 0.75 ),
+								glm::vec3( -1,   12.25, 0.75 ),   // p7
+								glm::vec3( -2.5, 13.0,  1.25 ),
+								glm::vec3( -2,   13.50, 1.25 ),
+								glm::vec3( -1.5, 12.50, 1.25 ),
+								glm::vec3( -1,   13.0,  1.25 ),   // p11
+								glm::vec3( -2.5, 12.50, 1.75 ),
+								glm::vec3( -2,   13.0,  1.75 ),
+								glm::vec3( -1.5, 12.0,  1.75 ),
+								glm::vec3( -1,   12.50, 1.75 ),   // p15
+							};
 
-  //! Bezier surface 3 control points
-  glm::vec3 points2[16] = {
-    glm::vec3( -2.5, 12.50, 1.75 ),   //! p0
-    glm::vec3( -2,   13.0,  1.75 ),
-    glm::vec3( -1.5, 12.0,  1.75 ),
-    glm::vec3( -1,   12.50, 1.75 ),   //! p3
-    glm::vec3( -2.5, 12.0,  2.25 ),
-    glm::vec3( -2,   12.5,  2.25 ),
-    glm::vec3( -1.5, 11.50, 2.25 ),
-    glm::vec3( -1,   12.0,  2.25 ),   //! p7
-    glm::vec3( -2.5, 13.0,  2.75 ),
-    glm::vec3( -2,   13.50, 2.75 ),
-    glm::vec3( -1.5, 12.50, 2.75 ),
-    glm::vec3( -1,   13.0,  2.75 ),   //! p11
-    glm::vec3( -2.5, 12.50, 3.25 ),
-    glm::vec3( -2,   13.0,  3.25 ),
-    glm::vec3( -1.5, 12.0,  3.25 ),
-    glm::vec3( -1,   12.50, 3.25 ),   //! p15
-  };
+	// Bezier surface 3 control points
+	glm::vec3 points2[16] = {	glm::vec3( -2.5, 12.50, 1.75 ),   // p0
+								glm::vec3( -2,   13.0,  1.75 ),
+								glm::vec3( -1.5, 12.0,  1.75 ),
+								glm::vec3( -1,   12.50, 1.75 ),   // p3
+								glm::vec3( -2.5, 12.0,  2.25 ),
+								glm::vec3( -2,   12.5,  2.25 ),
+								glm::vec3( -1.5, 11.50, 2.25 ),
+								glm::vec3( -1,   12.0,  2.25 ),   // p7
+								glm::vec3( -2.5, 13.0,  2.75 ),
+								glm::vec3( -2,   13.50, 2.75 ),
+								glm::vec3( -1.5, 12.50, 2.75 ),
+								glm::vec3( -1,   13.0,  2.75 ),   // p11
+								glm::vec3( -2.5, 12.50, 3.25 ),
+								glm::vec3( -2,   13.0,  3.25 ),
+								glm::vec3( -1.5, 12.0,  3.25 ),
+								glm::vec3( -1,   12.50, 3.25 ),   // p15
+							};
 
-  //! Bezier surface 4 control points
-  glm::vec3 points3[16] = {
-    glm::vec3( -4,   12.50, 1.75 ),   //! p0
-    glm::vec3( -3.5, 12.0,  1.75 ),
-    glm::vec3( -3,   12.0,  1.75 ),
-    glm::vec3( -2.5, 12.50, 1.75 ),   //! p3
-    glm::vec3( -4,   12.0,  2.25 ),
-    glm::vec3( -3.5, 12.5,  2.25 ),
-    glm::vec3( -3,   11.50, 2.25 ),
-    glm::vec3( -2.5, 12.0,  2.25 ),   //! p7
-    glm::vec3( -4,   13.0,  2.75 ),
-    glm::vec3( -3.5, 13.50, 2.75 ),
-    glm::vec3( -3,   12.50, 2.75 ),
-    glm::vec3( -2.5, 13.0,  2.75 ),   //! p11
-    glm::vec3( -4,   12.50, 3.25 ),
-    glm::vec3( -3.5, 13.0,  3.25 ),
-    glm::vec3( -3,   12.0,  3.25 ),
-    glm::vec3( -2.5, 12.50, 3.25 ),   //! p15
-  };
+	// Bezier surface 4 control points
+	glm::vec3 points3[16] = {	glm::vec3( -4,   12.50, 1.75 ),   // p0
+								glm::vec3( -3.5, 12.0,  1.75 ),
+								glm::vec3( -3,   12.0,  1.75 ),
+								glm::vec3( -2.5, 12.50, 1.75 ),   // p3
+								glm::vec3( -4,   12.0,  2.25 ),
+								glm::vec3( -3.5, 12.5,  2.25 ),
+								glm::vec3( -3,   11.50, 2.25 ),
+								glm::vec3( -2.5, 12.0,  2.25 ),   // p7
+								glm::vec3( -4,   13.0,  2.75 ),
+								glm::vec3( -3.5, 13.50, 2.75 ),
+								glm::vec3( -3,   12.50, 2.75 ),
+								glm::vec3( -2.5, 13.0,  2.75 ),   // p11
+								glm::vec3( -4,   12.50, 3.25 ),
+								glm::vec3( -3.5, 13.0,  3.25 ),
+								glm::vec3( -3,   12.0,  3.25 ),
+								glm::vec3( -2.5, 12.50, 3.25 ),   // p15
+							};
 
-  //! Create 4 Bezier patches (C0 and C1 continuous)
-  patch[0] = new Bezier( points0 );
-  patch[1] = new Bezier( points1 );
-  patch[2] = new Bezier( points2 );
-  patch[3] = new Bezier( points3 );
+	// Create 4 Bezier pPatches (C0 and C1 continuous)
+	pPatch[0] = new Bezier(points0);
+	pPatch[1] = new Bezier(points1);
+	pPatch[2] = new Bezier(points2);
+	pPatch[3] = new Bezier(points3);
 
-  //! Surface color info
-  for( int i = 0; i < 4; i++ )
-    patch[i]->m_surface = i + 1;
+	// Surface color info
+	for (int i = 0; i < 4; i++)
+		pPatch[i]->m_surface = i + 1;
 
-  //! Load the shader programs
-  g_gridBigShader       = LoadShaders( l_gridBigVertShader.c_str(),
-                                       l_gridBigFragShader.c_str()      );
-  g_gridSmallShader     = LoadShaders( l_gridSmallVertShader.c_str(),
-                                       l_gridSmallFragShader.c_str()    );
-  g_snakeShader         = LoadShaders( l_snakeVertShader.c_str(),
-                                       l_snakeFragShader.c_str()        );
-  g_obstaclesShader     = LoadShaders( l_obstaclesVertShader.c_str(),
-                                       l_obstaclesFragShader.c_str()    );
-  g_boundingBoxShader   = LoadShaders( l_boundingBoxVertShader.c_str(),
-                                       l_boundingBoxFragShader.c_str()  );
-  g_snakeContourShader  = LoadShaders( l_snakeContourVertShader.c_str(),
-                                       l_snakeContourFragShader.c_str() );
-  g_bezierShader        = LoadShaders( l_bezierVertShader.c_str(),
-                                       l_bezierFragShader.c_str()       );
+	// Load the shader programs
+	G_pGridBigShader = LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
+	G_pGridSmallShader = LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
+	G_pSnakeShader = LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
+	G_pObstaclesShader = LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
+	G_boundingBoxShader = LoadShaders(boundingBoxVertShader.c_str(), boundingBoxFragShader.c_str());
+	G_pSnakeContourShader = LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
+	G_pBezierShader = LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
 }
 
-//! Treat this as a destructor function. Delete dynamically allocated memory here.
-void Window::cleanUp() {
-  delete g_snake;
-  delete g_gridBig;
-  delete g_gridSmall;
-  delete g_obstacles;
-  delete g_headMtx;
-  delete g_tailMtx;
+// Treat this as a destructor function. Delete dynamically allocated memory here.
+void Window::cleanUp()
+{
+	delete G_pSnake;
+	delete G_pGridBig;
+	delete G_pGridSmall;
+	delete G_pObstacles;
+	delete G_pHeadMtx;
+	delete G_pTailMtx;
 
-  delete g_pyramidMtx;
-  delete g_coinMtx;
-  delete g_wallMtx;
+	delete G_pPyramidMtx;
+	delete G_pCoinMtx;
+	delete G_pWallMtx;
 
-  for( g_nodeIt = g_tileBigPos.begin(); g_nodeIt != g_tileBigPos.end(); ++g_nodeIt )
-    delete *g_nodeIt;
-  for( g_nodeIt = g_tileSmallPos.begin(); g_nodeIt != g_tileSmallPos.end();
-       ++g_nodeIt )
-    delete *g_nodeIt;
-  for( g_nodeIt = g_bodyMtx.begin(); g_nodeIt != g_bodyMtx.end(); ++g_nodeIt )
-    delete *g_nodeIt;
+	for (G_nodeIt = G_pTileBigPos.begin(); G_nodeIt != G_pTileBigPos.end(); ++G_nodeIt)
+		delete *G_nodeIt;
+	for (G_nodeIt = G_pTileSmallPos.begin(); G_nodeIt != G_pTileSmallPos.end(); ++G_nodeIt)
+		delete *G_nodeIt;
+	for (G_nodeIt = G_pBodyMtx.begin(); G_nodeIt != G_pBodyMtx.end(); ++G_nodeIt)
+		delete *G_nodeIt;
 
-  delete g_head;
-  delete g_body;
-  delete g_tail;
-  delete g_tileBig;
-  delete g_tileSmall;
-  delete g_coin;
-  delete g_wall;
+	delete G_pHead;
+	delete G_pBody;
+	delete G_pTail;
+	delete G_pTileBig;
+	delete G_pTileSmall;
+	delete G_pCoin;
+	delete G_pWall;
 
-  glDeleteProgram( g_gridBigShader      );
-  glDeleteProgram( g_gridSmallShader    );
-  glDeleteProgram( g_snakeShader        );
-  glDeleteProgram( g_obstaclesShader    );
-  glDeleteProgram( g_boundingBoxShader  );
-  glDeleteProgram( g_snakeContourShader );
-  glDeleteProgram( g_bezierShader       );
+	glDeleteProgram(G_pGridBigShader);
+	glDeleteProgram(G_pGridSmallShader);
+	glDeleteProgram(G_pSnakeShader);
+	glDeleteProgram(G_pObstaclesShader);
+	glDeleteProgram(G_boundingBoxShader);
+	glDeleteProgram(G_pSnakeContourShader);
+	glDeleteProgram(G_pBezierShader);
 }
 
-//! Since everything is on the grid, no need of collision-check in z-direction
-bool Window::checkCollision( Node *i_one,
-                             Node *i_two ) {
-  bool l_collisionX = static_cast< Transform * >(i_one)->m_position.x +
-                      static_cast< Transform * >(i_one)->m_size.x >=
-                      static_cast< Transform * >(i_two)->m_position.x &&
-                      static_cast< Transform * >(i_two)->m_position.x +
-                      static_cast< Transform * >(i_two)->m_size.x >=
-                      static_cast< Transform * >(i_one)->m_position.x;
+// Since everything is on the grid, no need of collision-check in z-direction
+bool Window::checkCollision(Node *first, Node *second)
+{
+	bool collisionX   = static_cast< Transform * >(first)->m_position.x +
+						static_cast< Transform * >(first)->m_size.x >=
+						static_cast< Transform * >(second)->m_position.x &&
+						static_cast< Transform * >(second)->m_position.x +
+						static_cast< Transform * >(second)->m_size.x >=
+						static_cast< Transform * >(first)->m_position.x;
 
-  bool l_collisionY = static_cast< Transform * >(i_one)->m_position.y +
-                      static_cast< Transform * >(i_one)->m_size.y >=
-                      static_cast< Transform * >(i_two)->m_position.y &&
-                      static_cast< Transform * >(i_two)->m_position.y +
-                      static_cast< Transform * >(i_two)->m_size.y >=
-                      static_cast< Transform * >(i_one)->m_position.y;
+	bool collisionY   = static_cast< Transform * >(first)->m_position.y +
+						static_cast< Transform * >(first)->m_size.y >=
+						static_cast< Transform * >(second)->m_position.y &&
+						static_cast< Transform * >(second)->m_position.y +
+						static_cast< Transform * >(second)->m_size.y >=
+						static_cast< Transform * >(first)->m_position.y;
 
-  return l_collisionX && l_collisionY;
+	return collisionX && collisionY;
 }
 
-//! Perform inter-object collision-checks
-void Window::performCollisions() {
-  std::vector< Node* >::iterator l_it;
+// Perform inter-object collision-checks
+void Window::performCollisions()
+{
+	std::vector<Node *>::iterator it;
 
-  for( std::vector< Node* >::iterator l_it = g_obstaclesList.begin() + 1;
-       l_it != g_obstaclesList.end(); ++l_it ) {
-    //! Only check for undestroyed obstacles
-    if( !static_cast< Transform * >(*l_it)->m_destroyed ) {
-      //! Check each obstacle wrt head
-      if( checkCollision( g_headMtx, *l_it ) ) {
-        /** Collision with wall
-         *  Set both head and wall bbox to red, stop motion of snake
-         **/
-        if( static_cast< Transform * >(*l_it)->m_type == 3 ) {
-          static_cast< Transform * >(*l_it)->m_bboxColor     = 3;
-          static_cast< Transform * >(g_headMtx)->m_bboxColor = 3;
-          Window::m_velocity = 0.0f;
-        }
+	for (std::vector<Node *>::iterator it = G_pObstaclesList.begin() + 1; it != G_pObstaclesList.end(); ++it)
+	{
+		// Only check for undestroyed obstacles
+		if( !static_cast< Transform * >(*it)->m_destroyed )
+		{
+			// Check each obstacle wrt head
+			if( checkCollision( G_pHeadMtx, *it ) )
+			{
+				/** Collision with wall
+					*  Set both head and wall bbox to red, stop motion of snake
+					**/
+				if (static_cast<Transform *>(*it)->m_type == 3)
+				{
+					static_cast<Transform *>(*it)->m_bboxColor = 3;
+					static_cast<Transform *>(G_pHeadMtx)->m_bboxColor = 3;
+					Window::m_velocity = 0.0f;
+				}
 
-        //! Set obstacle's bbox to red and destroy it (don't display)
-        else {
-          static_cast< Transform * >(*l_it)->m_bboxColor = 3;
-          static_cast< Transform * >(*l_it)->m_destroyed = true;
-        }
-      }
-    }
-  }
+				// Set obstacle's bbox to red and destroy it (don't display)
+				else
+				{
+					static_cast<Transform *>(*it)->m_bboxColor = 3;
+					static_cast<Transform *>(*it)->m_destroyed = true;
+				}
+			}
+		}
+	}
 }
 
-GLFWwindow* Window::createWindow( int i_width,
-                                  int i_height ) {
-  //! Initialize GLFW
-  if( !glfwInit() ) {
-    fprintf( stderr, "Failed to initialize GLFW\n" );
-    return NULL;
-  }
+GLFWwindow* Window::createWindow(int width, int height)
+{
+	// Initialize GLFW
+	if (!glfwInit())
+	{
+		std::cerr << "Failed to initialize GLFW\n";
+		return nullptr;
+	}
 
-  //! 4x antialiasing
-  glfwWindowHint( GLFW_SAMPLES, 4 );
+	// 4x antialiasing
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
-#ifdef __APPLE__ //! Because Apple hates comforming to standards
-  //! Ensure that minimum OpenGL version is 3.3
-  glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-  glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+#ifdef __APPLE__ // Because Apple hates comforming to standards
+	// Ensure that minimum OpenGL version is 3.3
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-  //! Enable forward compatibility and allow a modern OpenGL context
-  glfwWindowHint( GLFW_OPENGL_PROFILE,        GLFW_OPENGL_CORE_PROFILE );
-  glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE                  );
+	// Enable forward compatibility and allow a modern OpenGL context
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-  //! Create the GLFW window
-  GLFWwindow *l_window = glfwCreateWindow( i_width, i_height, WINDOW_TITLE,
-                                           nullptr, nullptr );
+	// Create the GLFW window
+	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
 
-  //! Check if the window could not be created
-  if( !l_window ) {
-    fprintf( stderr, "Failed to open GLFW window.\n" );
-    fprintf( stderr, "Either GLFW is not installed or your graphics card does \
-                      not support modern OpenGL.\n" );
-    glfwTerminate();
-    return nullptr;
-  }
+	// Check if the window could not be created
+	if (!window)
+	{
+		std::cerr << "Failed to open GLFW window.\n";
+		std::cerr << "Either GLFW is not installed or your graphics card does not support modern OpenGL.\n";
+		glfwTerminate();
+		return nullptr;
+	}
 
-  //! Make the context of the window
-  glfwMakeContextCurrent( l_window );
+	// Make the context of the window
+	glfwMakeContextCurrent(window);
 
-  //! Set swap interval to 1
-  glfwSwapInterval( 1 );
+	// Set swap interval to 1
+	glfwSwapInterval(1);
 
-  //! Get the width and height of the framebuffer to properly resize the window
-  glfwGetFramebufferSize( l_window, &i_width, &i_height );
+	// Get the width and height of the framebuffer to properly resize the window
+	glfwGetFramebufferSize(window, &width, &height);
 
-  //! Call the resize callback to make sure things get drawn immediately
-  Window::resizeCallback( l_window, i_width, i_height );
+	// Call the resize callback to make sure things get drawn immediately
+	Window::resizeCallback(window, width, height);
 
-  return l_window;
+	return window;
 }
 
-void Window::displayCallback( GLFWwindow* i_window ) {
-  //! Clear the color and depth buffers
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+void Window::displayCallback(GLFWwindow* window)
+{
+	// Clear the color and depth buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  //! Using GridBigShader, draw black background
-  glUseProgram( g_gridBigShader );
-  g_gridBig->draw( g_gridBigShader, Window::m_V);
+	// Using GridBigShader, draw black background
+	glUseProgram(G_pGridBigShader);
+	G_pGridBig->draw(G_pGridBigShader, Window::m_V);
 
-  //! Using GridSmallShader, draw small white tiles
-  glUseProgram( g_gridSmallShader );
-  g_gridSmall->draw( g_gridSmallShader, Window::m_V );
+	// Using GridSmallShader, draw small white tiles
+	glUseProgram(G_pGridSmallShader);
+	G_pGridSmall->draw(G_pGridSmallShader, Window::m_V);
 
-  //! Using SnakeShader, draw snake
-  glUseProgram( g_snakeShader );
-  g_snake->draw( g_snakeShader, Window::m_V );
+	// Using SnakeShader, draw snake
+	glUseProgram(G_pSnakeShader);
+	G_pSnake->draw(G_pSnakeShader, Window::m_V);
 
-  //! Using SnakeContourShader, draw outline of snake
-  glUseProgram( g_snakeContourShader );
-  static_cast< Transform * >(g_snake)->drawSnakeContour( g_snakeContourShader,
-                                                         Window::m_V );
+	// Using SnakeContourShader, draw outline of snake
+	glUseProgram(G_pSnakeContourShader);
+	static_cast<Transform *>(G_pSnake)->drawSnakeContour(G_pSnakeContourShader, Window::m_V);
 
-  //! Using ObstaclesShader, draw the obstacles
-  glUseProgram( g_obstaclesShader );
-  g_obstacles->draw( g_obstaclesShader, Window::m_V );
+	// Using ObstaclesShader, draw the obstacles
+	glUseProgram(G_pObstaclesShader);
+	G_pObstacles->draw(G_pObstaclesShader, Window::m_V);
 
-  //! Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
-  glUseProgram( g_boundingBoxShader );
-  if( g_drawBbox )
-    for( g_nodeIt = g_obstaclesList.begin(); g_nodeIt != g_obstaclesList.end();
-          ++g_nodeIt )
-      static_cast< Transform * >(*g_nodeIt)->drawBoundingBox( g_boundingBoxShader,
-                                                              Window::m_V );
+	// Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
+	glUseProgram(G_boundingBoxShader);
+	if (G_drawBbox)
+		for (G_nodeIt = G_pObstaclesList.begin(); G_nodeIt != G_pObstaclesList.end(); ++G_nodeIt)
+			static_cast<Transform *>(*G_nodeIt)->drawBoundingBox(G_boundingBoxShader, Window::m_V);
 
-  //! Using BezierShader, draw the 4 Bezier surfaces
-  glUseProgram( g_bezierShader );
-  for( int i = 0; i < 4; i++ ) {
-    patch[i]->draw( g_bezierShader );
-  }
+	// Using BezierShader, draw the 4 Bezier surfaces
+	glUseProgram(G_pBezierShader);
+	for (int i = 0; i < 4; i++)
+		pPatch[i]->draw(G_pBezierShader);
 
-  //! Gets events, including input such as keyboard and mouse or window resizing
-  glfwPollEvents();
+	// Gets events, including input such as keyboard and mouse or window resizing
+	glfwPollEvents();
 
-  //! Swap buffers
-  glfwSwapBuffers( i_window );
+	// Swap buffers
+	glfwSwapBuffers(window);
 
-  //! Refresh view matrix with new camera position every display callback
-  Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
+	// Refresh view matrix with new camera position every display callback
+	Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, g_camUp);
 }
 
-void Window::idleCallback() {
-  //! Update coin rotation angle
-  if( g_rotAngle >= 360.0f )
-    g_rotAngle = 0.0f;
-  g_rotAngle += 1.5f;
+void Window::idleCallback()
+{
+	// Update coin rotation angle
+	if (G_rotAngle >= 360.0f)
+		G_rotAngle = 0.0f;
+	G_rotAngle += 1.5f;
 
-  //! Move snake in y-direction
-  glm::mat4 l_moveMtx = glm::translate( glm::mat4( 1.0f ),
-                                        glm::vec3( 0.0f, g_yPos, 0.0f ) );
-  static_cast< Transform * >(g_snake)->update( l_moveMtx );
+	// Move snake in y-direction
+	glm::mat4 moveMtx = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, G_yPos, 0.0f));
+	static_cast<Transform *>(G_pSnake)->update(moveMtx);
 
-  for( int l_i = 0; l_i < g_nCoins; l_i++ ) {
-    //! Find tile center
-    float l_xCntr = static_cast< Transform * >(g_coinMtx[l_i])->m_position.x +
-                    static_cast< Transform * >(g_coinMtx[l_i])->m_size.x / 2.0f;
-    float l_yCntr = static_cast< Transform * >(g_coinMtx[l_i])->m_position.y -
-                    static_cast< Transform * >(g_coinMtx[l_i])->m_size.y / 2.0f;
+	for (int i = 0; i < G_nCoins; i++)
+	{
+		// Find tile center
+		float xCntr = static_cast<Transform *>(G_pCoinMtx[i])->m_position.x + static_cast<Transform *>(G_pCoinMtx[i])->m_size.x / 2.0f;
+		float yCntr = static_cast<Transform *>(G_pCoinMtx[i])->m_position.y - static_cast<Transform *>(G_pCoinMtx[i])->m_size.y / 2.0f;
 
-    //! Rotate coins
-    glm::mat4 l_rotMtx  = glm::translate( glm::mat4( 1.0f ),
-                                          glm::vec3( l_xCntr, l_yCntr, 0.0f ) ) *
-                          glm::rotate( glm::mat4( 1.0f ), glm::radians( g_rotAngle ),
-                                       glm::vec3( 0.0f, 0.0f, -1.0f ) );
-    static_cast< Transform * >(g_coinMtx[l_i])->update( l_rotMtx );
+		// Rotate coins
+		glm::mat4 rotMtx = glm::translate(glm::mat4(1.0f), glm::vec3(xCntr, yCntr, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(G_rotAngle), glm::vec3(0.0f, 0.0f, -1.0f));
+		static_cast<Transform *>(G_pCoinMtx[i])->update(rotMtx);
 
-    //! Update coin's bounding box
-    static_cast< Transform * >(g_coinMtx[l_i])->m_position.x = static_cast<float>(0.5f *
-                               cos( M_PI - glm::radians( g_rotAngle ) ) + 0.01f);
-    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y = static_cast<float>(0.5f *
-                               sin( M_PI - glm::radians( g_rotAngle ) ) + 0.01f);
+		// Update coin's bounding box
+		static_cast<Transform *>(G_pCoinMtx[i])->m_position.x = static_cast<float>(0.5f * cos(M_PI - glm::radians(G_rotAngle)) + 0.01f);
+		static_cast<Transform *>(G_pCoinMtx[i])->m_position.y = static_cast<float>(0.5f * sin(M_PI - glm::radians(G_rotAngle)) + 0.01f);
 
-    //! Keep lower left corner such that x is negative and y is positive
-    if( static_cast< Transform * >(g_coinMtx[l_i])->m_position.x > 0.0f )
-      static_cast< Transform * >(g_coinMtx[l_i])->m_position.x *= -1.0f;
-    if( static_cast< Transform * >(g_coinMtx[l_i])->m_position.y < 0.0f )
-      static_cast< Transform * >(g_coinMtx[l_i])->m_position.y *= -1.0f;
+		// Keep lower left corner such that x is negative and y is positive
+		if (static_cast<Transform *>(G_pCoinMtx[i])->m_position.x > 0.0f)
+			static_cast<Transform *>(G_pCoinMtx[i])->m_position.x *= -1.0f;
+		if (static_cast<Transform *>(G_pCoinMtx[i])->m_position.y < 0.0f)
+			static_cast<Transform *>(G_pCoinMtx[i])->m_position.y *= -1.0f;
 
-    //! Update box size accordingly
-    // static_cast< Transform * >(g_coinMtx[l_i])->m_position.x += l_xCntr;
-    static_cast< Transform * >(g_coinMtx[l_i])->m_size.x = abs( 2.0f *
-                            static_cast< Transform * >(g_coinMtx[l_i])->m_position.x );
-    static_cast< Transform * >(g_coinMtx[l_i])->m_size.y = abs( 2.0f *
-                            static_cast< Transform * >(g_coinMtx[l_i])->m_position.y );
-    static_cast< Transform * >(g_coinMtx[l_i])->m_position.y += 14.1f;
-    static_cast< Transform * >(g_coinMtx[l_i])->generateBoundingBox();
-  }
+		// Update box size accordingly
+		// static_cast< Transform * >(G_pCoinMtx[i])->m_position.x += xCntr;
+		static_cast<Transform *>(G_pCoinMtx[i])->m_size.x = abs(2.0f * static_cast<Transform *>(G_pCoinMtx[i])->m_position.x);
+		static_cast<Transform *>(G_pCoinMtx[i])->m_size.y = abs(2.0f * static_cast<Transform *>(G_pCoinMtx[i])->m_position.y);
+		static_cast<Transform *>(G_pCoinMtx[i])->m_position.y += 14.1f;
+		static_cast<Transform *>(G_pCoinMtx[i])->generateBoundingBox();
+	}
 
-  //! Update camera pos, lookat and snake pos
-  g_yPos             += Window::m_velocity;
-  Window::m_camPos.y += Window::m_velocity;
-  g_camLookAt.y      += Window::m_velocity;
+	// Update camera pos, lookat and snake pos
+	G_yPos += Window::m_velocity;
+	Window::m_camPos.y += Window::m_velocity;
+	G_camLookAt.y += Window::m_velocity;
 
-  //! Update head's bounding box position
-  static_cast< Transform * >(g_headMtx)->m_position.y += Window::m_velocity;
-  static_cast< Transform * >(g_headMtx)->generateBoundingBox();
-  static_cast< Transform * >(g_snake)->generateSnakeContour();
+	// Update head's bounding box position
+	static_cast<Transform *>(G_pHeadMtx)->m_position.y += Window::m_velocity;
+	static_cast<Transform *>(G_pHeadMtx)->generateBoundingBox();
+	static_cast<Transform *>(G_pSnake)->generateSnakeContour();
 
-  //! Perform collision check
-  performCollisions();
+	// Perform collision check
+	performCollisions();
 }
 
-void Window::resizeCallback( GLFWwindow* i_window,
-                             int         i_width,
-                             int         i_height ) {
+void Window::resizeCallback(GLFWwindow *window, int width, int height)
+{
 #ifdef __APPLE__
-  glfwGetFramebufferSize( i_window, &i_width, &i_height );  //! In case your Mac has a retina display
+	glfwGetFramebufferSize(window, &width, &height);	// In case your Mac has a retina display
 #endif
 
-  Window::m_width   = i_width;
-  Window::m_height  = i_height;
+	Window::m_width = width;
+	Window::m_height = height;
 
-  //! Set the viewport size. This is the only matrix that OpenGL maintains for us in modern OpenGL!
-  glViewport( 0, 0, i_width, i_height );
+	// Set the viewport size. This is the only matrix that OpenGL maintains for us in modern OpenGL!
+	glViewport(0, 0, width, height);
 
-  if( i_height > 0 ) {
-    Window::m_P = glm::perspective( 45.0f, (float) i_width / (float) i_height,
-                                    0.1f, 2000.0f );
-    Window::m_V = glm::lookAt( Window::m_camPos, g_camLookAt, g_camUp );
-  }
+	if (height > 0)
+	{
+		Window::m_P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 2000.0f);
+		Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, g_camUp);
+	}
 }
 
-void Window::keyCallback( GLFWwindow *i_window,
-                          int         i_key,
-                          int         i_scancode,
-                          int         i_action,
-                          int         i_mods ) {
-  if( i_action == GLFW_PRESS || i_action == GLFW_REPEAT ) {
-    switch( i_key ) {
-      case GLFW_KEY_ESCAPE:
-        glfwSetWindowShouldClose( i_window, GL_TRUE );
-        break;
+void Window::keyCallback(GLFWwindow *window, int key, int scanCode, int action, int mods)
+{
+	if (action == GLFW_PRESS || action == GLFW_REPEAT)
+	{
+		switch (key)
+		{
+			case GLFW_KEY_ESCAPE:
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
 
-      //! Toggle fog
-      case GLFW_KEY_F:
-        Window::m_fog = !Window::m_fog;
-        break;
+			// Toggle fog
+			case GLFW_KEY_F:
+				Window::m_fog = !Window::m_fog;
+				break;
 
-      //! Toggle Bounding boxes
-      case GLFW_KEY_B:
-        g_drawBbox = !g_drawBbox;
-        break;
+			// Toggle Bounding boxes
+			case GLFW_KEY_B:
+				G_drawBbox = !G_drawBbox;
+				break;
 
-      //! Accelerate
-      case GLFW_KEY_UP:
-      case GLFW_KEY_W:
-         if( Window::m_velocity == 0.0f )
-           break;
+			// Accelerate
+			case GLFW_KEY_UP:
+			case GLFW_KEY_W:
+				if (Window::m_velocity == 0.0f)
+					break;
 
 #ifdef __APPLE__
-        Window::m_velocity  = 0.2f;
+				Window::m_velocity = 0.2f;
 #else
-        Window::m_velocity  = 0.02f;
+				Window::m_velocity = 0.02f;
 #endif
-        break;
+				break;
 
-      //! Slow down
-      case GLFW_KEY_DOWN:
-      case GLFW_KEY_S:
+			// Slow down
+			case GLFW_KEY_DOWN:
+			case GLFW_KEY_S:
 #ifdef __APPLE__
-        Window::m_velocity  = 0.05f;
+				Window::m_velocity = 0.05f;
 #else
-        Window::m_velocity  = 0.005f;
+				Window::m_velocity = 0.005f;
 #endif
-        break;
-    }
-  }
+				break;
+		}
+	}
 
-  else if( i_action == GLFW_RELEASE ) {
-    if( Window::m_velocity == 0.0f )
-      return;
+	else if (action == GLFW_RELEASE)
+	{
+		if (Window::m_velocity == 0.0f)
+			return;
     
 #ifdef __APPLE__
-        Window::m_velocity  = 0.05f;
+		Window::m_velocity = 0.05f;
 #else
-        Window::m_velocity  = 0.005f;
+		Window::m_velocity = 0.005f;
 #endif
-  }
+	}
 }
 
-glm::vec3 trackBallMapping( glm::vec3 i_point ) {
-  glm::vec3 l_v;
-  float     l_d;
+glm::vec3 trackBallMapping(glm::vec3 point)
+{
+	glm::vec3 v;
+	float     d;
 
-  l_v.x = (2.0f * i_point.x - (float) Window::m_width)  / (float) Window::m_width;
-  l_v.y = ((float) Window::m_height - 2.0f * i_point.y) / (float) Window::m_height;
-  l_v.z = 0.0f;
+	v.x = (2.0f * point.x - (float)Window::m_width) / (float)Window::m_width;
+	v.y = ((float)Window::m_height - 2.0f * point.y) / (float)Window::m_height;
+	v.z = 0.0f;
 
-  l_d   = glm::length( l_v );
-  l_d   = (l_d < 1.0f) ? l_d : 1.0f;
-  l_v.z = sqrtf( 1.001f - powf( l_d, 2.0f ) );
-  glm::normalize( l_v );
+	d = glm::length(v);
+	d = (d < 1.0f) ? d : 1.0f;
+	v.z = sqrtf(1.001f - powf(d, 2.0f));
+	glm::normalize(v);
 
-  return l_v;
+	return v;
 }
 
-void Window::cursorPosCallback( GLFWwindow *i_window,
-                                double      i_xPos,
-                                double      i_yPos ) {
-  glm::vec3 l_direction, l_currPoint, l_rotAxis;
-  float     l_vel, l_rotAngle;
+void Window::cursorPosCallback(GLFWwindow *window, double xPos, double yPos)
+{
+	glm::vec3 direction, currPoint, rotAxis;
+	float     vel, rotAngle;
 
-  switch( Window::m_move ) {
-    case 1:   //! Rotation
-      l_currPoint = trackBallMapping( glm::vec3( (float) i_xPos, (float) i_yPos,
-                                      0.0f ) );
-      l_direction = l_currPoint - Window::m_lastPoint;
-      l_vel       = glm::length( l_direction );
+	switch (Window::m_move)
+	{
+		case 1:   // Rotation
+			currPoint = trackBallMapping(glm::vec3((float)xPos, (float)yPos, 0.0f));
+			direction = currPoint - Window::m_lastPoint;
+			vel = glm::length(direction);
 
-      if( l_vel > 0.0001f ) {
-        l_rotAxis   = glm::cross( Window::m_lastPoint, l_currPoint );
-        l_rotAngle  = l_vel * 0.01f;
+			if (vel > 0.0001f)
+			{
+				rotAxis = glm::cross(Window::m_lastPoint, currPoint);
+				rotAngle = vel * 0.01f;
 
-        //! Update camera position
-        glm::vec4 l_tmp = glm::rotate( glm::mat4( 1.0f ), -l_rotAngle, l_rotAxis )
-                          * glm::vec4( Window::m_camPos, 1.0f );
-        m_camPos  = glm::vec3( l_tmp.x, l_tmp.y, l_tmp.z );
-      }
+				// Update camera position
+				glm::vec4 l_tmp = glm::rotate(glm::mat4(1.0f), -rotAngle, rotAxis) * glm::vec4(Window::m_camPos, 1.0f);
+				m_camPos = glm::vec3(l_tmp.x, l_tmp.y, l_tmp.z);
+			}
 
-      break;
+			break;
 
-    case 2:   //! Panning (Not implemented)
-      break;
-  }
+		case 2:   // Panning (Not implemented)
+			break;
+	}
 }
 
-void Window::mouseButtonCallback( GLFWwindow *i_window,
-                                  int         i_button,
-                                  int         i_action,
-                                  int         i_mods ) {
-  double l_xPos, l_yPos;
+void Window::mouseButtonCallback(GLFWwindow *window, int i_button, int action, int mods)
+{
+	double xPos, yPos;
 
-  if( i_action == GLFW_PRESS ) {
-    switch( i_button ) {
-      case GLFW_MOUSE_BUTTON_LEFT:
-        Window::m_move  = 1;
+	if (action == GLFW_PRESS)
+	{
+		switch (i_button)
+		{
+			case GLFW_MOUSE_BUTTON_LEFT:
+				Window::m_move = 1;
 
-        glfwGetCursorPos( i_window, &l_xPos, &l_yPos );
-        Window::m_lastPoint = trackBallMapping( glm::vec3( (float) l_xPos,
-                                                           (float) l_yPos,
-                                                           0.0f ) );
-        break;
+				glfwGetCursorPos(window, &xPos, &yPos);
+				Window::m_lastPoint = trackBallMapping(glm::vec3((float)xPos, (float)yPos, 0.0f));
+				break;
 
-      case GLFW_MOUSE_BUTTON_RIGHT:
-        Window::m_move  = 2;
-        break;
-    }
-  }
+			case GLFW_MOUSE_BUTTON_RIGHT:
+				Window::m_move = 2;
+				break;
+		}
+	}
 
-  else if( i_action == GLFW_RELEASE ) {
-    Window::m_move  = 0;
-  }
+	else if (action == GLFW_RELEASE)
+		Window::m_move  = 0;
 }
 
-void Window::scrollCallback( GLFWwindow *i_window,
-                             double      i_xOffset,
-                             double      i_yOffset ) {
-  //! Avoid scrolling out of cubemap
-  if( ((int) i_yOffset == -1) &&
-      (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f
-                                              || Window::m_camPos.z > 900.0f) )
-    return;
+void Window::scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
+{
+	// Avoid scrolling out of cubemap
+	if (((int)yOffset == -1) && (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f || Window::m_camPos.z > 900.0f))
+		return;
 
-  //! Reposition camera to new location
-  glm::vec3 l_dir = Window::m_camPos - g_camLookAt;
-  glm::normalize( l_dir );
-  Window::m_camPos  -= l_dir * (float) i_yOffset * 0.1f;
+	// Reposition camera to new location
+	glm::vec3 dir = Window::m_camPos - G_camLookAt;
+	glm::normalize(dir);
+	Window::m_camPos -= dir * (float)yOffset * 0.1f;
 }
