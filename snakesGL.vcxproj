@@ -115,21 +115,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Bezier.cpp" />
-    <ClCompile Include="SceneGraph.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="snakesGL.cpp" />
-    <ClCompile Include="Window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Bezier.h" />
-    <ClInclude Include="SceneGraph.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="snakesGL.h" />
-    <ClInclude Include="Window.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Bezier.h" />
+    <ClInclude Include="src\SceneGraph.h" />
+    <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\snakesGL.h" />
+    <ClInclude Include="src\Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Bezier.cpp" />
+    <ClCompile Include="src\SceneGraph.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\snakesGL.cpp" />
+    <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

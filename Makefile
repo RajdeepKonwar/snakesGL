@@ -32,10 +32,16 @@ CXX?=g++
 CXXFLAGS=-std=c++11 -O3 -Wall
 LDFLAGS=-lGL -lGLU -lGLEW -lglfw3 -L/usr/local/lib -lXi -lm -lpthread -pthread -ldl -ldrm -lXdamage -lX11-xcb -lxcb-glx -lxcb-dri2 -lglfw -lrt -lXrandr -lXinerama -lXxf86vm -lXext -lXcursor -lXrender -lXfixes -lX11 -lxcb -lXau -lXdmcp
 
+OUT_DIR = ./obj
+MKDIR_P = mkdir -p
+${OUT_DIR}:
+	${MKDIR_P} ${OUT_DIR}
+SRC_DIR = ./src
+
 OBJECTS=snakesGL.o Bezier.o SceneGraph.o Shader.o Window.o
 
 snakesGL: $(OBJECTS)
-					$(CXX) $(CXXFLAGS) $(OBJECTS) -o snakesGL $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o snakesGL $(LDFLAGS)
 
 snakesGL.o: snakesGL.cpp
 
@@ -49,4 +55,4 @@ Window.o: Window.cpp
 
 .PHONY: clean
 clean:
-			rm -f *.o snakesGL
+	rm -f *.o snakesGL
