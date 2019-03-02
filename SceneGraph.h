@@ -90,10 +90,10 @@ public:
 	glm::vec3 m_position, m_size;
 
 private:
-	GLuint					m_bboxVAO, m_bboxVBO, m_snakeVAO, m_snakeVBO;
-	glm::mat4				m_tMtx;
-	std::list<Node *>		m_ptrs;
-	std::vector<glm::vec3>	m_bboxVertices, m_snakeVertices;
+	GLuint m_bboxVAO, m_bboxVBO, m_snakeVAO, m_snakeVBO;
+	glm::mat4 m_tMtx;
+	std::list<Node *> m_ptrs;
+	std::vector<glm::vec3> m_bboxVertices, m_snakeVertices;
 };
 
 // derived Geometry class
@@ -113,9 +113,9 @@ public:
 	int m_obstacleType = 1;		// 1 for pyramid, 2 for coin, 3 for wall
 
 private:
-	GLuint					m_VAO, m_VBO, m_NBO, m_EBO;
-	std::vector<GLfloat>	m_vertices, m_normals;
-	std::vector<GLuint>		m_indices;
+	GLuint m_VAO, m_VBO, m_NBO, m_EBO;
+	std::vector<GLfloat> m_vertices, m_normals;
+	std::vector<GLuint> m_indices;
 };
 
 #endif

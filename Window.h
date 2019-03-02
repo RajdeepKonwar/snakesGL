@@ -58,7 +58,7 @@ public:
 	static void cleanUp();
 	static GLFWwindow* createWindow(int width, int height);
   
-	static bool checkCollision(Node *one, Node *two);
+	static bool checkCollision(Node *first, Node *second);
 	static void performCollisions();
 
 	static void displayCallback(GLFWwindow *window);
@@ -76,21 +76,21 @@ private:
 	static float randGenY();
 
 public:
-	static int			m_width;
-	static int			m_height;
-	static int			m_move;
-	static int			m_nBody;
-	static int			m_nTile;
+	static int m_width;
+	static int m_height;
+	static int m_move;
+	static int m_nBody;
+	static int m_nTile;
 
-	static float		m_velocity;
+	static float m_velocity;
 
-	static glm::vec3	m_camPos;
-	static glm::vec3	m_lastPoint;
+	static glm::vec3 m_camPos;
+	static glm::vec3 m_lastPoint;
 
-	static glm::mat4	m_P;        // P for projection
-	static glm::mat4	m_V;        // V for view
+	static glm::mat4 m_P;	// P for projection
+	static glm::mat4 m_V;	// V for view
 
-	static bool			m_fog;
+	static bool m_fog;
 };
 
 #endif

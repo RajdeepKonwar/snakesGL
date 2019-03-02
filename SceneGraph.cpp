@@ -226,7 +226,7 @@ void Transform::drawSnakeContour(const GLuint &shaderProgram, const glm::mat4 &m
 	glBindVertexArray(0);
 }
 
-void Transform::draw( const GLuint &shaderProgram, const glm::mat4 &mtx )
+void Transform::draw(const GLuint &shaderProgram, const glm::mat4 &mtx)
 {
 	if( m_destroyed )
 		return;
@@ -252,83 +252,91 @@ void Geometry::load(const char *fileName)
 	if (!in.is_open())
 	{
 		std::cerr << "Error loading file " << fileName << std::endl;
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
-	while( getline( in, line ) ) {
-	// normals
-	if( line[0] == 'v' && line[1] == 'n' ) {
-		std::istringstream l_ss( line );
-		std::vector< std::string > l_tokens;
+	while( getline( in, line ) )
+	{
+		// normals
+		if (line[0] == 'v' && line[1] == 'n')
+		{
+			std::istringstream ss(line);
+			std::vector<std::string> tokens;
 
-		while( l_ss ) {
-		if( !getline( l_ss, next, ' ' ) || l_tokens.size() == 4 )
-			break;
+			while( ss )
+			{
+				if (!getline(ss, next, ' ') || tokens.size() == 4)
+					break;
 
-		l_tokens.push_back( next );
+				tokens.push_back(next);
+			}
+
+			n1 = static_cast<float>(atof(tokens[1].c_str()));
+			n2 = static_cast<float>(atof(tokens[2].c_str()));
+			n3 = static_cast<float>(atof(tokens[3].c_str()));
+
+			mag = sqrtf(pow(n1, 2.0f) + pow(n2, 2.0f) + pow(n3, 2.0f));
+			n1 = (n1 / mag) * 0.5f + 0.5f;
+			n2 = (n2 / mag) * 0.5f + 0.5f;
+			n3 = (n3 / mag) * 0.5f + 0.5f;
+
+			// Populate normals
+			m_normals.push_back(n1);
+			m_normals.push_back(n2);
+			m_normals.push_back(n3);
 		}
 
-		n1 = static_cast<float>(atof(l_tokens[1].c_str()));
-		n2 = static_cast<float>(atof(l_tokens[2].c_str()));
-		n3 = static_cast<float>(atof(l_tokens[3].c_str()));
+		// vertices
+		else if (line[0] == 'v' && line[1] == ' ')
+		{
+			std::istringstream ss(line);
+			std::vector<std::string> tokens;
 
-		mag = sqrtf( pow( n1, 2.0f ) + pow( n2, 2.0f ) + pow( n3, 2.0f ) );
-		n1  = (n1 / mag) * 0.5f + 0.5f;
-		n2  = (n2 / mag) * 0.5f + 0.5f;
-		n3  = (n3 / mag) * 0.5f + 0.5f;
+			while (ss)
+			{
+				if (!getline(ss, next, ' ') || tokens.size() == 4)
+					break;
 
-		// Populate normals
-		m_normals.push_back( n1 );
-		m_normals.push_back( n2 );
-		m_normals.push_back( n3 );
-	}
+				tokens.push_back(next);
+			}
 
-	// vertices
-	else if( line[0] == 'v' && line[1] == ' ' ) {
-		std::istringstream l_ss( line );
-		std::vector< std::string > l_tokens;
+			// Populate vertices
+			val = static_cast<float>(atof(tokens[1].c_str()));
+			m_vertices.push_back(val);
+			x.push_back(val);
 
-		while( l_ss ) {
-		if( !getline( l_ss, next, ' ' ) || l_tokens.size() == 4 )
-			break;
+			val = static_cast<float>(atof(tokens[2].c_str()));
+			m_vertices.push_back(val);
+			y.push_back(val);
 
-		l_tokens.push_back( next );
+			val = static_cast<float>(atof(tokens[3].c_str()));
+			m_vertices.push_back(val);
+			z.push_back(val);
 		}
 
-		// Populate vertices
-		val = static_cast<float>(atof(l_tokens[1].c_str()));
-		m_vertices.push_back( val );
-		x.push_back( val );
+		// faces
+		else if (line[0] == 'f')
+		{
+			std::istringstream ss(line);
+			std::vector<std::string> tokens;
 
-		val = static_cast<float>(atof(l_tokens[2].c_str()));
-		m_vertices.push_back( val );
-		y.push_back( val );
+			while (ss)
+			{
+				if (!getline(ss, next, ' ') || tokens.size() == 4)
+					break;
 
-		val = static_cast<float>(atof(l_tokens[3].c_str()));
-		m_vertices.push_back( val );
-		z.push_back( val );
-	}
+				tokens.push_back( next );
+			}
 
-	// faces
-	else if( line[0] == 'f' ) {
-		std::istringstream l_ss( line );
-		std::vector< std::string > l_tokens;
+			for (i = 1; i < 4; i++)
+			{
+				pos = tokens[i].find("//");
+				index = atoi((tokens[i].substr(0, pos)).c_str()) - 1;
 
-		while( l_ss ) {
-		if( !getline( l_ss, next, ' ' ) || l_tokens.size() == 4 )
-			break;
-
-		l_tokens.push_back( next );
+				// Populate face-indices
+				m_indices.push_back(index);
+			}
 		}
-
-		for( i = 1; i < 4; i++ ) {
-		pos = l_tokens[i].find( "//" );
-		index = atoi( (l_tokens[i].substr( 0, pos )).c_str() ) - 1;
-
-		// Populate face-indices
-		m_indices.push_back( index );
-		}
-	}
 	}
 
 	in.close();
