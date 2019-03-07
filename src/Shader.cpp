@@ -73,9 +73,9 @@ GLuint LoadShaders(const char *vertexFilePath, const char *fragmentFilePath)
 		// Especially on non-Windows systems where you can have the system happily execute "rm -rf ~"
 		int ret = 0;
 #ifdef _WIN32
-		ret = system( "CD" );
+		ret = system("CD");
 #else
-		ret = system( "pwd" );
+		ret = system("pwd");
 #endif
 
 		getchar();

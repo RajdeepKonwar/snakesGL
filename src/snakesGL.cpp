@@ -66,7 +66,7 @@ void setupGlew()
 	// Initialize GLEW. Not needed on OSX systems.
 #ifndef __APPLE__
 	GLenum err = glewInit();
-	if (GLEW_OK != err)
+	if (err != GLEW_OK)
 	{
 		/* Problem: glewInit failed, something is seriously wrong. */
 		std::cerr << "Error: " << glewGetErrorString(err) << std::endl;

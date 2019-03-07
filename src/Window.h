@@ -47,6 +47,7 @@
 #endif
 
 #include <GLFW/glfw3.h>
+
 #include "Bezier.h"
 #include "SceneGraph.h"
 #include "Shader.h"

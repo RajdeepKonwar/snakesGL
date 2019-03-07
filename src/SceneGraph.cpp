@@ -58,7 +58,7 @@ void Transform::addChild(Node *child)
 // untested: don't use
 void Transform::removeChild()
 {
-  m_ptrs.pop_back();
+	m_ptrs.pop_back();
 }
 
 void Transform::generateBoundingBox()
@@ -134,10 +134,9 @@ void Transform::drawBoundingBox(const GLuint &shaderProgram, const glm::mat4 &mt
 
 void Transform::generateSnakeContour()
 {
-	int i;
 	static float headPos[4] = { 0.78f, 0.78f, 1.8f, 0.78f };
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		headPos[i] += Window::m_velocity;
 
 	// Construct the head contours
@@ -155,7 +154,7 @@ void Transform::generateSnakeContour()
 	static float bodyPos[11] = { -0.53f, -0.53f, -0.53f,  0.27f,  0.27f, 0.44f,
 								 -1.53f, -1.53f, -1.53f, -2.53f, -2.53f };
 
-	for (i = 0; i < 11; i++)
+	for (int i = 0; i < 11; i++)
 		bodyPos[i] += Window::m_velocity;
 
 	// Construct the first body part attached to head
@@ -208,16 +207,17 @@ void Transform::generateSnakeContour()
 
 void Transform::drawSnakeContour(const GLuint &shaderProgram, const glm::mat4 &mtx)
 {
-	glm::mat4 modelView = mtx;
-  
 	GLuint uProjection = glGetUniformLocation(shaderProgram, "u_projection");
-	GLuint uModelView = glGetUniformLocation(shaderProgram, "u_modelView");
-	GLuint uCamPos = glGetUniformLocation(shaderProgram, "u_camPos");
-	GLuint uFog = glGetUniformLocation(shaderProgram, "u_fog");
-
 	glUniformMatrix4fv(uProjection, 1, GL_FALSE, &Window::m_P[0][0]);
+
+	glm::mat4 modelView = mtx;
+	GLuint uModelView = glGetUniformLocation(shaderProgram, "u_modelView");
 	glUniformMatrix4fv(uModelView, 1, GL_FALSE, &modelView[0][0]);
+
+	GLuint uCamPos = glGetUniformLocation(shaderProgram, "u_camPos");
 	glUniform3f(uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z);
+
+	GLuint uFog = glGetUniformLocation(shaderProgram, "u_fog");
 	glUniform1i(uFog, Window::m_fog);
 
 	glBindVertexArray(m_snakeVAO);
@@ -228,7 +228,7 @@ void Transform::drawSnakeContour(const GLuint &shaderProgram, const glm::mat4 &m
 
 void Transform::draw(const GLuint &shaderProgram, const glm::mat4 &mtx)
 {
-	if( m_destroyed )
+	if (m_destroyed)
 		return;
 
 	for (const auto &node : m_ptrs)
@@ -242,12 +242,6 @@ void Transform::update(const glm::mat4 &mtx)
 
 void Geometry::load(const char *fileName)
 {
-	float                 val, n1, n2, n3, mag;
-	std::string           line, next;
-	size_t                pos;
-	unsigned int          i, index;
-	std::vector<float>  x, y, z;
-
 	std::ifstream in(fileName);
 	if (!in.is_open())
 	{
@@ -255,7 +249,8 @@ void Geometry::load(const char *fileName)
 		exit(EXIT_FAILURE);
 	}
 
-	while( getline( in, line ) )
+	std::string line, next;
+	while (getline(in, line))
 	{
 		// normals
 		if (line[0] == 'v' && line[1] == 'n')
@@ -263,7 +258,7 @@ void Geometry::load(const char *fileName)
 			std::istringstream ss(line);
 			std::vector<std::string> tokens;
 
-			while( ss )
+			while (ss)
 			{
 				if (!getline(ss, next, ' ') || tokens.size() == 4)
 					break;
@@ -271,11 +266,11 @@ void Geometry::load(const char *fileName)
 				tokens.push_back(next);
 			}
 
-			n1 = static_cast<float>(atof(tokens[1].c_str()));
-			n2 = static_cast<float>(atof(tokens[2].c_str()));
-			n3 = static_cast<float>(atof(tokens[3].c_str()));
+			float n1 = static_cast<float>(atof(tokens[1].c_str()));
+			float n2 = static_cast<float>(atof(tokens[2].c_str()));
+			float n3 = static_cast<float>(atof(tokens[3].c_str()));
 
-			mag = sqrtf(pow(n1, 2.0f) + pow(n2, 2.0f) + pow(n3, 2.0f));
+			float mag = sqrtf(pow(n1, 2.0f) + pow(n2, 2.0f) + pow(n3, 2.0f));
 			n1 = (n1 / mag) * 0.5f + 0.5f;
 			n2 = (n2 / mag) * 0.5f + 0.5f;
 			n3 = (n3 / mag) * 0.5f + 0.5f;
@@ -301,17 +296,14 @@ void Geometry::load(const char *fileName)
 			}
 
 			// Populate vertices
-			val = static_cast<float>(atof(tokens[1].c_str()));
+			float val = static_cast<float>(atof(tokens[1].c_str()));
 			m_vertices.push_back(val);
-			x.push_back(val);
 
 			val = static_cast<float>(atof(tokens[2].c_str()));
 			m_vertices.push_back(val);
-			y.push_back(val);
 
 			val = static_cast<float>(atof(tokens[3].c_str()));
 			m_vertices.push_back(val);
-			z.push_back(val);
 		}
 
 		// faces
@@ -328,10 +320,10 @@ void Geometry::load(const char *fileName)
 				tokens.push_back( next );
 			}
 
-			for (i = 1; i < 4; i++)
+			for (int i = 1; i < 4; i++)
 			{
-				pos = tokens[i].find("//");
-				index = atoi((tokens[i].substr(0, pos)).c_str()) - 1;
+				size_t pos = tokens[i].find("//");
+				int index = atoi((tokens[i].substr(0, pos)).c_str()) - 1;
 
 				// Populate face-indices
 				m_indices.push_back(index);
@@ -383,14 +375,6 @@ Geometry::~Geometry()
 
 void Geometry::draw(const GLuint &shaderProgram, const glm::mat4 &mtx)
 {
-	glm::mat4 modelView = mtx;
-
-	GLuint uProjection = glGetUniformLocation(shaderProgram, "u_projection");
-	GLuint uModelView = glGetUniformLocation(shaderProgram, "u_modelView");
-	GLuint uCamPos = glGetUniformLocation(shaderProgram, "u_camPos");
-	GLuint uFog = glGetUniformLocation(shaderProgram, "u_fog");
-	GLuint uObstacleType = glGetUniformLocation(shaderProgram, "u_obstacleType");
-
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), 0.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), 0.2f, 0.2f, 0.2f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 1.0f, 1.0f, 1.0f);
@@ -401,10 +385,20 @@ void Geometry::draw(const GLuint &shaderProgram, const glm::mat4 &mtx)
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight2.diffuse"), 0.6f, 0.6f, 0.6f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight2.specular"), 0.7f, 0.7f, 0.7f);
 
+	GLuint uProjection = glGetUniformLocation(shaderProgram, "u_projection");
 	glUniformMatrix4fv(uProjection, 1, GL_FALSE, &Window::m_P[0][0]);
+
+	glm::mat4 modelView = mtx;
+	GLuint uModelView = glGetUniformLocation(shaderProgram, "u_modelView");
 	glUniformMatrix4fv(uModelView, 1, GL_FALSE, &modelView[0][0]);
+
+	GLuint uCamPos = glGetUniformLocation(shaderProgram, "u_camPos");
 	glUniform3f(uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z);
+
+	GLuint uObstacleType = glGetUniformLocation(shaderProgram, "u_obstacleType");
 	glUniform1i(uObstacleType, this->m_obstacleType);
+
+	GLuint uFog = glGetUniformLocation(shaderProgram, "u_fog");
 	glUniform1i(uFog, Window::m_fog);
 
 	glBindVertexArray(m_VAO);

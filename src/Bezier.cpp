@@ -62,7 +62,7 @@ Bezier::Bezier(const glm::vec3 points[16])
 	glm::vec3 xOfuv;
 
 	int counter = 0;
-	int rows    = 0;
+	int rows = 0;
 
 	float u = 0.0f;
 	float v = 0.0f;
@@ -74,9 +74,9 @@ Bezier::Bezier(const glm::vec3 points[16])
 			uVector = glm::vec4(u * u * u, u * u, u, 1);
 			vVector = glm::vec4(v * v * v, v * v, v, 1);
 
-			xOfuv	= glm::vec3(glm::dot( vVector, m_C[0] * uVector ),
-								glm::dot( vVector, m_C[1] * uVector ),
-								glm::dot( vVector, m_C[2] * uVector ));
+			xOfuv	= glm::vec3(glm::dot(vVector, m_C[0] * uVector),
+								glm::dot(vVector, m_C[1] * uVector),
+								glm::dot(vVector, m_C[2] * uVector));
 
 			m_vertices[rows].push_back(xOfuv);
 
@@ -92,8 +92,8 @@ Bezier::Bezier(const glm::vec3 points[16])
 		}
 
 		counter = 0;
-		v       = 0.0f;
-		u       = 0.0f + rows * 0.01f;
+		v = 0.0f;
+		u = 0.0f + rows * 0.01f;
 		rows++;
 	}
 
