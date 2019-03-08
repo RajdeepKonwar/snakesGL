@@ -4,7 +4,7 @@ A 3D snakes game developed in C++, modern OpenGL and GLSL shaders; inspired by t
 ### Compile Instructions
 #### Windows
 * Open `snakesGL.sln`
-* Right-click Solution 'stockast' in the Solution Explorer and select `Retarget solution`
+* Right-click Solution 'snakesGL' in the Solution Explorer and select `Retarget solution`
 * Build
 
 #### Linux
@@ -28,4 +28,4 @@ Simply run from Visual Studio.
 https://snakesgl.wordpress.com/
 
 
-[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
+[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/8wXGL-_3SBg)
