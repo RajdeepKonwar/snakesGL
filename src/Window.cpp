@@ -812,13 +812,11 @@ void Window::cursorPosCallback(GLFWwindow *window, double xPos, double yPos)
 	}
 }
 
-void Window::mouseButtonCallback(GLFWwindow *window, int i_button, int action, int mods)
+void Window::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-	
-
 	if (action == GLFW_PRESS)
 	{
-		switch (i_button)
+		switch (button)
 		{
 			case GLFW_MOUSE_BUTTON_LEFT:
 			{
