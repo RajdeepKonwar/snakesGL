@@ -14,23 +14,18 @@ make
 Type `make clean` to clean object file and executable.
 
 ### Run Instructions
+Running on a graphics card will deliver optimal performance.
+
 #### Windows
 Simply run from Visual Studio or double-click the executable created inside `x64\\{config}\snakesGL.exe`
 
-By default, the program will try and utilize the maximum system threads available. In order to use a specific number of threads, set the environment vairable `OMP_NUM_THREADS` equal to the number of threads you want.
-
 #### Linux
-Set the number of threads to be used for computation,
 ```
-export OMP_NUM_THREADS=number_of_threads
+./snakesGL
 ```
-For example, `export OMP_NUM_THREADS=8`.
-Then run the program
-```
-./stockast
-```
+
+## Demo
+[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
 
 ## Blog
 https://snakesgl.wordpress.com/
-
-[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
