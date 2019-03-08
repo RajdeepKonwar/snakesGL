@@ -1,5 +1,5 @@
 # snakesGL [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FRajdeepKonwar%2FsnakesGL.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FRajdeepKonwar%2FsnakesGL?ref=badge_shield)
-A 3D snakes game developed in C++, modern OpenGL (GLSL shaders); inspired by the classic 2000's Nokia 3D snakes game!
+A 3D snakes game developed using C++ and modern OpenGL (GLSL shaders); inspired by the classic 2000's Nokia 3D snakes game!
 
 ### Compile Instructions
 #### Windows
@@ -24,8 +24,5 @@ Simply run from Visual Studio.
 ./snakesGL
 ```
 
-## Blog
-https://snakesgl.wordpress.com/
-
-
+## Gameplay
 [![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/8wXGL-_3SBg)
