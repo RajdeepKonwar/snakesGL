@@ -79,10 +79,8 @@ Node *G_pObstacles;
 
 // Individual elements' transform mtx
 Node *G_pHeadMtx, *G_pTailMtx, **G_pPyramidMtx, **G_pCoinMtx, **G_pWallMtx;
-std::vector<Node *> G_pTileBigPos, G_pTileSmallPos, G_pBodyMtx, G_pObstaclesList;
-std::vector<Node *>::iterator G_nodeIt;
-
 Node *G_pHead, *G_pBody, *G_pTail, *G_pTileBig, *G_pTileSmall, *G_pCoin, *G_pWall;
+std::vector<Node *> G_pTileBigPos, G_pTileSmallPos, G_pBodyMtx, G_pObstaclesList;
 
 Bezier *patch[4];
 
@@ -247,10 +245,10 @@ void Window::initializeObjects()
 		G_pBodyMtx.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * static_cast<float>(i), 0.0f))));
 
 	// Add body parts to snake
-	for (G_nodeIt = G_pBodyMtx.begin(); G_nodeIt != G_pBodyMtx.end(); ++G_nodeIt)
+	for (const auto &bodyPart : G_pBodyMtx)
 	{
-		static_cast<Transform *>(G_pSnake)->addChild(*G_nodeIt);
-		static_cast<Transform *>(*G_nodeIt)->addChild(G_pBody);
+		static_cast<Transform *>(G_pSnake)->addChild(bodyPart);
+		static_cast<Transform *>(bodyPart)->addChild(G_pBody);
 	}
 
 	// Tail transform mtx
@@ -366,8 +364,8 @@ void Window::initializeObjects()
 	G_pObstaclesList.push_back(G_pWallMtx[G_nWalls]);
 
 	// Initialize obstacles' bounding boxes
-	for (G_nodeIt = G_pObstaclesList.begin(); G_nodeIt != G_pObstaclesList.end(); ++G_nodeIt)
-		static_cast<Transform *>(*G_nodeIt)->generateBoundingBox();
+	for (const auto &obstacle : G_pObstaclesList)
+		static_cast<Transform *>(obstacle)->generateBoundingBox();
 
 	// Arrange tiles to form grid
 	for (int i = -1; i <= Window::m_nTile; i++)
@@ -380,17 +378,17 @@ void Window::initializeObjects()
 	}
 
 	// Add big tiles to big grid group
-	for (G_nodeIt = G_pTileBigPos.begin(); G_nodeIt != G_pTileBigPos.end(); ++G_nodeIt)
+	for (const auto &bigTile : G_pTileBigPos)
 	{
-		static_cast<Transform *>(G_pGridBig)->addChild(*G_nodeIt);
-		static_cast<Transform *>(*G_nodeIt)->addChild(G_pTileBig);
+		static_cast<Transform *>(G_pGridBig)->addChild(bigTile);
+		static_cast<Transform *>(bigTile)->addChild(G_pTileBig);
 	}
 
 	// Add small tiles to small grid group
-	for (G_nodeIt = G_pTileSmallPos.begin(); G_nodeIt != G_pTileSmallPos.end(); ++G_nodeIt)
+	for (const auto &smallTile : G_pTileSmallPos)
 	{
-		static_cast<Transform *>(G_pGridSmall)->addChild(*G_nodeIt);
-		static_cast<Transform *>(*G_nodeIt)->addChild(G_pTileSmall);
+		static_cast<Transform *>(G_pGridSmall)->addChild(smallTile);
+		static_cast<Transform *>(smallTile)->addChild(G_pTileSmall);
 	}
 
 	// Bezier surface 1 control points
@@ -503,12 +501,12 @@ void Window::cleanUp()
 	delete G_pCoinMtx;
 	delete G_pWallMtx;
 
-	for (G_nodeIt = G_pTileBigPos.begin(); G_nodeIt != G_pTileBigPos.end(); ++G_nodeIt)
-		delete *G_nodeIt;
-	for (G_nodeIt = G_pTileSmallPos.begin(); G_nodeIt != G_pTileSmallPos.end(); ++G_nodeIt)
-		delete *G_nodeIt;
-	for (G_nodeIt = G_pBodyMtx.begin(); G_nodeIt != G_pBodyMtx.end(); ++G_nodeIt)
-		delete *G_nodeIt;
+	for (auto &bigTile : G_pTileBigPos)
+		delete bigTile;
+	for (auto &smallTile : G_pTileSmallPos)
+		delete smallTile;
+	for (auto &bodyPart : G_pBodyMtx)
+		delete bodyPart;
 
 	delete G_pHead;
 	delete G_pBody;
