@@ -84,7 +84,7 @@ std::vector<Node *>::iterator G_nodeIt;
 
 Node *G_pHead, *G_pBody, *G_pTail, *G_pTileBig, *G_pTileSmall, *G_pCoin, *G_pWall;
 
-Bezier *pPatch[4];
+Bezier *patch[4];
 
 // Default camera parameters
 //glm::vec3 Window::m_camPos(0.0f, 1.8f, 5.0f);		// e | Position of camera (top)
@@ -244,7 +244,7 @@ void Window::initializeObjects()
 
 	// Snake body parts' transform mtx
 	for (int i = 0; i < Window::m_nBody; i++)
-		G_pBodyMtx.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * (float)i, 0.0f))));
+		G_pBodyMtx.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * static_cast<float>(i), 0.0f))));
 
 	// Add body parts to snake
 	for (G_nodeIt = G_pBodyMtx.begin(); G_nodeIt != G_pBodyMtx.end(); ++G_nodeIt)
@@ -254,7 +254,7 @@ void Window::initializeObjects()
 	}
 
 	// Tail transform mtx
-	G_pTailMtx = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * (float)Window::m_nBody + 0.5f, 0.0f)));
+	G_pTailMtx = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f * static_cast<float>(Window::m_nBody) + 0.5f, 0.0f)));
 
 	// Add tail to snake
 	static_cast<Transform *>(G_pSnake)->addChild(G_pTailMtx);
@@ -276,14 +276,14 @@ void Window::initializeObjects()
 		} while (randY >= 12.0f && randY <= 14.0f);
 
 		// Reuse head (rotated by 45) as pyramid obstacle
-		glm::mat4 l_moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		glm::mat4 l_moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3(static_cast<float>(randX), static_cast<float>(randY), 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		G_pPyramidMtx[k] = new Transform( l_moveRotMtx );
 
 		// Type for collision detection
 		static_cast<Transform *>(G_pPyramidMtx[k])->m_type = 1;
 
 		// Bounding boxes' initial positions and sizes
-		static_cast<Transform *>(G_pPyramidMtx[k])->m_position = glm::vec3(-0.7f + (float)randX, 0.7f + (float)randY, 0.01f);
+		static_cast<Transform *>(G_pPyramidMtx[k])->m_position = glm::vec3(-0.7f + static_cast<float>(randX), 0.7f + static_cast<float>(randY), 0.01f);
 		static_cast<Transform *>(G_pPyramidMtx[k])->m_size = glm::vec3(1.4f, 1.4f, 0.75f);
 
 		// Add pyramid as child of obstacles
@@ -304,13 +304,13 @@ void Window::initializeObjects()
 			randY = randGenY();
 		} while (randY >= 12.0f && randY <= 14.0f);
 
-		G_pCoinMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)));
+		G_pCoinMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(static_cast<float>(randX), static_cast<float>(randY), 0.0f)));
 
 		// Type for collision detection
 		static_cast<Transform *>(G_pCoinMtx[k])->m_type = 2;
 
 		// Bounding boxes' initial positions and sizes
-		static_cast<Transform *>(G_pCoinMtx[k])->m_position = glm::vec3(-0.5f + (float)randX, 0.1f + (float)randY, 0.1726f);
+		static_cast<Transform *>(G_pCoinMtx[k])->m_position = glm::vec3(-0.5f + static_cast<float>(randX), 0.1f + static_cast<float>(randY), 0.1726f);
 		static_cast<Transform *>(G_pCoinMtx[k])->m_size = glm::vec3(1.0f, 0.2f, 1.15f);
 
 		// Add coin as child of obstacles
@@ -331,13 +331,13 @@ void Window::initializeObjects()
 			randY = randGenY();
 		} while (randX == 0.0f || (randY >= 12.0f && randY <= 14.0f));
 
-		G_pWallMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3((float)randX, (float)randY, 0.0f)));
+		G_pWallMtx[k] = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(static_cast<float>(randX), static_cast<float>(randY), 0.0f)));
 
 		// Type for collision detection
 		static_cast<Transform *>(G_pWallMtx[k])->m_type = 3;
 
 		// Bounding boxes' initial positions and sizes
-		static_cast<Transform *>(G_pWallMtx[k])->m_position = glm::vec3(-0.7f + (float)randX, 0.7f + (float)randY, 0.01f);
+		static_cast<Transform *>(G_pWallMtx[k])->m_position = glm::vec3(-0.7f + static_cast<float>(randX), 0.7f + static_cast<float>(randY), 0.01f);
 		static_cast<Transform *>(G_pWallMtx[k])->m_size = glm::vec3(1.4f, 1.4f, 1.0f);
 
 		// Add wall as child of obstacles
@@ -469,15 +469,15 @@ void Window::initializeObjects()
 								glm::vec3( -2.5, 12.50, 3.25 ),   // p15
 							};
 
-	// Create 4 Bezier pPatches (C0 and C1 continuous)
-	pPatch[0] = new Bezier(points0);
-	pPatch[1] = new Bezier(points1);
-	pPatch[2] = new Bezier(points2);
-	pPatch[3] = new Bezier(points3);
+	// Create 4 Bezier patches (C0 and C1 continuous)
+	patch[0] = new Bezier(points0);
+	patch[1] = new Bezier(points1);
+	patch[2] = new Bezier(points2);
+	patch[3] = new Bezier(points3);
 
 	// Surface color info
 	for (int i = 0; i < 4; i++)
-		pPatch[i]->m_surface = i + 1;
+		patch[i]->m_surface = i + 1;
 
 	// Load the shader programs
 	G_gridBigShader = LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
@@ -542,8 +542,6 @@ bool Window::checkCollision(Node *first, Node *second)
 // Perform inter-object collision-checks
 void Window::performCollisions()
 {
-	std::vector<Node *>::iterator it;
-
 	for (std::vector<Node *>::iterator it = G_pObstaclesList.begin() + 1; it != G_pObstaclesList.end(); ++it)
 	{
 		// Only check for undestroyed obstacles
@@ -622,7 +620,7 @@ GLFWwindow* Window::createWindow(int width, int height)
 	return window;
 }
 
-void Window::displayCallback(GLFWwindow* window)
+void Window::displayCallback(GLFWwindow *window)
 {
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -650,13 +648,13 @@ void Window::displayCallback(GLFWwindow* window)
 	// Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
 	glUseProgram(G_boundingBoxShader);
 	if (G_drawBbox)
-		for (G_nodeIt = G_pObstaclesList.begin(); G_nodeIt != G_pObstaclesList.end(); ++G_nodeIt)
-			static_cast<Transform *>(*G_nodeIt)->drawBoundingBox(G_boundingBoxShader, Window::m_V);
+		for (const auto &obstacle : G_pObstaclesList)
+			static_cast<Transform *>(obstacle)->drawBoundingBox(G_boundingBoxShader, Window::m_V);
 
 	// Using BezierShader, draw the 4 Bezier surfaces
 	glUseProgram(G_bezierShader);
 	for (int i = 0; i < 4; i++)
-		pPatch[i]->draw(G_bezierShader);
+		patch[i]->draw(G_bezierShader);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -735,7 +733,7 @@ void Window::resizeCallback(GLFWwindow *window, int width, int height)
 
 	if (height > 0)
 	{
-		Window::m_P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 2000.0f);
+		Window::m_P = glm::perspective(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 2000.0f);
 		Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, g_camUp);
 	}
 }
@@ -785,8 +783,8 @@ glm::vec3 trackBallMapping(glm::vec3 point)
 	glm::vec3 v;
 	float     d;
 
-	v.x = (2.0f * point.x - (float)Window::m_width) / (float)Window::m_width;
-	v.y = ((float)Window::m_height - 2.0f * point.y) / (float)Window::m_height;
+	v.x = (2.0f * point.x - static_cast<float>(Window::m_width)) / static_cast<float>(Window::m_width);
+	v.y = (static_cast<float>(Window::m_height) - 2.0f * point.y) / static_cast<float>(Window::m_height);
 	v.z = 0.0f;
 
 	d = glm::length(v);
@@ -805,7 +803,7 @@ void Window::cursorPosCallback(GLFWwindow *window, double xPos, double yPos)
 	switch (Window::m_move)
 	{
 		case 1:   // Rotation
-			currPoint = trackBallMapping(glm::vec3((float)xPos, (float)yPos, 0.0f));
+			currPoint = trackBallMapping(glm::vec3(static_cast<float>(xPos), static_cast<float>(yPos), 0.0f));
 			direction = currPoint - Window::m_lastPoint;
 			vel = glm::length(direction);
 
@@ -838,7 +836,7 @@ void Window::mouseButtonCallback(GLFWwindow *window, int i_button, int action, i
 				Window::m_move = 1;
 
 				glfwGetCursorPos(window, &xPos, &yPos);
-				Window::m_lastPoint = trackBallMapping(glm::vec3((float)xPos, (float)yPos, 0.0f));
+				Window::m_lastPoint = trackBallMapping(glm::vec3(static_cast<float>(xPos), static_cast<float>(yPos), 0.0f));
 				break;
 
 			case GLFW_MOUSE_BUTTON_RIGHT:
@@ -854,11 +852,11 @@ void Window::mouseButtonCallback(GLFWwindow *window, int i_button, int action, i
 void Window::scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
 	// Avoid scrolling out of cubemap
-	if (((int)yOffset == -1) && (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f || Window::m_camPos.z > 900.0f))
+	if ((static_cast<int>(yOffset) == -1) && (Window::m_camPos.x > 900.0f || Window::m_camPos.y > 900.0f || Window::m_camPos.z > 900.0f))
 		return;
 
 	// Reposition camera to new location
 	glm::vec3 dir = Window::m_camPos - G_camLookAt;
 	glm::normalize(dir);
-	Window::m_camPos -= dir * (float)yOffset * 0.1f;
+	Window::m_camPos -= dir * static_cast<float>(yOffset) * 0.1f;
 }
