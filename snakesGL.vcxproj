@@ -116,6 +116,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\fragment\BezierShader.frag" />
+    <None Include="shaders\fragment\BoundingBoxShader.frag" />
+    <None Include="shaders\fragment\GridBigShader.frag" />
+    <None Include="shaders\fragment\GridSmallShader.frag" />
+    <None Include="shaders\fragment\ObstaclesShader.frag" />
+    <None Include="shaders\fragment\SnakeContourShader.frag" />
+    <None Include="shaders\fragment\SnakeShader.frag" />
+    <None Include="shaders\vertex\BezierShader.vert" />
+    <None Include="shaders\vertex\BoundingBoxShader.vert" />
+    <None Include="shaders\vertex\GridBigShader.vert" />
+    <None Include="shaders\vertex\GridSmallShader.vert" />
+    <None Include="shaders\vertex\ObstaclesShader.vert" />
+    <None Include="shaders\vertex\SnakeContourShader.vert" />
+    <None Include="shaders\vertex\SnakeShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bezier.h" />
@@ -130,6 +144,29 @@
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\snakesGL.cpp" />
     <ClCompile Include="src\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="models\body.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\coin.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\head.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\tail.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\tile_big.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\tile_small.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="models\wall.obj">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

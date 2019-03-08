@@ -12,9 +12,63 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{63968e0c-7e78-489b-bb83-b32b7d3e6b40}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{2bf07d1b-b1f2-4804-967c-b2971603e715}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\Fragment">
+      <UniqueIdentifier>{d7cf3c98-d6b6-47df-a697-805d7e412ac8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\Vertex">
+      <UniqueIdentifier>{042a3120-371b-4207-9794-0f24917b12d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Models">
+      <UniqueIdentifier>{6228eb3d-69c5-42a2-b22d-cc58135d442e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\vertex\BezierShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\BoundingBoxShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\GridBigShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\GridSmallShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\ObstaclesShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\SnakeContourShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\vertex\SnakeShader.vert">
+      <Filter>Resource Files\Shaders\Vertex</Filter>
+    </None>
+    <None Include="shaders\fragment\BezierShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\BoundingBoxShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\GridBigShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\GridSmallShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\ObstaclesShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\SnakeContourShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
+    <None Include="shaders\fragment\SnakeShader.frag">
+      <Filter>Resource Files\Shaders\Fragment</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bezier.h">
@@ -49,5 +103,28 @@
     <ClCompile Include="src\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="models\body.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\coin.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\head.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\tail.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\tile_big.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\tile_small.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
+    <Object Include="models\wall.obj">
+      <Filter>Resource Files\Models</Filter>
+    </Object>
   </ItemGroup>
 </Project>
