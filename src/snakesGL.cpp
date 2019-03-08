@@ -30,9 +30,7 @@
 
 #include "snakesGL.h"
 
-#define NUM_SAMPLES 100
-
-GLFWwindow* G_window;
+GLFWwindow *G_window;
 
 void errorCallback(int error, const char *description)
 {
@@ -119,24 +117,24 @@ void printVersions()
 // Display FPS (Frames per second)
 void showFPS()
 {
-	static float frameTimes[NUM_SAMPLES];
-	static int   currFrame = 0;
-	static float prevTicks = static_cast<float>(clock());
-
-	int count, i;
 	float currTicks = static_cast<float>(clock());
+	static float prevTicks = static_cast<float>(clock());
 	float frameTime = currTicks - prevTicks;
 
-	frameTimes[currFrame % NUM_SAMPLES] = frameTime;
+	constexpr int numSamples = 100;
+	static float frameTimes[numSamples];
+	static int currFrame = 0;
+	frameTimes[currFrame % numSamples] = frameTime;
 	prevTicks = currTicks;
 
-	if (currFrame < NUM_SAMPLES)
+	int count = 0;
+	if (currFrame < numSamples)
 		count = currFrame;
 	else
-		count = NUM_SAMPLES;
+		count = numSamples;
 
 	float frameTimeAvg = 0.0f;
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 		frameTimeAvg += frameTimes[i];
 	frameTimeAvg /= count;
 
@@ -152,8 +150,11 @@ void showFPS()
 
 int main(int argc, char **argv)
 {
+	constexpr int windowWidth = 1280;
+	constexpr int windowHeight = 720;
+
 	// Create the GLFW window
-	G_window = Window::createWindow(3000, 2000);
+	G_window = Window::createWindow(windowWidth, windowHeight);
 
 	// Print OpenGL and GLSL versions
 	printVersions();

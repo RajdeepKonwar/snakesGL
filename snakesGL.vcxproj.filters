@@ -69,6 +69,27 @@
     <None Include="shaders\fragment\SnakeShader.frag">
       <Filter>Resource Files\Shaders\Fragment</Filter>
     </None>
+    <None Include="models\body.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\coin.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\head.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\tail.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\tile_big.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\tile_small.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="models\wall.obj">
+      <Filter>Resource Files\Models</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bezier.h">
@@ -103,28 +124,5 @@
     <ClCompile Include="src\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="models\body.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\coin.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\head.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\tail.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\tile_big.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\tile_small.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-    <Object Include="models\wall.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
   </ItemGroup>
 </Project>
