@@ -17,15 +17,15 @@ Type `make clean` to clean object file and executable.
 Running on a graphics card will deliver optimal performance.
 
 #### Windows
-Simply run from Visual Studio or double-click the executable created inside `x64\\{config}\snakesGL.exe`
+Simply run from Visual Studio.
 
 #### Linux
 ```
 ./snakesGL
 ```
 
-## Gameplay
-[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/8wXGL-_3SBg)
-
 ## Blog
 https://snakesgl.wordpress.com/
+
+
+[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
