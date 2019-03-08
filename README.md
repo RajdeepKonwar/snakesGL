@@ -24,8 +24,8 @@ Simply run from Visual Studio or double-click the executable created inside `x64
 ./snakesGL
 ```
 
-## Demo
-[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/DJgKYX8bxGo)
+## Gameplay
+[![snakesGL YouTube Link](https://img.youtube.com/vi/DJgKYX8bxGo/0.jpg)](https://youtu.be/8wXGL-_3SBg)
 
 ## Blog
 https://snakesgl.wordpress.com/
