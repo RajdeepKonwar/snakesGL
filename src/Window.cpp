@@ -54,17 +54,11 @@ int Window::m_move = 0;
 int Window::m_nBody = 3;
 int Window::m_nTile = 20;
 bool Window::m_fog = true;
+float Window::m_velocity = SNAKE_SPEED;
 
 // Global variables
 GLuint G_gridBigShader, G_gridSmallShader, G_snakeShader, G_obstaclesShader;
 GLuint G_boundingBoxShader, G_snakeContourShader, G_velocityShader, G_bezierShader;
-
-// Overclocking on apple to get better fps lul
-#ifdef __APPLE__
-float Window::m_velocity  = SNAKE_SPEED_APPLE;
-#else
-float Window::m_velocity  = SNAKE_SPEED;
-#endif
 
 float G_yPos = 0.0f;
 bool G_drawBbox = false;
@@ -88,7 +82,7 @@ Bezier *patch[4];
 //glm::vec3 Window::m_camPos(0.0f, 1.8f, 5.0f);		// e | Position of camera (top)
 glm::vec3 Window::m_camPos(0.0f, -3.0f, 3.5f);		// e | Position of camera
 glm::vec3 G_camLookAt(0.0f, 2.5f, 0.0f);			// d | Where camera looks at
-glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);				// u | What orientation "up" is
+glm::vec3 G_camUp(0.0f, 1.0f, 0.0f);				// u | What orientation "up" is
 
 glm::vec3 Window::m_lastPoint(0.0f, 0.0f, 0.0f);	// For mouse tracking
 glm::mat4 Window::m_P;
@@ -96,20 +90,20 @@ glm::mat4 Window::m_V;
 
 float Window::randGenX()
 {
-	int l_randMax =  12;
-	int l_randMin = -12;
-	int l_rand = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+	int randMax =  12;
+	int randMin = -12;
+	int rando = rand() % (randMax - randMin + 1) + randMin;
 
-	return (2.0f * static_cast<float>(l_rand));
+	return (2.0f * static_cast<float>(rando));
 }
 
 float Window::randGenY()
 {
-	int l_randMax = Window::m_nTile;
-	int l_randMin = 2;
-	int l_rand = rand() % (l_randMax - l_randMin + 1) + l_randMin;
+	int randMax = Window::m_nTile;
+	int randMin = 2;
+	int rando = rand() % (randMax - randMin + 1) + randMin;
 
-	return (2.0f * static_cast<float>(l_rand));
+	return (2.0f * static_cast<float>(rando));
 }
 
 // functions as constructor
@@ -274,8 +268,8 @@ void Window::initializeObjects()
 		} while (randY >= 12.0f && randY <= 14.0f);
 
 		// Reuse head (rotated by 45) as pyramid obstacle
-		glm::mat4 l_moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3(static_cast<float>(randX), static_cast<float>(randY), 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		G_pPyramidMtx[k] = new Transform( l_moveRotMtx );
+		glm::mat4 moveRotMtx = glm::translate(glm::mat4(1.0f), glm::vec3(static_cast<float>(randX), static_cast<float>(randY), 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		G_pPyramidMtx[k] = new Transform(moveRotMtx);
 
 		// Type for collision detection
 		static_cast<Transform *>(G_pPyramidMtx[k])->m_type = 1;
@@ -370,7 +364,7 @@ void Window::initializeObjects()
 	// Arrange tiles to form grid
 	for (int i = -1; i <= Window::m_nTile; i++)
 	{
-		for( int j = -8; j <= 8; j++ )
+		for (int j = -8; j <= 8; j++)
 		{
 			G_pTileBigPos.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(j * 2.0f, i * 2.0f, -0.1f))));
 			G_pTileSmallPos.push_back(new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(j * 2.0f, i * 2.0f, 0.0f))));
@@ -661,7 +655,7 @@ void Window::displayCallback(GLFWwindow *window)
 	glfwSwapBuffers(window);
 
 	// Refresh view matrix with new camera position every display callback
-	Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, g_camUp);
+	Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, G_camUp);
 }
 
 void Window::idleCallback()
@@ -732,7 +726,7 @@ void Window::resizeCallback(GLFWwindow *window, int width, int height)
 	if (height > 0)
 	{
 		Window::m_P = glm::perspective(45.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 2000.0f);
-		Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, g_camUp);
+		Window::m_V = glm::lookAt(Window::m_camPos, G_camLookAt, G_camUp);
 	}
 }
 
@@ -779,13 +773,11 @@ void Window::keyCallback(GLFWwindow *window, int key, int scanCode, int action, 
 glm::vec3 trackBallMapping(glm::vec3 point)
 {
 	glm::vec3 v;
-	float     d;
-
 	v.x = (2.0f * point.x - static_cast<float>(Window::m_width)) / static_cast<float>(Window::m_width);
 	v.y = (static_cast<float>(Window::m_height) - 2.0f * point.y) / static_cast<float>(Window::m_height);
 	v.z = 0.0f;
 
-	d = glm::length(v);
+	float d = glm::length(v);
 	d = (d < 1.0f) ? d : 1.0f;
 	v.z = sqrtf(1.001f - powf(d, 2.0f));
 	glm::normalize(v);
@@ -795,28 +787,26 @@ glm::vec3 trackBallMapping(glm::vec3 point)
 
 void Window::cursorPosCallback(GLFWwindow *window, double xPos, double yPos)
 {
-	glm::vec3 direction, currPoint, rotAxis;
-	float     vel, rotAngle;
-
 	switch (Window::m_move)
 	{
 		case 1:   // Rotation
-			currPoint = trackBallMapping(glm::vec3(static_cast<float>(xPos), static_cast<float>(yPos), 0.0f));
-			direction = currPoint - Window::m_lastPoint;
-			vel = glm::length(direction);
+		{
+			glm::vec3 currPoint = trackBallMapping(glm::vec3(static_cast<float>(xPos), static_cast<float>(yPos), 0.0f));
+			glm::vec3 direction = currPoint - Window::m_lastPoint;
+			float vel = glm::length(direction);
 
 			if (vel > 0.0001f)
 			{
-				rotAxis = glm::cross(Window::m_lastPoint, currPoint);
-				rotAngle = vel * 0.01f;
+				glm::vec3 rotAxis = glm::cross(Window::m_lastPoint, currPoint);
+				float rotAngle = vel * 0.01f;
 
 				// Update camera position
-				glm::vec4 l_tmp = glm::rotate(glm::mat4(1.0f), -rotAngle, rotAxis) * glm::vec4(Window::m_camPos, 1.0f);
-				m_camPos = glm::vec3(l_tmp.x, l_tmp.y, l_tmp.z);
+				glm::vec4 tmp = glm::rotate(glm::mat4(1.0f), -rotAngle, rotAxis) * glm::vec4(Window::m_camPos, 1.0f);
+				m_camPos = glm::vec3(tmp.x, tmp.y, tmp.z);
 			}
 
 			break;
-
+		}
 		case 2:   // Panning (Not implemented)
 			break;
 	}
@@ -824,19 +814,20 @@ void Window::cursorPosCallback(GLFWwindow *window, double xPos, double yPos)
 
 void Window::mouseButtonCallback(GLFWwindow *window, int i_button, int action, int mods)
 {
-	double xPos, yPos;
+	
 
 	if (action == GLFW_PRESS)
 	{
 		switch (i_button)
 		{
 			case GLFW_MOUSE_BUTTON_LEFT:
+			{
 				Window::m_move = 1;
-
+				double xPos, yPos;
 				glfwGetCursorPos(window, &xPos, &yPos);
 				Window::m_lastPoint = trackBallMapping(glm::vec3(static_cast<float>(xPos), static_cast<float>(yPos), 0.0f));
 				break;
-
+			}
 			case GLFW_MOUSE_BUTTON_RIGHT:
 				Window::m_move = 2;
 				break;

@@ -114,16 +114,16 @@ Bezier::Bezier(const glm::vec3 points[16])
 	}
 }
 
-void Bezier::draw(const GLuint &i_shaderProgram)
+void Bezier::draw(const GLuint &shaderProgram)
 {
-	glUniformMatrix4fv(glGetUniformLocation(i_shaderProgram, "projection"), 1, GL_FALSE, &Window::m_P[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(i_shaderProgram, "modelView"), 1, GL_FALSE, &Window::m_V[0][0]);
-	glUniform1i(glGetUniformLocation(i_shaderProgram, "u_surface"), m_surface);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &Window::m_P[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "modelView"), 1, GL_FALSE, &Window::m_V[0][0]);
+	glUniform1i(glGetUniformLocation(shaderProgram, "u_surface"), m_surface);
 
-	GLuint uFog = glGetUniformLocation(i_shaderProgram, "u_fog");
+	GLuint uFog = glGetUniformLocation(shaderProgram, "u_fog");
 	glUniform1i(uFog, Window::m_fog);
 
-	GLuint uCamPos = glGetUniformLocation(i_shaderProgram, "u_camPos");
+	GLuint uCamPos = glGetUniformLocation(shaderProgram, "u_camPos");
 	glUniform3f(uCamPos, Window::m_camPos.x, Window::m_camPos.y, Window::m_camPos.z);
 
 	for (int i = 0; i <= 100; i++)
