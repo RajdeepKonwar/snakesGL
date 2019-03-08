@@ -39,6 +39,14 @@
 constexpr auto WINDOW_TITLE = "snakesGL";
 constexpr auto CONFIG_FILE = "./snakesGL.conf";
 
+#ifdef __APPLE__
+constexpr float SNAKE_SPEED = 0.05f;
+#else
+constexpr float SNAKE_SPEED = 0.03f;
+#endif
+
+constexpr float SPEED_INC = 0.02f;
+
 // Static data members
 int Window::m_width;
 int Window::m_height;
@@ -48,14 +56,14 @@ int Window::m_nTile = 20;
 bool Window::m_fog = true;
 
 // Global variables
-GLuint G_pGridBigShader, G_pGridSmallShader, G_pSnakeShader, G_pObstaclesShader;
-GLuint G_boundingBoxShader, G_pSnakeContourShader, G_velocityShader, G_pBezierShader;
+GLuint G_gridBigShader, G_gridSmallShader, G_snakeShader, G_obstaclesShader;
+GLuint G_boundingBoxShader, G_snakeContourShader, G_velocityShader, G_bezierShader;
 
 // Overclocking on apple to get better fps lul
 #ifdef __APPLE__
-float Window::m_velocity  = 0.05f;
+float Window::m_velocity  = SNAKE_SPEED_APPLE;
 #else
-float Window::m_velocity  = 0.005f;
+float Window::m_velocity  = SNAKE_SPEED;
 #endif
 
 float G_yPos = 0.0f;
@@ -80,7 +88,7 @@ Bezier *pPatch[4];
 
 // Default camera parameters
 //glm::vec3 Window::m_camPos(0.0f, 1.8f, 5.0f);		// e | Position of camera (top)
-glm::vec3 Window::m_camPos(0.0f, -3.5f, 3.5f);		// e | Position of camera
+glm::vec3 Window::m_camPos(0.0f, -3.0f, 3.5f);		// e | Position of camera
 glm::vec3 G_camLookAt(0.0f, 2.5f, 0.0f);			// d | Where camera looks at
 glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);				// u | What orientation "up" is
 
@@ -149,48 +157,48 @@ void Window::initializeObjects()
 		std::string varName = lineBuf.substr(k, l - k);
 		std::string varValue = lineBuf.substr(l + 1);
 
-		if (varName.compare("grid_big_vert_shader") == 0)
+		if (!varName.compare("grid_big_vert_shader"))
 			gridBigVertShader = varValue;
-		else if (varName.compare("grid_big_frag_shader") == 0)
+		else if (!varName.compare("grid_big_frag_shader"))
 			gridBigFragShader = varValue;
-		else if (varName.compare("grid_small_vert_shader") == 0)
+		else if (!varName.compare("grid_small_vert_shader"))
 			gridSmallVertShader = varValue;
-		else if (varName.compare("grid_small_frag_shader") == 0)
+		else if (!varName.compare("grid_small_frag_shader"))
 			gridSmallFragShader = varValue;
-		else if (varName.compare("snake_vert_shader") == 0)
+		else if (!varName.compare("snake_vert_shader"))
 			snakeVertShader = varValue;
-		else if (varName.compare("snake_frag_shader") == 0)
+		else if (!varName.compare("snake_frag_shader"))
 			snakeFragShader = varValue;
-		else if (varName.compare("obstacles_vert_shader") == 0)
+		else if (!varName.compare("obstacles_vert_shader"))
 			obstaclesVertShader = varValue;
-		else if (varName.compare("obstacles_frag_shader") == 0)
+		else if (!varName.compare("obstacles_frag_shader"))
 			obstaclesFragShader = varValue;
-		else if (varName.compare("bounding_box_vert_shader") == 0)
+		else if (!varName.compare("bounding_box_vert_shader"))
 			boundingBoxVertShader = varValue;
-		else if (varName.compare("bounding_box_frag_shader") == 0)
+		else if (!varName.compare("bounding_box_frag_shader"))
 			boundingBoxFragShader = varValue;
-		else if (varName.compare("snake_contour_vert_shader") == 0)
+		else if (!varName.compare("snake_contour_vert_shader"))
 			snakeContourVertShader = varValue;
-		else if (varName.compare("snake_contour_frag_shader") == 0)
+		else if (!varName.compare("snake_contour_frag_shader"))
 			snakeContourFragShader = varValue;
-		else if (varName.compare("bezier_vert_shader") == 0)
+		else if (!varName.compare("bezier_vert_shader"))
 			bezierVertShader = varValue;
-		else if (varName.compare("bezier_frag_shader") == 0)
+		else if (!varName.compare("bezier_frag_shader"))
 			bezierFragShader = varValue;
 
-		else if (varName.compare("head") == 0)
+		else if (!varName.compare("head"))
 			head = varValue;
-		else if (varName.compare("body") == 0)
+		else if (!varName.compare("body"))
 			body = varValue;
-		else if (varName.compare("tail") == 0)
+		else if (!varName.compare("tail"))
 			tail = varValue;
-		else if (varName.compare("tile_big") == 0)
+		else if (!varName.compare("tile_big"))
 			tileBig = varValue;
-		else if (varName.compare("tile_small") == 0)
+		else if (!varName.compare("tile_small"))
 			tileSmall = varValue;
-		else if (varName.compare("coin") == 0)
+		else if (!varName.compare("coin"))
 			coin = varValue;
-		else if (varName.compare("wall") == 0)
+		else if (!varName.compare("wall"))
 			wall = varValue;
 		else
 			std::cout << "\nUnknown setting (" << varName << "). Ignored.\n";
@@ -199,13 +207,13 @@ void Window::initializeObjects()
 	confFn.close();
 
 	// Geometry nodes
-	G_pHead      = new Geometry( head.c_str()      );
-	G_pBody      = new Geometry( body.c_str()      );
-	G_pTail      = new Geometry( tail.c_str()      );
-	G_pTileSmall = new Geometry( tileSmall.c_str() );
-	G_pTileBig   = new Geometry( tileBig.c_str()   );
-	G_pCoin      = new Geometry( coin.c_str()      );
-	G_pWall      = new Geometry( wall.c_str()      );
+	G_pHead = new Geometry(head.c_str());
+	G_pBody = new Geometry(body.c_str());
+	G_pTail = new Geometry(tail.c_str());
+	G_pTileSmall = new Geometry(tileSmall.c_str());
+	G_pTileBig = new Geometry(tileBig.c_str());
+	G_pCoin = new Geometry(coin.c_str());
+	G_pWall = new Geometry(wall.c_str());
 
 	// Set geometry obstacle type (for color, 1 by default)
 	static_cast<Geometry *>(G_pCoin)->m_obstacleType = 2;
@@ -472,13 +480,13 @@ void Window::initializeObjects()
 		pPatch[i]->m_surface = i + 1;
 
 	// Load the shader programs
-	G_pGridBigShader = LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
-	G_pGridSmallShader = LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
-	G_pSnakeShader = LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
-	G_pObstaclesShader = LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
+	G_gridBigShader = LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
+	G_gridSmallShader = LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
+	G_snakeShader = LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
+	G_obstaclesShader = LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
 	G_boundingBoxShader = LoadShaders(boundingBoxVertShader.c_str(), boundingBoxFragShader.c_str());
-	G_pSnakeContourShader = LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
-	G_pBezierShader = LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
+	G_snakeContourShader = LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
+	G_bezierShader = LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
 }
 
 // Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -510,31 +518,23 @@ void Window::cleanUp()
 	delete G_pCoin;
 	delete G_pWall;
 
-	glDeleteProgram(G_pGridBigShader);
-	glDeleteProgram(G_pGridSmallShader);
-	glDeleteProgram(G_pSnakeShader);
-	glDeleteProgram(G_pObstaclesShader);
+	glDeleteProgram(G_gridBigShader);
+	glDeleteProgram(G_gridSmallShader);
+	glDeleteProgram(G_snakeShader);
+	glDeleteProgram(G_obstaclesShader);
 	glDeleteProgram(G_boundingBoxShader);
-	glDeleteProgram(G_pSnakeContourShader);
-	glDeleteProgram(G_pBezierShader);
+	glDeleteProgram(G_snakeContourShader);
+	glDeleteProgram(G_bezierShader);
 }
 
 // Since everything is on the grid, no need of collision-check in z-direction
 bool Window::checkCollision(Node *first, Node *second)
 {
-	bool collisionX   = static_cast< Transform * >(first)->m_position.x +
-						static_cast< Transform * >(first)->m_size.x >=
-						static_cast< Transform * >(second)->m_position.x &&
-						static_cast< Transform * >(second)->m_position.x +
-						static_cast< Transform * >(second)->m_size.x >=
-						static_cast< Transform * >(first)->m_position.x;
+	bool collisionX = static_cast<Transform *>(first)->m_position.x + static_cast<Transform *>(first)->m_size.x >= static_cast<Transform *>(second)->m_position.x &&
+					  static_cast<Transform *>(second)->m_position.x + static_cast<Transform *>(second)->m_size.x >= static_cast<Transform *>(first)->m_position.x;
 
-	bool collisionY   = static_cast< Transform * >(first)->m_position.y +
-						static_cast< Transform * >(first)->m_size.y >=
-						static_cast< Transform * >(second)->m_position.y &&
-						static_cast< Transform * >(second)->m_position.y +
-						static_cast< Transform * >(second)->m_size.y >=
-						static_cast< Transform * >(first)->m_position.y;
+	bool collisionY = static_cast<Transform *>(first)->m_position.y + static_cast<Transform *>(first)->m_size.y >= static_cast<Transform *>(second)->m_position.y &&
+					  static_cast<Transform *>(second)->m_position.y + static_cast<Transform *>(second)->m_size.y >= static_cast<Transform *>(first)->m_position.y;
 
 	return collisionX && collisionY;
 }
@@ -547,10 +547,10 @@ void Window::performCollisions()
 	for (std::vector<Node *>::iterator it = G_pObstaclesList.begin() + 1; it != G_pObstaclesList.end(); ++it)
 	{
 		// Only check for undestroyed obstacles
-		if( !static_cast< Transform * >(*it)->m_destroyed )
+		if (!static_cast<Transform *>(*it)->m_destroyed)
 		{
 			// Check each obstacle wrt head
-			if( checkCollision( G_pHeadMtx, *it ) )
+			if (checkCollision(G_pHeadMtx, *it))
 			{
 				/** Collision with wall
 					*  Set both head and wall bbox to red, stop motion of snake
@@ -628,24 +628,24 @@ void Window::displayCallback(GLFWwindow* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Using GridBigShader, draw black background
-	glUseProgram(G_pGridBigShader);
-	G_pGridBig->draw(G_pGridBigShader, Window::m_V);
+	glUseProgram(G_gridBigShader);
+	G_pGridBig->draw(G_gridBigShader, Window::m_V);
 
 	// Using GridSmallShader, draw small white tiles
-	glUseProgram(G_pGridSmallShader);
-	G_pGridSmall->draw(G_pGridSmallShader, Window::m_V);
+	glUseProgram(G_gridSmallShader);
+	G_pGridSmall->draw(G_gridSmallShader, Window::m_V);
 
 	// Using SnakeShader, draw snake
-	glUseProgram(G_pSnakeShader);
-	G_pSnake->draw(G_pSnakeShader, Window::m_V);
+	glUseProgram(G_snakeShader);
+	G_pSnake->draw(G_snakeShader, Window::m_V);
 
 	// Using SnakeContourShader, draw outline of snake
-	glUseProgram(G_pSnakeContourShader);
-	static_cast<Transform *>(G_pSnake)->drawSnakeContour(G_pSnakeContourShader, Window::m_V);
+	glUseProgram(G_snakeContourShader);
+	static_cast<Transform *>(G_pSnake)->drawSnakeContour(G_snakeContourShader, Window::m_V);
 
 	// Using ObstaclesShader, draw the obstacles
-	glUseProgram(G_pObstaclesShader);
-	G_pObstacles->draw(G_pObstaclesShader, Window::m_V);
+	glUseProgram(G_obstaclesShader);
+	G_pObstacles->draw(G_obstaclesShader, Window::m_V);
 
 	// Using BoundingBoxShader, draw the axis-aligned bounding boxes (AABB)
 	glUseProgram(G_boundingBoxShader);
@@ -654,9 +654,9 @@ void Window::displayCallback(GLFWwindow* window)
 			static_cast<Transform *>(*G_nodeIt)->drawBoundingBox(G_boundingBoxShader, Window::m_V);
 
 	// Using BezierShader, draw the 4 Bezier surfaces
-	glUseProgram(G_pBezierShader);
+	glUseProgram(G_bezierShader);
 	for (int i = 0; i < 4; i++)
-		pPatch[i]->draw(G_pBezierShader);
+		pPatch[i]->draw(G_bezierShader);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -763,38 +763,20 @@ void Window::keyCallback(GLFWwindow *window, int key, int scanCode, int action, 
 			// Accelerate
 			case GLFW_KEY_UP:
 			case GLFW_KEY_W:
-				if (Window::m_velocity == 0.0f)
-					break;
-
-#ifdef __APPLE__
-				Window::m_velocity = 0.2f;
-#else
-				Window::m_velocity = 0.02f;
-#endif
+				Window::m_velocity = SNAKE_SPEED + SPEED_INC;
 				break;
 
 			// Slow down
 			case GLFW_KEY_DOWN:
 			case GLFW_KEY_S:
-#ifdef __APPLE__
-				Window::m_velocity = 0.05f;
-#else
-				Window::m_velocity = 0.005f;
-#endif
+				Window::m_velocity = SNAKE_SPEED - SPEED_INC;
 				break;
 		}
 	}
 
 	else if (action == GLFW_RELEASE)
 	{
-		if (Window::m_velocity == 0.0f)
-			return;
-    
-#ifdef __APPLE__
-		Window::m_velocity = 0.05f;
-#else
-		Window::m_velocity = 0.005f;
-#endif
+		Window::m_velocity = SNAKE_SPEED;
 	}
 }
 
