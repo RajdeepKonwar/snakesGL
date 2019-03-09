@@ -52,6 +52,9 @@
 #include "SceneGraph.h"
 #include "Shader.h"
 
+constexpr auto WINDOW_TITLE = "snakesGL";
+constexpr auto CONFIG_FILE = "./snakesGL.conf";
+
 class Window
 {
 public:

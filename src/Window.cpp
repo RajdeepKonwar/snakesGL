@@ -29,15 +29,11 @@
  **/
 
 #include <fstream>
-
 #ifdef _WIN32
 #include <string>
 #endif
 
 #include "Window.h"
-
-constexpr auto WINDOW_TITLE = "snakesGL";
-constexpr auto CONFIG_FILE = "./snakesGL.conf";
 
 #ifdef __APPLE__
 constexpr float SNAKE_SPEED = 0.05f;
@@ -192,8 +188,6 @@ void Window::initializeObjects()
 			coin = varValue;
 		else if (!varName.compare("wall"))
 			wall = varValue;
-		else
-			std::cout << "\nUnknown setting (" << varName << "). Ignored.\n";
 	}
 
 	confFn.close();
@@ -586,7 +580,7 @@ GLFWwindow* Window::createWindow(int width, int height)
 #endif
 
 	// Create the GLFW window
-	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, glfwGetPrimaryMonitor(), nullptr);
 
 	// Check if the window could not be created
 	if (!window)
