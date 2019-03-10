@@ -57,10 +57,6 @@ Bezier::Bezier(const glm::vec3 points[16])
 	m_C[1] = m_B * m_G[1] * m_B;
 	m_C[2] = m_B * m_G[2] * m_B;
 
-	glm::vec4 uVector;
-	glm::vec4 vVector;
-	glm::vec3 xOfuv;
-
 	int counter = 0;
 	int rows = 0;
 
@@ -71,12 +67,12 @@ Bezier::Bezier(const glm::vec3 points[16])
 	{
 		while (counter < 202)
 		{
-			uVector = glm::vec4(u * u * u, u * u, u, 1);
-			vVector = glm::vec4(v * v * v, v * v, v, 1);
+			glm::vec4 uVector = glm::vec4(u * u * u, u * u, u, 1);
+			glm::vec4 vVector = glm::vec4(v * v * v, v * v, v, 1);
 
-			xOfuv	= glm::vec3(glm::dot(vVector, m_C[0] * uVector),
-								glm::dot(vVector, m_C[1] * uVector),
-								glm::dot(vVector, m_C[2] * uVector));
+			glm::vec3 xOfuv	= glm::vec3(glm::dot(vVector, m_C[0] * uVector),
+										glm::dot(vVector, m_C[1] * uVector),
+										glm::dot(vVector, m_C[2] * uVector));
 
 			m_vertices[rows].push_back(xOfuv);
 

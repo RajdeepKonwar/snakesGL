@@ -155,7 +155,7 @@ void showFPS()
 
 	float fps;
 	if (frameTimeAvg > 0.0f)
-		fps = (100000.0f) / frameTimeAvg;
+		fps = (1000.0f) / frameTimeAvg;
 	else
 		fps = 60.0f;
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 	GetDesktopResolution(width, height);
 
 	// Create the GLFW window
-	G_window = Window::createWindow(width * 2.0, height * 2.0);
+	G_window = Window::createWindow(width * 2, height * 2);
 
 	// Print OpenGL and GLSL versions
 	printVersions();

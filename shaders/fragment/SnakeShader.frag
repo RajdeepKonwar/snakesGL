@@ -30,70 +30,69 @@
 
 #version 330 core
 
-struct DirLight {
-  vec3 direction;
+struct DirLight
+{
+	vec3 direction;
   
-  vec3 ambient;
-  vec3 diffuse;
-  vec3 specular;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 };
 
-vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir );
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 
 in vec3 Normal;
 in vec3 FragCoord;
 in vec4 ViewSpace;
 
 uniform DirLight dirLight;
-uniform vec4     u_camPos;
-uniform bool     u_fog;
+uniform vec4 u_camPos;
+uniform bool u_fog;
 
 out vec4 FragColor;
 
-void main() {
-  // Directional Lighting
-  
-  vec3 viewDirection = normalize ( vec3( u_camPos.x, u_camPos.y, u_camPos.z ) -
-                       vec3( ViewSpace.x, ViewSpace.y, ViewSpace.z ) );
-  
-  vec4 l_snakeColor = vec4( 0.0f, 0.0f, 0.0f, 1.0f );  //! red
-  l_snakeColor += vec4( CalcDirLight( dirLight, normalize( Normal ), viewDirection ),
-                        0.0f );
+void main()
+{
+	// Directional Lighting
+	vec3 viewDirection = normalize(vec3(u_camPos.x, u_camPos.y, u_camPos.z) - vec3(ViewSpace.x, ViewSpace.y, ViewSpace.z));
 
-  //! Linear fog
-  vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
-  float l_dist      = length( l_distVector );
+	vec4 snakeColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);	//! red
+	snakeColor += vec4(CalcDirLight(dirLight, normalize(Normal), viewDirection), 0.0f);
 
-  float l_minFogDist = 2.0f;
-  float l_maxFogDist = 17.0f;
+	//! Linear fog
+	vec3 distVector = vec3(ViewSpace) - vec3(u_camPos);
+	float dist = length(distVector);
 
-  float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
+	float minFogDist = 2.0f;
+	float maxFogDist = 17.0f;
 
-  vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );  //! grey
+	float fogFactor = (maxFogDist - dist) / (maxFogDist - minFogDist);
 
-  l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  if (u_fog)
-    FragColor   = mix( l_fogColor, l_snakeColor, l_fogFactor );
-  else
-    FragColor   = l_snakeColor;
+	vec4 fogColor = vec4(0.3f, 0.3f, 0.3f, 1.0f);		//! grey
+
+	fogFactor = clamp(fogFactor, 0.0f, 1.0f);
+	if (u_fog)
+		FragColor = mix(fogColor, snakeColor, fogFactor);
+	else
+		FragColor = snakeColor;
 }
 
 //! Calculates the color when using a directional light.
-vec3 CalcDirLight( DirLight light, vec3 normal, vec3 viewDir ) {
-  vec3 lightDir = normalize( light.direction );
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+{
+	vec3 lightDir = normalize(light.direction);
 
-  //! Diffuse shading
-  float diff = max( dot( normal, lightDir ), 0.0 );
+	//! Diffuse shading
+	float diff = max(dot(normal, lightDir), 0.0f);
 
-  //! Specular shading
-  vec3 reflectDir = reflect( -lightDir, normal );
-  float spec = pow( max( dot( viewDir, reflectDir ), 0.0 ), 0.6 );
+	//! Specular shading
+	vec3 reflectDir = reflect(-lightDir, normal);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 0.6f);
 
-  //! Combine results
-  vec3 ambient  = light.ambient  * vec3( 0.1745f, 0.01175f, 0.01175f );
-  vec3 diffuse  = light.diffuse  * diff * vec3( 0.61424f, 0.04136f, 0.04136f );
-  vec3 specular = light.specular * spec * vec3( 0.727811f, 0.626959f, 0.626959f )
-                  * dot(vec3(0.727811f, 0.626959f, 0.626959f), light.specular);
+	//! Combine results
+	vec3 ambient = light.ambient  * vec3(0.1745f, 0.01175f, 0.01175f);
+	vec3 diffuse = light.diffuse  * diff * vec3(0.61424f, 0.04136f, 0.04136f);
+	vec3 specular = light.specular * spec * vec3(0.727811f, 0.626959f, 0.626959f) * dot(vec3(0.727811f, 0.626959f, 0.626959f), light.specular);
 
-  return (ambient + diffuse + specular);
+	return (ambient + diffuse + specular);
 }

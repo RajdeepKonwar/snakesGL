@@ -38,8 +38,9 @@ uniform mat4 modelView;
 out vec3 FragCoord;
 out vec4 ViewSpace;
 
-void main() {
-  gl_Position = projection * modelView * vec4( a_pos, 1.0f );
-  ViewSpace   = modelView * vec4( a_pos, 1.0f );
-  FragCoord   = a_pos;
+void main()
+{
+	gl_Position = projection * modelView * vec4(a_pos, 1.0f);
+	ViewSpace = modelView * vec4(a_pos, 1.0f);
+	FragCoord = a_pos;
 }

@@ -39,36 +39,38 @@ uniform int u_surface;
 
 out vec4 FragColor;
 
-void main() {
-  //! Linear fog
-  vec3 l_distVector = vec3( ViewSpace ) - vec3( u_camPos );
-  float l_dist      = length( l_distVector );
+void main()
+{
+	//! Linear fog
+	vec3 distVector = vec3(ViewSpace) - vec3(u_camPos);
+	float dist = length(distVector);
 
-  float l_minFogDist = 2.0f;
-  float l_maxFogDist = 17.0f;
+	float minFogDist = 2.0f;
+	float maxFogDist = 17.0f;
 
-  float l_fogFactor = (l_maxFogDist - l_dist) / (l_maxFogDist - l_minFogDist);
-  vec4 l_fogColor   = vec4( 0.3f, 0.3f, 0.3f, 1.0f );
+	float fogFactor = (maxFogDist - dist) / (maxFogDist - minFogDist);
+	vec4 fogColor = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 
-  vec4 l_bezierColor  = vec4( 0.0f, 0.6f, 0.7f, 1.0f );  
-  switch( u_surface ) {
-    case 1:
-      l_bezierColor  = vec4( 0.0f, 0.63f, 0.95f, 1.0f );
-      break;
-    case 2:
-      l_bezierColor  = vec4( 1.0f, 0.73f, 0.0f, 1.0f );
-      break;
-    case 3:
-      l_bezierColor  = vec4( 0.48f, 0.73f, 0.0f, 1.0f );
-      break;
-    case 4:
-      l_bezierColor  = vec4( 0.96f, 0.325f, 0.08f, 1.0f );  
-      break;
-  }
+	vec4 bezierColor = vec4(0.0f, 0.6f, 0.7f, 1.0f);
+	switch (u_surface)
+	{
+	case 1:
+		bezierColor = vec4(0.0f, 0.63f, 0.95f, 1.0f);
+		break;
+	case 2:
+		bezierColor = vec4(1.0f, 0.73f, 0.0f, 1.0f);
+		break;
+	case 3:
+		bezierColor = vec4(0.48f, 0.73f, 0.0f, 1.0f);
+		break;
+	case 4:
+		bezierColor = vec4(0.96f, 0.325f, 0.08f, 1.0f);
+		break;
+	}
 
-  l_fogFactor = clamp( l_fogFactor, 0.0f, 1.0f );
-  if (u_fog)
-    FragColor   = mix( l_fogColor, l_bezierColor, l_fogFactor );
-  else
-    FragColor   = l_bezierColor;
+	fogFactor = clamp(fogFactor, 0.0f, 1.0f);
+	if (u_fog)
+		FragColor = mix(fogColor, bezierColor, fogFactor);
+	else
+		FragColor = bezierColor;
 }
