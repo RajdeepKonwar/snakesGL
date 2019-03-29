@@ -127,6 +127,10 @@ void printVersions()
 #ifdef GL_SHADING_LANGUAGE_VERSION
 	std::cout << "Supported GLSL version is " << (char *)glGetString(GL_SHADING_LANGUAGE_VERSION) << ".\n";
 #endif
+
+	int numVertexAttribsSupprted = 0;
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numVertexAttribsSupprted);
+	std::cout << "Manimum number of vertex attributes supported: " << numVertexAttribsSupprted << std::endl;
 }
 
 // Display FPS (Frames per second)

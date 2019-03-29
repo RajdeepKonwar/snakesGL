@@ -34,6 +34,10 @@
 #endif
 
 #include "Window.h"
+#include "irrKlang.h"
+
+using namespace irrklang;
+#pragma comment(lib, "irrKlang.lib")
 
 #ifdef __APPLE__
 constexpr float SNAKE_SPEED = 0.05f;
@@ -83,6 +87,10 @@ glm::vec3 G_camUp(0.0f, 1.0f, 0.0f);				// u | What orientation "up" is
 glm::vec3 Window::m_lastPoint(0.0f, 0.0f, 0.0f);	// For mouse tracking
 glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
+
+// Sound engines
+ISoundEngine *G_themeSound, *G_collisionSound;
+bool G_bGameOver = false;
 
 float Window::randGenX()
 {
@@ -191,6 +199,20 @@ void Window::initializeObjects()
 	}
 
 	confFn.close();
+
+	// Sound Engines
+	G_themeSound = createIrrKlangDevice();
+	G_collisionSound = createIrrKlangDevice();
+	if (!G_themeSound || !G_collisionSound)
+	{
+		std::cerr << "Error starting up the sound engine!\n";
+		exit(EXIT_FAILURE);
+	}
+
+	// Play theme music
+	G_themeSound->play2D("./audio/snakes.mp3" , true);
+	G_themeSound->setSoundVolume(static_cast<irrklang::ik_f32>(0.1));
+	G_collisionSound->setSoundVolume(static_cast<irrklang::ik_f32>(0.5));
 
 	// Geometry nodes
 	G_pHead = new Geometry(head.c_str());
@@ -380,79 +402,79 @@ void Window::initializeObjects()
 	}
 
 	// Bezier surface 1 control points
-	glm::vec3 points0[16] = {	glm::vec3( -4,   12.50, 0.25 ),   // p0
-								glm::vec3( -3.5, 13.0,  0.25 ),
-								glm::vec3( -3,   13.0,  0.25 ),
-								glm::vec3( -2.5, 12.50, 0.25 ),   // p3
-								glm::vec3( -4,   12.25, 0.75 ),
-								glm::vec3( -3.5, 13.50, 0.75 ),
-								glm::vec3( -3,   13.50, 0.75 ),
-								glm::vec3( -2.5, 12.25, 0.75 ),   // p7
-								glm::vec3( -4,   13.0,  1.25 ),
-								glm::vec3( -3.5, 12.50, 1.25 ),
-								glm::vec3( -3,   12.50, 1.25 ),
-								glm::vec3( -2.5, 13.0,  1.25 ),   // p11
-								glm::vec3( -4,   12.50, 1.75 ),
-								glm::vec3( -3.5, 12.0,  1.75 ),
-								glm::vec3( -3,   12.0,  1.75 ),
-								glm::vec3( -2.5, 12.50, 1.75 ),   // p15
+	glm::vec3 points0[16] = {	glm::vec3(-4,   12.50, 0.25),	// p0
+								glm::vec3(-3.5, 13.0,  0.25),
+								glm::vec3(-3,   13.0,  0.25),
+								glm::vec3(-2.5, 12.50, 0.25),	// p3
+								glm::vec3(-4,   12.25, 0.75),
+								glm::vec3(-3.5, 13.50, 0.75),
+								glm::vec3(-3,   13.50, 0.75),
+								glm::vec3(-2.5, 12.25, 0.75),	// p7
+								glm::vec3(-4,   13.0,  1.25),
+								glm::vec3(-3.5, 12.50, 1.25),
+								glm::vec3(-3,   12.50, 1.25),
+								glm::vec3(-2.5, 13.0,  1.25),	// p11
+								glm::vec3(-4,   12.50, 1.75),
+								glm::vec3(-3.5, 12.0,  1.75),
+								glm::vec3(-3,   12.0,  1.75),
+								glm::vec3(-2.5, 12.50, 1.75),	// p15
 							};
 
 	// Bezier surface 2 control points
-	glm::vec3 points1[16] = {	glm::vec3( -2.5, 12.50, 0.25 ),   // p0
-								glm::vec3( -2,   12.0,  0.25 ),
-								glm::vec3( -1.5, 13.0,  0.25 ),
-								glm::vec3( -1,   12.50, 0.25 ),   // p3
-								glm::vec3( -2.5, 12.25, 0.75 ),
-								glm::vec3( -2,   11.0,  0.75 ),
-								glm::vec3( -1.5, 13.50, 0.75 ),
-								glm::vec3( -1,   12.25, 0.75 ),   // p7
-								glm::vec3( -2.5, 13.0,  1.25 ),
-								glm::vec3( -2,   13.50, 1.25 ),
-								glm::vec3( -1.5, 12.50, 1.25 ),
-								glm::vec3( -1,   13.0,  1.25 ),   // p11
-								glm::vec3( -2.5, 12.50, 1.75 ),
-								glm::vec3( -2,   13.0,  1.75 ),
-								glm::vec3( -1.5, 12.0,  1.75 ),
-								glm::vec3( -1,   12.50, 1.75 ),   // p15
+	glm::vec3 points1[16] = {	glm::vec3(-2.5, 12.50, 0.25),	// p0
+								glm::vec3(-2,   12.0,  0.25),
+								glm::vec3(-1.5, 13.0,  0.25),
+								glm::vec3(-1,   12.50, 0.25),	// p3
+								glm::vec3(-2.5, 12.25, 0.75),
+								glm::vec3(-2,   11.0,  0.75),
+								glm::vec3(-1.5, 13.50, 0.75),
+								glm::vec3(-1,   12.25, 0.75),	// p7
+								glm::vec3(-2.5, 13.0,  1.25),
+								glm::vec3(-2,   13.50, 1.25),
+								glm::vec3(-1.5, 12.50, 1.25),
+								glm::vec3(-1,   13.0,  1.25),	// p11
+								glm::vec3(-2.5, 12.50, 1.75),
+								glm::vec3(-2,   13.0,  1.75),
+								glm::vec3(-1.5, 12.0,  1.75),
+								glm::vec3(-1,   12.50, 1.75),	// p15
 							};
 
 	// Bezier surface 3 control points
-	glm::vec3 points2[16] = {	glm::vec3( -2.5, 12.50, 1.75 ),   // p0
-								glm::vec3( -2,   13.0,  1.75 ),
-								glm::vec3( -1.5, 12.0,  1.75 ),
-								glm::vec3( -1,   12.50, 1.75 ),   // p3
-								glm::vec3( -2.5, 12.0,  2.25 ),
-								glm::vec3( -2,   12.5,  2.25 ),
-								glm::vec3( -1.5, 11.50, 2.25 ),
-								glm::vec3( -1,   12.0,  2.25 ),   // p7
-								glm::vec3( -2.5, 13.0,  2.75 ),
-								glm::vec3( -2,   13.50, 2.75 ),
-								glm::vec3( -1.5, 12.50, 2.75 ),
-								glm::vec3( -1,   13.0,  2.75 ),   // p11
-								glm::vec3( -2.5, 12.50, 3.25 ),
-								glm::vec3( -2,   13.0,  3.25 ),
-								glm::vec3( -1.5, 12.0,  3.25 ),
-								glm::vec3( -1,   12.50, 3.25 ),   // p15
+	glm::vec3 points2[16] = {	glm::vec3(-2.5, 12.50, 1.75),	// p0
+								glm::vec3(-2,   13.0,  1.75),
+								glm::vec3(-1.5, 12.0,  1.75),
+								glm::vec3(-1,   12.50, 1.75),	// p3
+								glm::vec3(-2.5, 12.0,  2.25),
+								glm::vec3(-2,   12.5,  2.25),
+								glm::vec3(-1.5, 11.50, 2.25),
+								glm::vec3(-1,   12.0,  2.25),	// p7
+								glm::vec3(-2.5, 13.0,  2.75),
+								glm::vec3(-2,   13.50, 2.75),
+								glm::vec3(-1.5, 12.50, 2.75),
+								glm::vec3(-1,   13.0,  2.75),	// p11
+								glm::vec3(-2.5, 12.50, 3.25),
+								glm::vec3(-2,   13.0,  3.25),
+								glm::vec3(-1.5, 12.0,  3.25),
+								glm::vec3(-1,   12.50, 3.25),	// p15
 							};
 
 	// Bezier surface 4 control points
-	glm::vec3 points3[16] = {	glm::vec3( -4,   12.50, 1.75 ),   // p0
-								glm::vec3( -3.5, 12.0,  1.75 ),
-								glm::vec3( -3,   12.0,  1.75 ),
-								glm::vec3( -2.5, 12.50, 1.75 ),   // p3
-								glm::vec3( -4,   12.0,  2.25 ),
-								glm::vec3( -3.5, 12.5,  2.25 ),
-								glm::vec3( -3,   11.50, 2.25 ),
-								glm::vec3( -2.5, 12.0,  2.25 ),   // p7
-								glm::vec3( -4,   13.0,  2.75 ),
-								glm::vec3( -3.5, 13.50, 2.75 ),
-								glm::vec3( -3,   12.50, 2.75 ),
-								glm::vec3( -2.5, 13.0,  2.75 ),   // p11
-								glm::vec3( -4,   12.50, 3.25 ),
-								glm::vec3( -3.5, 13.0,  3.25 ),
-								glm::vec3( -3,   12.0,  3.25 ),
-								glm::vec3( -2.5, 12.50, 3.25 ),   // p15
+	glm::vec3 points3[16] = {	glm::vec3(-4,   12.50, 1.75),	// p0
+								glm::vec3(-3.5, 12.0,  1.75),
+								glm::vec3(-3,   12.0,  1.75),
+								glm::vec3(-2.5, 12.50, 1.75),	// p3
+								glm::vec3(-4,   12.0,  2.25),
+								glm::vec3(-3.5, 12.5,  2.25),
+								glm::vec3(-3,   11.50, 2.25),
+								glm::vec3(-2.5, 12.0,  2.25),	// p7
+								glm::vec3(-4,   13.0,  2.75),
+								glm::vec3(-3.5, 13.50, 2.75),
+								glm::vec3(-3,   12.50, 2.75),
+								glm::vec3(-2.5, 13.0,  2.75),	// p11
+								glm::vec3(-4,   12.50, 3.25),
+								glm::vec3(-3.5, 13.0,  3.25),
+								glm::vec3(-3,   12.0,  3.25),
+								glm::vec3(-2.5, 12.50, 3.25),	// p15
 							};
 
 	// Create 4 Bezier patches (C0 and C1 continuous)
@@ -466,13 +488,13 @@ void Window::initializeObjects()
 		patch[i]->m_surface = i + 1;
 
 	// Load the shader programs
-	G_gridBigShader = LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
-	G_gridSmallShader = LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
-	G_snakeShader = LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
-	G_obstaclesShader = LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
-	G_boundingBoxShader = LoadShaders(boundingBoxVertShader.c_str(), boundingBoxFragShader.c_str());
-	G_snakeContourShader = LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
-	G_bezierShader = LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
+	G_gridBigShader			= LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
+	G_gridSmallShader		= LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
+	G_snakeShader			= LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
+	G_obstaclesShader		= LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
+	G_boundingBoxShader		= LoadShaders(boundingBoxVertShader.c_str(), boundingBoxFragShader.c_str());
+	G_snakeContourShader	= LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
+	G_bezierShader			= LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
 }
 
 // Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -511,6 +533,9 @@ void Window::cleanUp()
 	glDeleteProgram(G_boundingBoxShader);
 	glDeleteProgram(G_snakeContourShader);
 	glDeleteProgram(G_bezierShader);
+
+	G_themeSound->drop();
+	G_collisionSound->drop();
 }
 
 // Since everything is on the grid, no need of collision-check in z-direction
@@ -541,6 +566,11 @@ void Window::performCollisions()
 					**/
 				if (static_cast<Transform *>(*it)->m_type == 3)
 				{
+					if (!G_bGameOver)
+					{
+						G_collisionSound->play2D("./audio/solid.wav");
+						G_bGameOver = true;
+					}
 					static_cast<Transform *>(*it)->m_bboxColor = 3;
 					static_cast<Transform *>(G_pHeadMtx)->m_bboxColor = 3;
 					Window::m_velocity = 0.0f;
@@ -549,6 +579,7 @@ void Window::performCollisions()
 				// Set obstacle's bbox to red and destroy it (don't display)
 				else
 				{
+					G_collisionSound->play2D("./audio/bleep.wav");
 					static_cast<Transform *>(*it)->m_bboxColor = 3;
 					static_cast<Transform *>(*it)->m_destroyed = true;
 				}
