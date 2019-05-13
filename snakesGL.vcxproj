@@ -93,6 +93,7 @@
     <ClInclude Include="src\SceneGraph.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\snakesGL.h" />
+    <ClInclude Include="src\Sound.h" />
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -100,6 +101,7 @@
     <ClCompile Include="src\SceneGraph.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\snakesGL.cpp" />
+    <ClCompile Include="src\Sound.cpp" />
     <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>

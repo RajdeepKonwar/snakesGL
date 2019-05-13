@@ -28,24 +28,9 @@
  * main program.
  **/
 
-#include "wtypes.h"
 #include "snakesGL.h"
 
 GLFWwindow *G_window;
-
-void GetDesktopResolution(int &horizontal, int &vertical)
-{
-	RECT desktop;
-	// Get a handle to the desktop window
-	const HWND hDesktop = GetDesktopWindow();
-	// Get the size of screen to the variable desktop
-	GetWindowRect(hDesktop, &desktop);
-	// The top left corner will have coordinates (0,0)
-	// and the bottom right corner will have coordinates
-	// (horizontal, vertical)
-	horizontal = desktop.right;
-	vertical = desktop.bottom;
-}
 
 void errorCallback(int error, const char *description)
 {
@@ -86,7 +71,7 @@ void setupGlew()
 		glfwTerminate();
 	}
 
-	std::cout << "Current GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
+	std::cout << "Current GLEW version: " << glewGetString(GLEW_VERSION) << std::endl << std::endl;
 #endif
 }
 
@@ -120,8 +105,10 @@ void setupOpenGLSettings()
 void printVersions()
 {
 	// Get info of GPU and supported OpenGL version
-	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "OpenGL version supported " << glGetString(GL_VERSION) << std::endl;
+	std::cout << "OpenGL Info:\n";
+	std::cout << "  Vendor: "   << glGetString(GL_VENDOR)   << std::endl;
+	std::cout << "  Renderer: " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "  Version "   << glGetString(GL_VERSION)  << std::endl;
 
 	// If the shading language symbol is defined
 #ifdef GL_SHADING_LANGUAGE_VERSION
@@ -130,7 +117,7 @@ void printVersions()
 
 	int numVertexAttribsSupprted = 0;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numVertexAttribsSupprted);
-	std::cout << "Manimum number of vertex attributes supported: " << numVertexAttribsSupprted << std::endl;
+	std::cout << "Maximum number of vertex attributes supported: " << numVertexAttribsSupprted << std::endl;
 }
 
 // Display FPS (Frames per second)
@@ -169,11 +156,10 @@ void showFPS()
 
 int main(int argc, char **argv)
 {
-	int width = 0, height = 0;
-	GetDesktopResolution(width, height);
+	int height = 1080, width = 1920;
 
 	// Create the GLFW window
-	G_window = Window::createWindow(width * 2, height * 2);
+	G_window = Window::createWindow(width, height);
 
 	// Print OpenGL and GLSL versions
 	printVersions();
@@ -195,7 +181,7 @@ int main(int argc, char **argv)
 
 		// Idle callback. Updating objects, etc. can be done here.
 		Window::idleCallback();
-		showFPS();
+		//showFPS();
 	}
 
 	std::cout << std::endl;

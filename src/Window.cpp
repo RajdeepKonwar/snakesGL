@@ -34,10 +34,7 @@
 #endif
 
 #include "Window.h"
-#include "irrKlang.h"
-
-using namespace irrklang;
-#pragma comment(lib, "irrKlang.lib")
+#include "Sound.h"
 
 #ifdef __APPLE__
 constexpr float SNAKE_SPEED = 0.05f;
@@ -89,7 +86,8 @@ glm::mat4 Window::m_P;
 glm::mat4 Window::m_V;
 
 // Sound engines
-ISoundEngine *G_themeSound, *G_collisionSound;
+std::unique_ptr<Sound> G_themeSound = std::make_unique<Sound>();
+std::unique_ptr<Sound> G_collisionSound = std::make_unique<Sound>();
 bool G_bGameOver = false;
 
 float Window::randGenX()
@@ -200,38 +198,29 @@ void Window::initializeObjects()
 
 	confFn.close();
 
-	// Sound Engines
-	G_themeSound = createIrrKlangDevice();
-	G_collisionSound = createIrrKlangDevice();
-	if (!G_themeSound || !G_collisionSound)
-	{
-		std::cerr << "Error starting up the sound engine!\n";
-		exit(EXIT_FAILURE);
-	}
-
 	// Play theme music
-	G_themeSound->play2D("./audio/snakes.mp3" , true);
-	G_themeSound->setSoundVolume(static_cast<irrklang::ik_f32>(0.1));
-	G_collisionSound->setSoundVolume(static_cast<irrklang::ik_f32>(0.5));
+	G_themeSound->Play("./audio/snakes.mp3" , TwoDimensional, true);
+	G_themeSound->SetSoundVolume(0.15f);
+	G_collisionSound->SetSoundVolume(0.5f);
 
 	// Geometry nodes
-	G_pHead = new Geometry(head.c_str());
-	G_pBody = new Geometry(body.c_str());
-	G_pTail = new Geometry(tail.c_str());
-	G_pTileSmall = new Geometry(tileSmall.c_str());
-	G_pTileBig = new Geometry(tileBig.c_str());
-	G_pCoin = new Geometry(coin.c_str());
-	G_pWall = new Geometry(wall.c_str());
+	G_pHead			= new Geometry(head.c_str());
+	G_pBody			= new Geometry(body.c_str());
+	G_pTail			= new Geometry(tail.c_str());
+	G_pTileSmall	= new Geometry(tileSmall.c_str());
+	G_pTileBig		= new Geometry(tileBig.c_str());
+	G_pCoin			= new Geometry(coin.c_str());
+	G_pWall			= new Geometry(wall.c_str());
 
 	// Set geometry obstacle type (for color, 1 by default)
 	static_cast<Geometry *>(G_pCoin)->m_obstacleType = 2;
 	static_cast<Geometry *>(G_pWall)->m_obstacleType = 3;
 
 	// Group nodes
-	G_pGridBig = new Transform(glm::mat4(1.0f));
-	G_pGridSmall = new Transform(glm::mat4(1.0f));
-	G_pSnake = new Transform(glm::mat4(1.0f));
-	G_pObstacles = new Transform(glm::mat4(1.0f));
+	G_pGridBig		= new Transform(glm::mat4(1.0f));
+	G_pGridSmall	= new Transform(glm::mat4(1.0f));
+	G_pSnake		= new Transform(glm::mat4(1.0f));
+	G_pObstacles	= new Transform(glm::mat4(1.0f));
 
 	// Transform modes
 	G_pHeadMtx = new Transform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.8f, 0.0f)));
@@ -330,7 +319,7 @@ void Window::initializeObjects()
 	}
 
 	// Walls transform mtx
-	G_pWallMtx = new Node *[G_nWalls + 1];
+	G_pWallMtx = new Node *[static_cast<size_t>(G_nWalls) + 1];
 	for (int k = 0; k < G_nWalls; k++)
 	{
 		do
@@ -488,13 +477,13 @@ void Window::initializeObjects()
 		patch[i]->m_surface = i + 1;
 
 	// Load the shader programs
-	G_gridBigShader			= LoadShaders(gridBigVertShader.c_str(), gridBigFragShader.c_str());
-	G_gridSmallShader		= LoadShaders(gridSmallVertShader.c_str(), gridSmallFragShader.c_str());
-	G_snakeShader			= LoadShaders(snakeVertShader.c_str(), snakeFragShader.c_str());
-	G_obstaclesShader		= LoadShaders(obstaclesVertShader.c_str(), obstaclesFragShader.c_str());
-	G_boundingBoxShader		= LoadShaders(boundingBoxVertShader.c_str(), boundingBoxFragShader.c_str());
-	G_snakeContourShader	= LoadShaders(snakeContourVertShader.c_str(), snakeContourFragShader.c_str());
-	G_bezierShader			= LoadShaders(bezierVertShader.c_str(), bezierFragShader.c_str());
+	G_gridBigShader			= LoadShaders(gridBigVertShader.c_str(),		gridBigFragShader.c_str());
+	G_gridSmallShader		= LoadShaders(gridSmallVertShader.c_str(),		gridSmallFragShader.c_str());
+	G_snakeShader			= LoadShaders(snakeVertShader.c_str(),			snakeFragShader.c_str());
+	G_obstaclesShader		= LoadShaders(obstaclesVertShader.c_str(),		obstaclesFragShader.c_str());
+	G_boundingBoxShader		= LoadShaders(boundingBoxVertShader.c_str(),	boundingBoxFragShader.c_str());
+	G_snakeContourShader	= LoadShaders(snakeContourVertShader.c_str(),	snakeContourFragShader.c_str());
+	G_bezierShader			= LoadShaders(bezierVertShader.c_str(),			bezierFragShader.c_str());
 }
 
 // Treat this as a destructor function. Delete dynamically allocated memory here.
@@ -533,9 +522,6 @@ void Window::cleanUp()
 	glDeleteProgram(G_boundingBoxShader);
 	glDeleteProgram(G_snakeContourShader);
 	glDeleteProgram(G_bezierShader);
-
-	G_themeSound->drop();
-	G_collisionSound->drop();
 }
 
 // Since everything is on the grid, no need of collision-check in z-direction
@@ -568,7 +554,7 @@ void Window::performCollisions()
 				{
 					if (!G_bGameOver)
 					{
-						G_collisionSound->play2D("./audio/solid.wav");
+						G_collisionSound->Play("./audio/solid.wav");
 						G_bGameOver = true;
 					}
 					static_cast<Transform *>(*it)->m_bboxColor = 3;
@@ -579,7 +565,7 @@ void Window::performCollisions()
 				// Set obstacle's bbox to red and destroy it (don't display)
 				else
 				{
-					G_collisionSound->play2D("./audio/bleep.wav");
+					G_collisionSound->Play("./audio/bleep.wav");
 					static_cast<Transform *>(*it)->m_bboxColor = 3;
 					static_cast<Transform *>(*it)->m_destroyed = true;
 				}
@@ -611,7 +597,7 @@ GLFWwindow* Window::createWindow(int width, int height)
 #endif
 
 	// Create the GLFW window
-	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, glfwGetPrimaryMonitor(), nullptr);
+	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
 
 	// Check if the window could not be created
 	if (!window)
