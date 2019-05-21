@@ -156,10 +156,8 @@ void showFPS()
 
 int main(int argc, char **argv)
 {
-	int height = 1080, width = 1920;
-
 	// Create the GLFW window
-	G_window = Window::createWindow(width, height);
+	G_window = Window::createWindow();
 
 	// Print OpenGL and GLSL versions
 	printVersions();

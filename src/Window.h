@@ -60,7 +60,7 @@ class Window
 public:
 	static void initializeObjects();
 	static void cleanUp();
-	static GLFWwindow* createWindow(int width, int height);
+	static GLFWwindow* createWindow();
   
 	static bool checkCollision(Node *first, Node *second);
 	static void performCollisions();

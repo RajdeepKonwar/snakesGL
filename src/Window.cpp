@@ -200,7 +200,7 @@ void Window::initializeObjects()
 
 	// Play theme music
 	G_themeSound->Play("./audio/snakes.mp3" , TwoDimensional, true);
-	G_themeSound->SetSoundVolume(0.15f);
+	G_themeSound->SetSoundVolume(0.25f);
 	G_collisionSound->SetSoundVolume(0.5f);
 
 	// Geometry nodes
@@ -574,7 +574,7 @@ void Window::performCollisions()
 	}
 }
 
-GLFWwindow* Window::createWindow(int width, int height)
+GLFWwindow* Window::createWindow()
 {
 	// Initialize GLFW
 	if (!glfwInit())
@@ -596,8 +596,17 @@ GLFWwindow* Window::createWindow(int width, int height)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+	// "Windowed full screen" windows
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
 	// Create the GLFW window
-	GLFWwindow *window = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, WINDOW_TITLE, monitor, nullptr);
 
 	// Check if the window could not be created
 	if (!window)
@@ -615,6 +624,7 @@ GLFWwindow* Window::createWindow(int width, int height)
 	glfwSwapInterval(1);
 
 	// Get the width and height of the framebuffer to properly resize the window
+	int width = mode->width, height = mode->height;
 	glfwGetFramebufferSize(window, &width, &height);
 
 	// Call the resize callback to make sure things get drawn immediately
