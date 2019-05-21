@@ -624,7 +624,7 @@ GLFWwindow* Window::createWindow()
 	glfwSwapInterval(1);
 
 	// Get the width and height of the framebuffer to properly resize the window
-	int width = mode->width, height = mode->height;
+	int width = 0, height = 0;
 	glfwGetFramebufferSize(window, &width, &height);
 
 	// Call the resize callback to make sure things get drawn immediately
